@@ -5,6 +5,9 @@
 # env
 .env
 
+# config
+/config
+
 # runtime output
 package-lock.json
 
