@@ -27,6 +27,9 @@ export class ChannelMember extends BaseEntity{
     @Column()
     userIdx: number;
 
+    @Column()
+    channelType: number;
+
     @ManyToOne(() => Channel, (channel) => channel.channelMembers)
     channel: Channel;
 }

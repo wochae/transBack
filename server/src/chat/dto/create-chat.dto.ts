@@ -1,1 +1,2 @@
-export class CreateChatDto {}
+export class CreateChatDto1{
+}
