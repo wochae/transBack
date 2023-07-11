@@ -9,7 +9,6 @@ import { ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
     ChatModule,
-    ConfigModule.forRoot(),
   ],
   controllers: [],
 })

@@ -1,17 +1,16 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ChatService } from './chat.service';
-// import { CreateChatDto } from './dto/create-chat.dto';
-// import { UpdateChatDto } from './dto/update-chat.dto';
+import { CreateChatDMDto } from './dto/chats.dto';
 
 @Controller('chat/')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  // @Post('dm/:target_nickname')
-  // createChannelandInitDM(@Param('target_nickname') target_nickname: string, @Body('content') content: string) {
-    
-  //   return this.chatService.createChannelandInitDM(target_nickname, content);
-  // }
+  @Post('dm/:target_nickname')
+  createChannelandInitDM(@Param('target_nickname') target_nickname: string, @Body('content') content: string) {
+    const createChatDMDto = new CreateChatDMDto(0, 0, content);
+    return this.chatService.createDMChannel(createChatDMDto, target_nickname);
+  }
 
   // -----------------------------------------------------
   // @Post()
