@@ -12,6 +12,8 @@ export class Channel extends BaseEntity{
     @Column({nullable: true})
     onwer: number;
 
+
+    // 근데 우리 비밀번호 컬럼 데이터에 저장할 때 비밀번호 암호화 처리해야함.
     @Column({nullable: true})
     password: string;
 

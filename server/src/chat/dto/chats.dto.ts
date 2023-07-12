@@ -1,15 +1,4 @@
 import { IsNotEmpty } from 'class-validator';
-import { Message } from '../chat.entity';
-
-// 한 클레스에서 여러 개의 dto를 만들 수 있음.
-
-export class CreateChatTargetDto{
-    @IsNotEmpty()
-    target_nickname: string;
-
-    @IsNotEmpty()
-    content: string;
-}
 
 export class CreateChatDMDto{
     constructor(userIdx: number, channelType: number, message: string) {
@@ -32,23 +21,9 @@ export class CreateChatDMDto{
 
     @IsNotEmpty()
     message: string;
-
-    // 근데 우리 비밀번호 컬럼 데이터에 저장할 때 비밀번호 암호화 처리해야함.
 }
 
 export class CreateChatDto{
     userIdx: number;
     channelType: number;
 }
-
-
-
-// import { IsNotEmpty } from 'class-validator';
-
-// export class CreateBoardDto {
-//   @IsNotEmpty()
-//   title: string;
-
-//   @IsNotEmpty()
-//   description: string;
-// }
