@@ -22,9 +22,10 @@ export class ChatService {
     const { userIdx, channelType, message } = createChatDMDto;
     const socketClinetUserId = 0; // 당소. 나중에 client로부터 받아올 예정
     let targetUser: number; // 귀소, 일단은 지금 유저 정보가 없어서 식별자 number 값으로 대체
+    
     targetUser = 1;
     const channelMember = await this.channelMemberRepository.findOne({ 
-      where: { userIdx: userIdx, channelType: channelType }  
+      where: { userIdx: userIdx, channelType: channelType }
     });
     
     if (channelMember) { // 존재하면 안 돼서 에러를 반환.
@@ -65,6 +66,8 @@ export class ChatService {
       sender: socketClinetUserId, // 내가 대상한테 말하는 상황이라 가정하고 입력
       message: message,
     });
+
+    return { channel, channelMember1, channelMember2, DM };
 
   };
 };
