@@ -5,8 +5,9 @@ import { chatProviders } from 'src/chat/chat.providers';
 import { DatabaseModule } from 'src/database/database.module';
 
 @Module({
-  controllers: [ChatController, DatabaseModule],
-  providers: [ChatService, ...chatProviders, ],
-  exports: [ChatService, ...chatProviders, ],
+  imports: [DatabaseModule],
+  controllers: [ChatController],
+  providers: [ChatService, ...chatProviders],
+  exports: [...chatProviders],
 })
 export class ChatModule {}

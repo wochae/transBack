@@ -9,10 +9,10 @@ export class Channel extends BaseEntity{
     @Column()
     channelName: string;
 
-    @Column()
+    @Column({nullable: true})
     onwer: number;
 
-    @Column()
+    @Column({nullable: true})
     password: string;
 
     @OneToMany(() => ChannelMember, (channelMember) => channelMember.channel)
@@ -40,16 +40,15 @@ export class Message extends BaseEntity{
     idx: number;
     
     @Column()
-    channelIdx: number;
+    channelId: number;
 
     @Column()
-    permission: number;
+    sender: number;
 
     @Column()
-    channelType: number;
-    
-    @Column()
-    mutedTime: Date;
+    message: string;
+
+    // date 타입 컬럼은 나중에 넣기
 }
 
 // joinedChannel, channel, message

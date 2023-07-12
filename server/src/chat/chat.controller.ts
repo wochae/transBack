@@ -1,16 +1,26 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ChatService } from './chat.service';
-// import { CreateChatDto } from './dto/create-chat.dto';
-// import { UpdateChatDto } from './dto/update-chat.dto';
+import { CreateChatDMDto } from './dto/chats.dto';
 
 @Controller('chat/')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
+  @Post('dm/:target_nickname')
+    createChannelandInitDM(@Param('target_nickname') target_nickname: string, @Body('content') content: string) {
+
+    // const nick = createChatDMDto.target_nickname;
+    // const user:User = this.userService.findOne(nick);
+    // user.id
+    const createChatDMDto = new CreateChatDMDto(0, 0, content);
+
+    return this.chatService.createDMChannel(createChatDMDto, 1); // 1은 대상 id임
+  }
+
   // @Post('dm/:target_nickname')
   // createChannelandInitDM(@Param('target_nickname') target_nickname: string, @Body('content') content: string) {
-    
-  //   return this.chatService.createChannelandInitDM(target_nickname, content);
+  //   const createChatDMDto = new CreateChatDMDto(0, 0, content);
+  //   return this.chatService.createDMChannel(createChatDMDto, target_nickname);
   // }
 
   // -----------------------------------------------------
