@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, getConnection } from 'typeorm';
 import { Channel, ChannelMember, Message } from './chat.entity';
-import { CreateChatDMDto, CreateChatDto } from './dto/chats.dto';
+import { CreateChatDMDto, CreateChatDto, FindDMChannelDto } from './dto/chats.dto';
 
 @Injectable()
 export class ChatService {
@@ -12,7 +12,6 @@ export class ChatService {
     private channelRepository: Repository<Channel>,
     @Inject('CHANNELMEMBERS_REPOSITORY')
     private channelMemberRepository: Repository<ChannelMember>,
-    
   ) { }
 
   // async createChannel(createChannelDto: CreateChatDto){}
@@ -70,6 +69,57 @@ export class ChatService {
     return { channel, channelMember1, channelMember2, DM };
 
   };
+
+  async findDMChannel(my_user : number, target_user : number) {
+    // my_user 와 target_user 의 idx 가 존재하는
+    // 채널 참여자 테이블을 찾는다.(idx는 채널 참여자 테이블의 userIdx)
+    
+    const query = `
+      SELECT *
+      FROM channel_member
+      WHERE ("userIdx" = $1 AND "channelId" IN (
+          SELECT "channelId"
+          FROM "channel_member"
+          WHERE "userIdx" = $2 AND "channelType" = 0
+      ))
+      OR ("userIdx" = $2 AND "channelId" IN (
+          SELECT "channelId"
+          FROM "channel_member"
+          WHERE "userIdx" = $1 AND "channelType" = 0
+      ))
+    `;
+    const parameters = [my_user, target_user];
+    
+    return this.channelMemberRepository.query(query, parameters);
+  };
+
+  /*
+  async findDMChannel(my_user : number, target_user : number) {
+    // my_user 와 target_user 의 idx 가 존재하는
+    // 채널 참여자 테이블을 찾는다.(idx는 채널 참여자 테이블의 userIdx)
+    
+    const userRepository = getRepository(User);
+    const users = await userRepository.find({ name: 'John' });
+    
+    return this.channelMemberRepository.query(query, parameters);
+  };
+  */
+  //db logic
+  /*
+    SELECT *
+    FROM channel_member
+    WHERE (userId = 'User1' AND channelId IN (
+            SELECT channelId
+            FROM channel_member
+            WHERE userId = 'User2' AND channelType = 0
+        ))
+        OR (userId = 'User2' AND channelId IN (
+            SELECT channelId
+            FROM channel_member
+            WHERE userId = 'User1' AND channelType = 0
+        ));
+*/
+
 };
 
   // 예시

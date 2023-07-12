@@ -27,3 +27,11 @@ export class CreateChatDto{
     userIdx: number;
     channelType: number;
 }
+
+export class FindDMChannelDto{
+    @IsNotEmpty()
+    my_nickname: string;
+    
+    @IsNotEmpty()
+    target_nickname : string;
+}
