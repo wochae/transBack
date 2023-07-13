@@ -1,10 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { CreateChatDMDto, FindDMChannelDto } from './dto/chats.dto';
+import { CreateChatDMDto, FindDMChannelDto, FindDMChannelResDto } from './dto/chats.dto';
+import { UsersService } from 'src/users/users.service';
 
 @Controller('chat/')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post('dm/:target_nickname')
   createChannelandInitDM(@Param('target_nickname') target_nickname: string, @Body('content') content: string) {
@@ -18,13 +22,11 @@ export class ChatController {
   }
 
   @Get('dm/:target_nickname')
-  findDMChannel(@Param('target_nickname') target_nickname: string) {
-    // userService findUserByNickname 이 필요하다.
-    // 일단 임시로 0, 1로 설정
-    const my_user = 0;
-    const target_user = 1;
-    this.chatService.findDMChannel(0, 1);
-    return this.chatService.findDMChannel(my_user, target_user);
+  async findDMChannel(@Param('target_nickname') target_nickname: string) {
+    // 일단 임시로 1은 나임을 알림,
+    const my_user = 1; // temporary variable, my_user_idx
+    const target_userIdx = await this.usersService.findUserIdxByNickname(target_nickname); // target_user_idx
+    return this.chatService.findDMChannel(my_user, target_userIdx); // parmas types are number
   }
   // @Post('dm/:target_nickname')
   // createChannelandInitDM(@Param('target_nickname') target_nickname: string, @Body('content') content: string) {
