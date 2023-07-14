@@ -24,9 +24,10 @@ export class ChatController {
   @Get('dm/:target_nickname')
   async findDMChannel(@Param('target_nickname') target_nickname: string) {
     // 일단 임시로 1은 나임을 알림,
-    const my_user = 1; // temporary variable, my_user_idx
+    const my_user = "jujeon"; // temporary variable, my_user_idx
+    const my_user_idx = await this.usersService.findUserIdxByNickname(my_user); // my_user_idx
     const target_userIdx = await this.usersService.findUserIdxByNickname(target_nickname); // target_user_idx
-    return this.chatService.findDMChannel(my_user, target_userIdx); // parmas types are number
+    return this.chatService.findDMChannel(my_user_idx, target_userIdx); // parmas types are number
   }
   // @Post('dm/:target_nickname')
   // createChannelandInitDM(@Param('target_nickname') target_nickname: string, @Body('content') content: string) {

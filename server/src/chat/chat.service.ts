@@ -17,12 +17,11 @@ export class ChatService {
   // async createChannel(createChannelDto: CreateChatDto){}
 
   // situation 1. DM 채팅방이 없을 때 행위자 user1 channelType 0 is DM
-  async createDMChannel(createChatDMDto: CreateChatDMDto, target_nickname: number) {
+  async createDMChannel(createChatDMDto: CreateChatDMDto, target_user_idx: number) {
     const { userIdx, channelType, message } = createChatDMDto;
     const socketClinetUserId = 0; // 당소. 나중에 client로부터 받아올 예정
-    let targetUser: number; // 귀소, 일단은 지금 유저 정보가 없어서 식별자 number 값으로 대체
-    
-    targetUser = 1;
+    // let targetUser: number; // 귀소, 일단은 지금 유저 정보가 없어서 식별자 number 값으로 대체
+    let targetUser = target_user_idx;
     const channelMember = await this.channelMemberRepository.findOne({ 
       where: { userIdx: userIdx, channelType: channelType }
     });
