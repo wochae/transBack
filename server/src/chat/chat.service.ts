@@ -44,7 +44,7 @@ export class ChatService {
       channelType: 0,
     });
 
-    const generatedChannelIdx = channel.id; // 그래서 저 maxId 랑 값이 같아야 함.
+    const generatedChannelIdx = channel.idx; // 그래서 저 maxId 랑 값이 같아야 함.
     // 채널 멤버 생성
     const channelMember1 = await this.channelMemberRepository.save({
       userIdx: socketClinetUserId,
@@ -69,31 +69,56 @@ export class ChatService {
 
   };
 
-  async findDMChannel(my_user : number, target_user : number) {
+  async findDMChannel(my_user : number, target_user : number): Promise<number> {
     // my_user 와 target_user 의 idx 가 존재하는
     // 채널 참여자 테이블을 찾는다.(idx는 채널 참여자 테이블의 userIdx)
+    const something = await this.channelMemberRepository
+      .createQueryBuilder('cm')
+      .where('"userIdx" = :target_user AND "channelType" = 0', { target_user: target_user })
+      .getRawOne();
+    console.log('debug 0:', something[0]);
+    console.log('debug: ', something);
+    const ourChannelId:number = something.cm_channelIdx;
     
-    const query = `
-      SELECT *
-      FROM channel_member
-      WHERE ("userIdx" = $1 AND "channelId" IN (
-          SELECT "channelId"
-          FROM "channel_member"
-          WHERE "userIdx" = $2 AND "channelType" = 0
-      ))
-    `;
-    const parameters = [my_user, target_user];
-    
-    const pair_channelMembers: Promise<ChannelMember[]> = await this.channelMemberRepository.query(query, parameters);
-    if ((await pair_channelMembers).length != 2) {
-      throw new NotFoundException(`ChannelMember with userIdx ${my_user} and ${target_user} does not exist`);
+    if (ourChannelId == null) {
+      throw console.log("DM 채널이 존재하지 않습니다.");
     }
-    const chIdx: Promise<ChannelMember[]> = pair_channelMembers;
+    console.log(`ourChannelId: ${ourChannelId}`)
+    const channelId = await this.channelMemberRepository
+      .createQueryBuilder('channel_member')
+      .select()
+      .where('"userIdx" = :my_user', { my_user: my_user })
+      .andWhere('"channelIdx" = :ourChannelId', { ourChannelId: ourChannelId })
+      .getRawOne();
     
-    return chIdx[0].channelId;
-
+    // if (channelId == null) {
+    //   throw console.log("채널이 존재하지 않습니다.");
+    // }
+    console.log('debug: ', channelId);
+    console.log('debug: ', channelId.channel_member_channelIdx);
+    // const id = channelId;
+    // const query = `
+    //   SELECT *
+    //   FROM channel_member
+    //   WHERE ("userIdx" = $1 AND "channelId" IN (
+    //       SELECT "channelId"
+    //       FROM "channel_member"
+    //       WHERE "userIdx" = $2 AND "channelType" = 0
+    //   ))
+    // `;
+    // const parameters = [my_user, target_user];
+    
+    // const pair_channelMembers: Promise<ChannelMember[]> = await this.channelMemberRepository.query(query, parameters);
+    // if ((await pair_channelMembers).length != 2) {
+    //   throw new NotFoundException(`ChannelMember with userIdx ${my_user} and ${target_user} does not exist`);
+    // }
+    // const chIdx: Promise<ChannelMember[]> = pair_channelMembers;
+    
+    return channelId.channel_member_channelIdx;
   };
 
+  /*
+  channelId.channel.idx
   /*
   async findDMChannel(my_user : number, target_user : number) {
     // my_user 와 target_user 의 idx 가 존재하는
