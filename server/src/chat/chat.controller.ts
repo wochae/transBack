@@ -22,7 +22,7 @@ export class ChatController {
   }
 
   @Get('dm/:target_nickname')
-  async findDMChannel(@Param('target_nickname') target_nickname: string){
+  async findDMChannel(@Param('target_nickname') target_nickname: string): Promise<FindDMChannelResDto>{
     // 일단 임시로 1은 나임을 알림,
     const my_user = "jujeon"; // temporary variable, my_user_idx
     const my_user_idx = await this.usersService.findUserIdxByNickname(my_user); // my_user_idx

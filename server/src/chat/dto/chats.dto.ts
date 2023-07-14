@@ -1,4 +1,5 @@
 import { IsNotEmpty } from 'class-validator';
+import { Message } from '../chat.entity';
 
 export class CreateChatDMDto{
     constructor(userIdx: number, channelType: number, message: string) {
@@ -36,11 +37,21 @@ export class FindDMChannelDto{
     target_nickname : string;
 }
 
+// export class FindDMChannelResDto {
+//     constructor(my_userIdx: number, target_userIdx: number, msgs: Message[]) {
+//         this.my_userIdx = my_userIdx;
+//         this.target_userIdx = target_userIdx;
+//         this.msgs = msgs;
+//     }
+//     my_userIdx: number;
+//     target_userIdx: number;
+//     msgs : Message[];
+// }
 export class FindDMChannelResDto {
-    constructor(my_userIdx: number, target_userIdx: number) {
-        this.my_userIdx = my_userIdx;
-        this.target_userIdx = target_userIdx;
+    constructor(channelIdx :number, msgs: Message[]) {
+        this.channelIdx = channelIdx;
+        this.msgs = msgs;
     }
-    my_userIdx: number;
-    target_userIdx: number;
+    channelIdx: number;
+    msgs : Message[];
 }

@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Repository, getConnection } from 'typeorm';
 import { Channel, ChannelMember, Message } from './chat.entity';
-import { CreateChatDMDto, CreateChatDto, FindDMChannelDto } from './dto/chats.dto';
+import { CreateChatDMDto, CreateChatDto, FindDMChannelDto, FindDMChannelResDto } from './dto/chats.dto';
 
 @Injectable()
 export class ChatService {
@@ -69,20 +69,25 @@ export class ChatService {
 
   };
 
-  async findDMChannel(my_user : number, target_user : number): Promise<number> {
+  async findDMChannel(my_user : number, target_user : number): Promise<FindDMChannelResDto> {
     // my_user 와 target_user 의 idx 가 존재하는
     // 채널 참여자 테이블을 찾는다.(idx는 채널 참여자 테이블의 userIdx)
-    const something = await this.channelMemberRepository
+    const ourChannelId:number = await this.channelMemberRepository
       .createQueryBuilder('cm')
       .where('"userIdx" = :target_user AND "channelType" = 0', { target_user: target_user })
       .getRawOne();
-    console.log('debug 0:', something[0]);
-    console.log('debug: ', something);
-    const ourChannelId:number = something.cm_channelIdx;
+      // TODO : my_user 를 먼저 체크
+      // TODO : channelIds 중 map을 사용한 반복문 
+      // TODO : channelIdx, 그에 속한 Message객체들 반환, or 없다, 그래서 프론트는 방 생성으로 넘어가는 요청;
+      // TODO : DTO 제대로 설계
+    // console.log('debug 0:', something[0]);
+    // console.log('debug: ', something);
     
     if (ourChannelId == null) {
       throw console.log("DM 채널이 존재하지 않습니다.");
     }
+
+      // TODO : target_user 체크
     console.log(`ourChannelId: ${ourChannelId}`)
     const channelId = await this.channelMemberRepository
       .createQueryBuilder('channel_member')
@@ -90,12 +95,13 @@ export class ChatService {
       .where('"userIdx" = :my_user', { my_user: my_user })
       .andWhere('"channelIdx" = :ourChannelId', { ourChannelId: ourChannelId })
       .getRawOne();
+    console.log("debug: ", channelId);
     
     // if (channelId == null) {
     //   throw console.log("채널이 존재하지 않습니다.");
     // }
-    console.log('debug: ', channelId);
-    console.log('debug: ', channelId.channel_member_channelIdx);
+    console.log(`channelId: ${channelId}`);
+    console.log('debug: ', channelId.channel.idx);
     // const id = channelId;
     // const query = `
     //   SELECT *
@@ -113,8 +119,14 @@ export class ChatService {
     //   throw new NotFoundException(`ChannelMember with userIdx ${my_user} and ${target_user} does not exist`);
     // }
     // const chIdx: Promise<ChannelMember[]> = pair_channelMembers;
+
+    // channelId.channel_member_channelIdx
+    const foundChannelIdx = channelId.channel.idx;
+    console.log('debug: ', foundChannelIdx);
     
-    return channelId.channel_member_channelIdx;
+    const msgs: Message[] = await this.messageRepository.find({ where: { channelIdx: foundChannelIdx } });
+    const findDMChannelResDto: FindDMChannelResDto = new FindDMChannelResDto(foundChannelIdx, msgs);
+    return findDMChannelResDto;
   };
 
   /*
