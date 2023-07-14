@@ -4,7 +4,7 @@ import { BaseEntity, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColum
 @Entity()
 export class Channel extends BaseEntity{
     @PrimaryGeneratedColumn()
-    id: number;
+    idx: number;
 
     @Column()
     channelName: string;
@@ -24,7 +24,7 @@ export class Channel extends BaseEntity{
 @Entity()
 export class ChannelMember extends BaseEntity{
     @PrimaryGeneratedColumn()
-    id: number;
+    idx: number;
 
     @Column()
     userIdx: number;
@@ -42,7 +42,7 @@ export class Message extends BaseEntity{
     idx: number;
     
     @Column()
-    channelId: number;
+    channelIdx: number;
 
     @Column()
     sender: number;

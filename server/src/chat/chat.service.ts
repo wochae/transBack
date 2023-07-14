@@ -81,11 +81,6 @@ export class ChatService {
           FROM "channel_member"
           WHERE "userIdx" = $2 AND "channelType" = 0
       ))
-      OR ("userIdx" = $2 AND "channelId" IN (
-          SELECT "channelId"
-          FROM "channel_member"
-          WHERE "userIdx" = $1 AND "channelType" = 0
-      ))
     `;
     const parameters = [my_user, target_user];
     
