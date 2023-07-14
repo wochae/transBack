@@ -89,7 +89,14 @@ export class ChatService {
     `;
     const parameters = [my_user, target_user];
     
-    return this.channelMemberRepository.query(query, parameters);
+    const pair_channelMembers: Promise<ChannelMember[]> = await this.channelMemberRepository.query(query, parameters);
+    if ((await pair_channelMembers).length != 2) {
+      throw new NotFoundException(`ChannelMember with userIdx ${my_user} and ${target_user} does not exist`);
+    }
+    const chIdx: Promise<ChannelMember[]> = pair_channelMembers;
+    
+    return chIdx[0].channelId;
+
   };
 
   /*
