@@ -75,70 +75,31 @@ export class ChatService {
     // 채널 참여자 테이블을 찾는다.(idx는 채널 참여자 테이블의 userIdx)
     // 시나리오 유저 1이 유저 2와 대화 존재 여부를 찾는다.
     // IN 이라는 SQL 문법을 사용하는게 더 직관적이다.
-    const myDMChannelsSubQuery = await this.channelMemberRepository
-      .createQueryBuilder('cm_sub')
-      .select('"cm_sub"."channelIdx"')
-      .where('"cm_sub"."channelType" = 0')
-      .andWhere('"cm_sub"."userIdx" = :my_user')
-      .setParameter('my_user', my_user)
-      .getMany();
-      console.log('<DEBUG> : myDMChannelsSubQuery debug: ', myDMChannelsSubQuery);
-      // 이러면 채널 멤버 중에 내가 속한 채널들의 idx를 가져온다.
-      
+    
       // TODO : my_user 를 먼저 체크 (validation start with my_user)
       // TODO : channelIds 중 map을 사용한 반복문 
       // TODO : channelIdx, 그에 속한 Message객체들 반환, or 없다, 그래서 프론트는 방 생성으로 넘어가는 요청;
       // TODO : DTO 제대로 설계
     
-    // console.log('debug 0:', something[0]);
-    // console.log('debug: ', something);
-    // console.log(' ourChannelId debug: ', ourChannel); // 이렇게 하면 objdct가 아닌 {} 로 나온다.
-    // if (ourChannel == null) {
-    //   throw console.log("DM 채널이 존재하지 않습니다.");
-    // }
-    // console.log(`ourChannelId: ${ourChannel}`)
       // TODO : target_user 체크
-    const queryBuidler = await this.channelMemberRepository.createQueryBuilder('channel_member')
-      .select()
-      .where('"channel_member"."channelIdx" = :target_user', { target_user: target_user })
-      .andWhere('"channel_member"."channelIdx" IN (' + myDMChannelsSubQuery + ')')
-    console.log('<DEBUG> : queryBuilder GetOne debug: ', queryBuidler);
-
-    // const channelId = await this.channelMemberRepository
-    //   .createQueryBuilder('channel_member')
-    //   .select()
-    //   .where('"channelIdx" = :ourChannel', { ourChannel: ourChannel })
-    //   .andWhere('"userIdx" = :my_user', { my_user: my_user })
-    //   .getRawOne();
-    // console.log("debug: ", channelId);
     
-    // if (channelId == null) {
-    //   throw console.log("채널이 존재하지 않습니다.");
-    // }
-    // console.log(`channelId: ${channelId}`);
-    // console.log('channelIddebug: ', channelId.channel.idx);
-    // const id = channelId;
-    // const query = `
-    //   SELECT *
-    //   FROM channel_member
-    //   WHERE ("userIdx" = $1 AND "channelId" IN (
-    //       SELECT "channelId"
-    //       FROM "channel_member"
-    //       WHERE "userIdx" = $2 AND "channelType" = 0
-    //   ))
-    // `;
-    // const parameters = [my_user, target_user];
-    
-    // const pair_channelMembers: Promise<ChannelMember[]> = await this.channelMemberRepository.query(query, parameters);
-    // if ((await pair_channelMembers).length != 2) {
-    //   throw new NotFoundException(`ChannelMember with userIdx ${my_user} and ${target_user} does not exist`);
-    // }
-    // const chIdx: Promise<ChannelMember[]> = pair_channelMembers;
+    const myDMChannelsSubQuery = this.channelMemberRepository.createQueryBuilder('channel_member');
+    myDMChannelsSubQuery
+      .select('channel_member."channelIdx"')
+      .where('"channel_member"."channelType" = 0')
+      .andWhere('"channel_member"."userIdx" = ' + my_user)
+      
+      // 이러면 채널 멤버 중에 내가 속한 채널들의 idx를 가져온다.
 
-    // channelId.channel_member_channelIdx
-    // const foundChannelIdx = channelId.channel.idx;
-    // console.log('foundChannelIdx check debug: ', foundChannelIdx);
-    const foundchIdx = (await queryBuidler.getOne()).channel.idx
+    const myDMChannelsSubQueryStr = myDMChannelsSubQuery.getQuery();
+    const queryBuidler = this.channelMemberRepository.createQueryBuilder('channel_member')
+      .select('channel_member.channelIdx')
+      .where(`channel_member.userIdx = ${target_user} AND channel_member.channelIdx IN (${myDMChannelsSubQueryStr})`);
+    
+      
+    const foundchIdx = ((await queryBuidler.getRawOne()).channelIdx);
+
+    console.log("DEBUG : check for - " + foundchIdx);
     const msgs: Message[] = await this.messageRepository.find({ where: { channelIdx: foundchIdx } });
     const findDMChannelResDto: FindDMChannelResDto = new FindDMChannelResDto(foundchIdx, msgs);
     return findDMChannelResDto;
