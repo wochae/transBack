@@ -1,4 +1,5 @@
-import { BaseEntity, Column, Entity, PrimaryColumn } from "typeorm";
+import { ChannelMember } from "src/chat/chat.entity";
+import { BaseEntity, Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
 
 @Entity()
 export class User extends BaseEntity {
@@ -12,6 +13,11 @@ export class User extends BaseEntity {
     @Column({ unique: true})
     nickname: string;
 
+    @OneToMany(
+        () => ChannelMember,
+        (channelMember) => channelMember.user,
+    )
+    channelMembers: ChannelMember[];
     
 
 }

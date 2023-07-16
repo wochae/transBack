@@ -34,7 +34,7 @@ export class ChatService {
     // 이거 용도, 한 채널을 생성한 뒤에 그 채널에 대한 두 가지의 채널멤버 튜플을 넣어야해서.
     const channelMaxId = await this.channelRepository
       .createQueryBuilder("channel")
-      .select('MAX(channel.id)', 'id')
+      .select('MAX(channel.idx)', 'idx')
       .getRawOne();
     let idx = 1;
     if (channelMaxId != null) idx = channelMaxId + 1;
