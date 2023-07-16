@@ -9,7 +9,7 @@ export class UsersService {
     @Inject('USERS_REPOSITORY')
     private userRepository: Repository<User>,
   ) {}
-  async findUserIdxByNickname(nickname: string){
+  async findUserIdxByNickname(nickname: string): Promise<number>{
     const user = await this.userRepository.findOne({
       where: [{nickname : nickname}],
     });

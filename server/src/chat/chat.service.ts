@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Repository, getConnection } from 'typeorm';
 import { Channel, ChannelMember, Message } from './chat.entity';
-import { CreateChatDMDto, CreateChatDto, FindDMChannelDto, FindDMChannelResDto } from './dto/chats.dto';
+import { CreateChatDMReqDto, CreateChatDto, FindDMChannelDto, FindDMChannelResDto } from './dto/chats.dto';
 import { User } from 'src/users/users.entity';
 
 @Injectable()
@@ -18,8 +18,8 @@ export class ChatService {
   // async createChannel(createChannelDto: CreateChatDto){}
 
   // situation 1. DM 채팅방이 없을 때 행위자 user1 channelType 0 is DM
-  async createDMChannel(createChatDMDto: CreateChatDMDto, target_user_idx: number) {
-    const { userIdx, channelType, message } = createChatDMDto;
+  async createDMChannel(createChatDMReqDto: CreateChatDMReqDto, target_user_idx: number) {
+    const { userIdx, channelType, message } = createChatDMReqDto;
     const socketClinetUserId = 0; // 당소. 나중에 client로부터 받아올 예정
     // let targetUser: number; // 귀소, 일단은 지금 유저 정보가 없어서 식별자 number 값으로 대체
     let targetUser = target_user_idx;
@@ -141,10 +141,10 @@ export class ChatService {
   //   return this.boardRepository.createBoard(createBoardDto, user);
   // }
 
-  // createChannelandInitDM(createChatDMDto:CreateChatDMDto, target_nickname: string, content: string) {
+  // createChannelandInitDM(createChatDMReqDto:CreateChatDMReqDto, target_nickname: string, content: string) {
   //   // 임의 ID 정수 값 넣기
   //   // channelRepository.find({ where: { userNick = target_nickname } })
-  //   const { channelIdx, userIdx, channelType } = createChatDMDto;
+  //   const { channelIdx, userIdx, channelType } = createChatDMReqDto;
   //   // const { channelName, owner, password } = anythingDto(target_nickname, owner, password);
   //   this.channelRepository.createChannel({ // 주입의 문제 있음.
   //       channelName: target_nickname,

@@ -11,14 +11,14 @@ export class ChatController {
   ) {}
 
   @Post('dm/:target_nickname')
-  createChannelandInitDM(@Param('target_nickname') target_nickname: string, @Body('content') content: string) {
-
-    // const nick = createChatDMDto.target_nickname;
-    // const user:User = this.userService.findOne(nick);
-    // user.id
-    const createChatDMDto = new CreateChatDMDto(0, 0, content);
-
-    return this.chatService.createDMChannel(createChatDMDto, 1); // 1은 대상 id임
+  async createChannelandInitDM(@Param('target_nickname') target_nickname: string, @Body('content') content: string) {
+    const my_user = "jujeon";
+    const my_userIdx = await this.usersService.findUserIdxByNickname(my_user);
+    const target_userIdx = await this.usersService.findUserIdxByNickname(target_nickname);
+    //const createChatDMDto = new CreateChatDMDto(userIdx, 0, content); async await 문제 - 당장은 async controller로 해결. 
+    const createChatDMDto = new CreateChatDMDto(target_userIdx, 0, content);
+     
+    return this.chatService.createDMChannel(createChatDMDto, my_userIdx); // 1은 대상 id임
   }
 
   @Get('dm/:target_nickname')

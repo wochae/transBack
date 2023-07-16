@@ -1,7 +1,7 @@
 import { IsNotEmpty } from 'class-validator';
 import { Message } from '../chat.entity';
 
-export class CreateChatDMDto{
+export class CreateChatDMReqDto{
     constructor(userIdx: number, channelType: number, message: string) {
         this.userIdx = userIdx;
         this.channelType = channelType;
@@ -22,6 +22,16 @@ export class CreateChatDMDto{
 
     @IsNotEmpty()
     message: string;
+}
+
+export class CreateChatDMResDto {
+    constructor(channelIdx: number, messages: Message[]) {
+        this.channelIdx = channelIdx;
+        this.messages = messages;
+    }
+
+    channelIdx: number;
+    messages: Message[];
 }
 
 export class CreateChatDto{
