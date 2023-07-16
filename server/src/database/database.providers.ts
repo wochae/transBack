@@ -9,7 +9,7 @@ export const databaseProviders = [
           port: parseInt(process.env.DB_PORT),
           username: process.env.DB_USERNAME,
           password: process.env.DB_PASSWORD,
-          database: process.env.DB_DATABASE,
+          database: 'pingpong',
           entities: [__dirname + '/../**/*.entity{.ts,.js}'],
           // NOTE: synchronize는 개발용으로만 사용하고, 배포시에는 false 로 설정해야 함 true는 초기화
           synchronize: true,
