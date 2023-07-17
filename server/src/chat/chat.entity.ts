@@ -1,3 +1,4 @@
+import { User } from "src/users/users.entity";
 import { BaseEntity, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 
@@ -27,13 +28,13 @@ export class ChannelMember extends BaseEntity{
     idx: number;
 
     @Column()
-    userIdx: number;
-
-    @Column()
     channelType: number;
 
     @ManyToOne(() => Channel, (channel) => channel.channelMembers)
     channel: Channel;
+
+    @ManyToOne(() => User, (user) => user.channelMembers)
+    user: User;
 }
 
 @Entity()
