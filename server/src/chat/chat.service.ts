@@ -20,17 +20,20 @@ export class ChatService {
   // situation 1. DM 채팅방이 없을 때 행위자 user1 channelType 0 is DM
   
   async createDMChannel(createChatDMDto: CreateChatDMDto, my_userIdx: number) {
-    const { userIdx, channelType, message } = createChatDMDto;
+    const { userIdx, channelType, message } = createChatDMDto; // channelType 0 이 의미가 있나 싶더라고.
     let targetUser = userIdx;
-    const channelMember = await this.channelMemberRepository.findOne({ 
-      where: { userIdx: userIdx, channelType: channelType }
-    });
-    
-    if (channelMember) { // 존재하면 안 돼서 에러를 반환.
-      throw new NotFoundException(`ChannelMember with userIdx ${userIdx} already exists`);
-    }
+
+    // 주석한 이유 : 지금 대상과 했는지 안 했는지는 GET 구현에서 조건절을 통해서만 꺼내올 수 있음
+
+    // const channelMember = await this.channelMemberRepository.findOne({ 
+    //   where: { userIdx: , channelType: channelType }
+    // });
+    // if (channelMember) { // 존재하면 안 돼서 에러를 반환.
+    //   throw new NotFoundException(`ChannelMember with userIdx ${userIdx} already exists`);
+    // }
     // 채널 생성 먼저
     // 이거 용도, 한 채널을 생성한 뒤에 그 채널에 대한 두 가지의 채널멤버 튜플을 넣어야해서.
+    
     const channelMaxId:number = await this.channelRepository
       .createQueryBuilder("channel")
       .select('MAX(channel.idx)', 'idx')
