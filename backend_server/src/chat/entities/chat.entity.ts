@@ -43,7 +43,7 @@ export class ChannelMember extends BaseEntity {
 }
 
 @Entity()
-export class Message extends BaseEntity {
+export class Messages extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 
@@ -58,27 +58,4 @@ export class Message extends BaseEntity {
 
   @Column()
   msgDate: Date;
-
-  // date 타입 컬럼은 나중에 넣기
 }
-
-// joinedChannel, channel, message
-/*
-@Entity()
-export class Board extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  title: string;
-
-  @Column()
-  description: string;
-
-  @Column()
-  status: BoardStatus;
-
-  @ManyToOne((type) => User, (user) => user.boards, { eager: false })
-  user: User;
-}
-*/
