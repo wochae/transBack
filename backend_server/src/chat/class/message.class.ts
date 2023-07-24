@@ -1,8 +1,11 @@
+// FIXME: get, set 을 여기에 두는게 좋을까?
+// Channel에 두는게 좋을까 ?
 export class Message {
   /******************************* 멤버 변수 *******************************/
   private _channelIdx: number;
   private _sender: number;
   private _message: string;
+  private _msgDate: Date;
 
   /******************************* 메서드 *******************************/
   constructor(channelIdx: number, sender: number, message: string) {
@@ -18,8 +21,8 @@ export class Message {
   get getSender(): number {
     return this._sender;
   }
-  get getMessage(): string {
-    return this._message;
+  get getMsgDate(): Date {
+    return this._msgDate;
   }
 
   // setter
@@ -36,7 +39,13 @@ export class Message {
   set setSender(sender: number) {
     this._sender = sender;
   }
-  set setMessage(message: string) {
-    this._message = message;
+  set setMsgDate(msgDate: Date) {
+    this._msgDate = msgDate;
   }
+  // get getMessage(): string {
+  //   return this._message;
+  // }
+  // set setMessage(message: string) {
+  //   this._message = message;
+  // }
 }
