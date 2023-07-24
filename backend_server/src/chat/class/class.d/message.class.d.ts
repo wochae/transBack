@@ -1,12 +1,13 @@
 // FIXME: get, set 을 여기에 두는게 좋을까? Chat에 두는게 좋을까?
 declare class Message {
   /******************************* 멤버 변수 *******************************/
-  private _channelIdx: number;
-  private _sender: number;
-  private _message: string;
-  private _msgDate: Date;
+  private channelIdx: number;
+  private sender: number;
+  private message: string;
+  private msgDate: Date;
 
   /******************************* 메서드 *******************************/
+  // TODO: getMessage, setMessage 필요할까?
   // getter
   get getChannelInfo(): any; // 필요할까? 필요하면 DTO?
   get getChannelIdx(): number;

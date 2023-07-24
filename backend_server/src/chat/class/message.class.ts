@@ -2,27 +2,27 @@
 // Channel에 두는게 좋을까 ?
 export class Message {
   /******************************* 멤버 변수 *******************************/
-  private _channelIdx: number;
-  private _sender: number;
-  private _message: string;
-  private _msgDate: Date;
+  private channelIdx: number;
+  private sender: number;
+  private message: string;
+  private msgDate: Date;
 
   /******************************* 메서드 *******************************/
   constructor(channelIdx: number, sender: number, message: string) {
-    this._channelIdx = channelIdx;
-    this._sender = sender;
-    this._message = message;
+    this.channelIdx = channelIdx;
+    this.sender = sender;
+    this.message = message;
   }
 
   // getter
   get getChannelIdx(): number {
-    return this._channelIdx;
+    return this.channelIdx;
   }
   get getSender(): number {
-    return this._sender;
+    return this.sender;
   }
   get getMsgDate(): Date {
-    return this._msgDate;
+    return this.msgDate;
   }
 
   // setter
@@ -34,18 +34,18 @@ export class Message {
     // this.setSender = sender;
   }
   set setChannelIdx(channelIdx: number) {
-    this._channelIdx = channelIdx;
+    this.channelIdx = channelIdx;
   }
   set setSender(sender: number) {
-    this._sender = sender;
+    this.sender = sender;
   }
   set setMsgDate(msgDate: Date) {
-    this._msgDate = msgDate;
+    this.msgDate = msgDate;
   }
   // get getMessage(): string {
-  //   return this._message;
+  //   return this.message;
   // }
   // set setMessage(message: string) {
-  //   this._message = message;
+  //   this.message = message;
   // }
 }
