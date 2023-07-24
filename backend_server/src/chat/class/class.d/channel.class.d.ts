@@ -1,4 +1,4 @@
-import { Message } from './message.class';
+import { Message } from '../message.class';
 
 // FIXME: private 에 _ 붙이는 거 어떻게 생각하는지..?
 // FIXME: any type 을 적절하게 수정해야함
