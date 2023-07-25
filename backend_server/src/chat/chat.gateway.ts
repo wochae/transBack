@@ -14,14 +14,19 @@ import { CreateChatDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
 import { Socket, Server } from 'socket.io';
 
-@WebSocketGateway({ namespace: 'chat' })
+@WebSocketGateway({
+  namespace: 'chat',
+  cors: {
+    origin: ['http://localhost:3000'],
+  },
+})
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   constructor(private readonly chatService: ChatService) {}
   private logger: Logger = new Logger('ChatGateway');
 
-  /***************************** 기본적인 것  *****************************/
+  /***************************** DEFAULT *****************************/
   @WebSocketServer()
   server: Server;
 
@@ -43,8 +48,9 @@ export class ChatGateway
       `💬 Client { NickName } disconnected _ 일단 소켓 ID 출력 ${client.id}`,
     );
   }
-  /***************************** 기본적인 것  *****************************/
+  /***************************** SOCKET API  *****************************/
 
+  // MAIN_PROFILE
   @SubscribeMessage('user_profile')
   async handleGetProfile(
     @ConnectedSocket() client: Socket,
@@ -54,6 +60,7 @@ export class ChatGateway
     // client.emit('target_profile', targetProfile);
   }
 
+  // MAIN_CHAT_0
   @SubscribeMessage('check_dm')
   async handleCheckDM(
     @ConnectedSocket() client: Socket,
@@ -65,4 +72,7 @@ export class ChatGateway
     // client.emit('found_dm', { Message[], member[], channelIdx });
     // }
   }
+
+  // MAIN_CHAT_2
+
 }
