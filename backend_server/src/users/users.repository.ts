@@ -1,13 +1,10 @@
 import { Repository } from 'typeorm'; // EntityRepository 가 deprecated 되어 직접 호출함
-import {
-  UserObject,
-  Histories,
-  HistoriesType,
-  ResultType,
-} from './entities/users.entity';
+import { UserObject, Histories, HistoriesType } from './entities/users.entity';
 import { CreateUsersDto } from './dto/create-users.dto';
 import { CreateHistoryDto } from './dto/create-history.dto';
+import { CustomRepository } from 'src/typeorm-ex.decorator';
 
+@CustomRepository(UserObject)
 export class UserObjectRepository extends Repository<UserObject> {
   async createUser(createUsersDto: CreateUsersDto): Promise<UserObject> {
     const { intra } = createUsersDto;
@@ -28,6 +25,7 @@ export class UserObjectRepository extends Repository<UserObject> {
   }
 }
 
+@CustomRepository(Histories)
 export class HistoriesRepository extends Repository<Histories> {
   async createHistories(
     createHistoryDto: CreateHistoryDto,
