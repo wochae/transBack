@@ -28,7 +28,8 @@ export class Message {
   // setter
   // set setChannelInfo(channelIdx: number, sender: number, message: string) {
   // FIXME: Dto 만들기
-  set setChannelInfo(chatInfo: chatDTO) {
+  // set setChannelInfo(chatInfo: chatDTO) {
+  set setChannelInfo(chatInfo: any) {
     // this.setChannelIdx(chatInfo.channelIdx);
     // this.setChannelIdx(chatInfo.channelIdx);
     // this.setSender = sender;
