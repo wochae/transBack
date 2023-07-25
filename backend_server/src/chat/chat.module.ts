@@ -10,17 +10,5 @@ import { Channel } from './class/channel.class';
 })
 export class ChatModule {
   private logger: Logger = new Logger('ChatModule');
-  constructor(private chat: Chat) {
-    // TEST1: 전역 테스트
-    // const jaekim = new Channel();
-    // jaekim.setChannelIdx = 1;
-    // console.log('jaekim ChannelIdx: ', jaekim.getChannelIdx);
-    // this.chat.setPrivateChannels = jaekim;
-    // const testIdx = this.chat.getPrivateChannels[0];
-    // console.log('testIdx: ', testIdx);
-    // this.logger.log('[ 💬 Object ] Initialized!');
-    // TODO: db 에서 데이터를 가져와서 private privateChannels 를 채워야함.
-    // console.log('private: ', this.chat.getPrivateChannels);
-    // console.log('protected: ', this.chat.getProtectedChannels);
-  }
+  constructor(private chat: Chat) {}
 }

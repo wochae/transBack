@@ -83,11 +83,6 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ) {
-    // TEST1: 전역 테스트
-    // console.log(
-    //   `jaekim channelIdx : ${this.chat.getPrivateChannels[0].getChannelIdx}`,
-    // );
-
     const jsonData = JSON.parse(data);
     // TODO: DTO 로 data 인자 유효성 검사
     // const chatDTO = new ChatDTO();
@@ -98,12 +93,6 @@ export class ChatGateway
     this.logger.log(
       `[ 💬 Socket API ] 'chat_enter' is called by ${jsonData.nickname}`,
     );
-    jsonData.nickname = new Channel();
-    jsonData.nickname.setChannelIdx = 1;
-    console.log('jaekim ChannelIdx: ', jsonData.nickname.getChannelIdx);
-    this.chat.setPrivateChannels = jsonData.nickname;
-    console.log('Push Success');
-    console.log('length: ', this.chat.getPrivateChannels.length);
     // TODO: 비밀번호 확인부 모듈로 나누기?
     // - 비밀번호 확인
     // roomid 로 chat 객체 안에 있는 Channel 을 찾는다.
@@ -117,3 +106,11 @@ export class ChatGateway
     // return this.chatService.enterPrivateAndPublicRoom(socket, ocketData);
   }
 }
+
+// length 테스트할 때 썼던 코드
+// jsonData.nickname = new Channel();
+// jsonData.nickname.setChannelIdx = 1;
+// console.log('jaekim ChannelIdx: ', jsonData.nickname.getChannelIdx);
+// this.chat.setPrivateChannels = jsonData.nickname;
+// console.log('Push Success');
+// console.log('length: ', this.chat.getPrivateChannels.length);
