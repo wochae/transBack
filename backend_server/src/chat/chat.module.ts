@@ -7,7 +7,7 @@ import { Message } from './class/message.class';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함
-  providers: [ChatGateway, ChatService, Chat], // FIXME: Channel 은 어차피 Chat 으로 접근할거니까 필요 없겠지?
+  providers: [ChatGateway, ChatService, Chat],
 })
 export class ChatModule {
   private logger: Logger = new Logger('ChatModule');
@@ -22,12 +22,14 @@ export class ChatModule {
     this.logger.log('[ 💬 TEST ] Test Chat Object Init!');
     channel1.setMode = 'public';
     channel1.setOwner = null;
-    // channel1.setPassword = null;
-    channel1.setPassword = '1234';
     channel1.setMessage = testMsg;
     channel1.setMember = ['jaekim'];
-    this.chat.setProtectedChannels = channel1;
+    // Public Room TEST
+    // channel1.setPassword = null;
+    // Protected Room TEST
+    channel1.setPassword = '1234';
 
+    this.chat.setProtectedChannels = channel1;
     console.log(this.chat.getProtectedChannels[0]);
   }
 }
