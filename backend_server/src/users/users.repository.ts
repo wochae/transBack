@@ -10,7 +10,7 @@ export class UserObjectRepository extends Repository<UserObject> {
     const { intra } = createUsersDto;
 
     const user = this.create({
-      intra,
+      intra: intra,
       nickname: intra,
       rankpoint: 0,
       isOnline: true,
@@ -21,7 +21,7 @@ export class UserObjectRepository extends Repository<UserObject> {
 
     await this.save(user);
 
-    return user.nickname;
+    return user.intra;
   }
 }
 

@@ -31,10 +31,11 @@ export class Chat {
   // method
   // FIXME: 여기서는 protected 와 private 을 한번에 처리. channelIdx 으로 삭제하기 때문에.
   removeChannel(channelIdx: number): void {
+    // splice 는 원본을 수정한다. 실패 시 빈배열을 반환한다고 한다.
+    // TODO: 실패 시 빈배열 반환이 어떤 걸 의미하는지 찾아보기.
     const protectedChannelIdx = this.protectedChannels.findIndex(
       (channel) => channel.getChannelIdx === channelIdx,
     );
-    // splice 는 원본을 수정한다. 실패 시 빈배열을 반환한다고 한다. 따로 에러처리가 필요없다고 생각했다.
     if (protectedChannelIdx !== -1) {
       this.protectedChannels.splice(protectedChannelIdx, 1);
     }

@@ -8,8 +8,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity()
-export class ChannelMember extends BaseEntity {
+@Entity('direct_message_members')
+export class DirectMessageMembers extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 
@@ -19,12 +19,12 @@ export class ChannelMember extends BaseEntity {
   @Column()
   userIdx2: number;
 
-  @OneToMany(() => Messages, (message) => message.channelMember)
-  messages: Messages[];
+  @OneToMany(() => DirectMessages, (message) => message.channelMember)
+  messages: DirectMessages[];
 }
 
-@Entity()
-export class Messages extends BaseEntity {
+@Entity('direct_messages')
+export class DirectMessages extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 
@@ -40,6 +40,9 @@ export class Messages extends BaseEntity {
   @Column()
   msgDate: Date;
 
-  @ManyToOne(() => ChannelMember, (channelMember) => channelMember.messages)
-  channelMember: ChannelMember;
+  @ManyToOne(
+    () => DirectMessageMembers,
+    (channelMember) => channelMember.messages,
+  )
+  channelMember: DirectMessageMembers;
 }

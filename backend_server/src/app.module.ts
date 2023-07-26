@@ -3,11 +3,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 // import { ChatModule } from './chat/chat.module';
 import { UsersModule } from './users/users.module';
-// import { GameModule } from './game/game.module';
+import { ChatModule } from './chat/chat.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeORMConfig } from './configs/typeorm.config';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(typeORMConfig), UsersModule],
+  imports: [TypeOrmModule.forRoot(typeORMConfig), ChatModule, UsersModule],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
