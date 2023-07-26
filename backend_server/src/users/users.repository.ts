@@ -15,8 +15,8 @@ export class UserObjectRepository extends Repository<UserObject> {
       rankpoint: 0,
       isOnline: true,
       available: true,
-      win: 0,
-      lose: 0,
+      win: true,
+      lose: true,
     });
 
     await this.save(user);
