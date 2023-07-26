@@ -22,6 +22,7 @@ export class ChatModule {
     this.logger.log('[ 💬 TEST ] Test Chat Object Init!');
     channel1.setMode = 'public';
     channel1.setOwner = null;
+    // channel1.setPassword = null;
     channel1.setPassword = '1234';
     channel1.setMessage = testMsg;
     channel1.setMember = ['jaekim'];

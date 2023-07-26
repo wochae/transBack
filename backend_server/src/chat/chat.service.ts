@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
 import { Socket } from 'socket.io';
+import { error } from 'console';
 
 @Injectable()
 export class ChatService {
@@ -12,6 +13,14 @@ export class ChatService {
   // TODO: { member[], channelIdx } 이 두개를 반환할건데... 어떻게 해야할까?
   // TODO: 에러처리 catch ~ throw
   enterChatRoom(client: Socket, clientData: any, channel: Channel): Channel {
+    // // 2. 비밀번호 확인
+    // if (channel != null) {
+    //   if (channel.getPassword !== clientData.password) {
+    //     client.emit('wrong_password');
+    //     this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
+    //     return new error('wrong_password');
+    //   }
+    // }
     this.logger.log(
       `[ 💬 Socket API ] enterChatRomm _ roomId: ${channel.getRoomId}`,
     );

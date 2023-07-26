@@ -14,6 +14,7 @@ import { ChatService } from './chat.service';
 import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
+import { error } from 'console';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -92,18 +93,27 @@ export class ChatGateway
     this.logger.log(
       `[ 💬 Socket API ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
     );
+    // TODO: 이미 들어가있는 방인지 확인하는 부분 추가하기
     // TODO: 비밀번호 확인부 모듈로 나누기?
     // - 비밀번호 확인 (존재하면 비밀번호 확인, 존재하지 않으면 그냥 입장)
     // 1. roomid 로 chat 객체 안에 있는 Channel 을 찾는다.
-    const protectedChannel: Channel =
+    let protectedChannel: Channel =
       this.chatService.findProtectedChannelByRoomId(jsonData.roomId);
-    console.log('protectedChannel : ', protectedChannel);
-    // 2. 비밀번호 확인
-    if (protectedChannel != null) {
-      if (protectedChannel.getPassword !== jsonData.password) {
-        client.emit('wrong_password');
-        this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
-        return null;
+    // console.log('protectedChannel : ', protectedChannel);
+    if (protectedChannel == null) {
+      this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
+      protectedChannel = this.chatService.findPublicChannelByRoomId(
+        jsonData.roomId,
+      );
+    } else {
+      this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
+      // 2. 비밀번호 확인
+      if (protectedChannel != null) {
+        if (protectedChannel.getPassword !== jsonData.password) {
+          client.emit('wrong_password');
+          this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
+          return new error('wrong_password');
+        }
       }
     }
     return this.chatService.enterChatRoom(client, jsonData, protectedChannel);
