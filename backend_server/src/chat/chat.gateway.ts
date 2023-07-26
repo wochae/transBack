@@ -11,8 +11,6 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { ChatService } from './chat.service';
-import { CreateChatDto } from './dto/create-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
 import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
@@ -79,31 +77,36 @@ export class ChatGateway
 
   // API: MAIN_CHAT_2
   @SubscribeMessage('chat_enter')
-  async enterPrivateAndPublicRoom(
+  async enterProtectedAndPublicRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
+    // 반환형 선언하기
   ) {
-    const jsonData = JSON.parse(data);
     // TODO: DTO 로 data 인자 유효성 검사
     // const chatDTO = new ChatDTO();
     // { nickname, roomId, password } = chatDTO;
+    const jsonData = JSON.parse(data);
     console.log('nickname : ', jsonData.nickname);
     console.log('roomId : ', jsonData.roomId);
     console.log('password :', jsonData.password);
     this.logger.log(
-      `[ 💬 Socket API ] 'chat_enter' is called by ${jsonData.nickname}`,
+      `[ 💬 Socket API ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
     );
     // TODO: 비밀번호 확인부 모듈로 나누기?
-    // - 비밀번호 확인
-    // roomid 로 chat 객체 안에 있는 Channel 을 찾는다.
-    // const channel: Channel = this.chatService.findChannelByRoomId(
-    //   jsonData.roomId,
-    // );
-    // if (channel.getPassword !== jsonData.password) {
-    //   client.emit('wrong_password');
-    //   return;
-    // }
-    // return this.chatService.enterPrivateAndPublicRoom(socket, ocketData);
+    // - 비밀번호 확인 (존재하면 비밀번호 확인, 존재하지 않으면 그냥 입장)
+    // 1. roomid 로 chat 객체 안에 있는 Channel 을 찾는다.
+    const protectedChannel: Channel =
+      this.chatService.findProtectedChannelByRoomId(jsonData.roomId);
+    console.log('protectedChannel : ', protectedChannel);
+    // 2. 비밀번호 확인
+    if (protectedChannel != null) {
+      if (protectedChannel.getPassword !== jsonData.password) {
+        client.emit('wrong_password');
+        this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
+        return null;
+      }
+    }
+    return this.chatService.enterChatRoom(client, jsonData, protectedChannel);
   }
 }
 
