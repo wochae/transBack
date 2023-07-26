@@ -6,7 +6,7 @@ export class Channel {
   /******************************* 멤버 변수 *******************************/
   private channelIdx: number;
   private roomId: number;
-  private member: any[] = []; //   private member: member[];
+  private member: any = []; //   private member: member[];
   private messages: Message[] = [];
   private mode: string; // TODO: enum 으로 수정
   private owner: any; //   private owner: member;

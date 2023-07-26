@@ -87,36 +87,33 @@ export class ChatGateway
     // const chatDTO = new ChatDTO();
     // { nickname, roomId, password } = chatDTO;
     const jsonData = JSON.parse(data);
-    console.log('nickname : ', jsonData.nickname);
-    console.log('roomId : ', jsonData.roomId);
-    console.log('password :', jsonData.password);
+
     this.logger.log(
-      `[ 💬 Socket API ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
+      `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
     );
-    // TODO: 이미 들어가있는 방인지 확인하는 부분 추가하기
+    if (this.chatService.checkAlreadyInRoom(jsonData)) {
+      console.log('Already in Room');
+      return 'Already in Room';
+    }
     // TODO: 비밀번호 확인부 모듈로 나누기?
-    // - 비밀번호 확인 (존재하면 비밀번호 확인, 존재하지 않으면 그냥 입장)
-    // 1. roomid 로 chat 객체 안에 있는 Channel 을 찾는다.
-    let protectedChannel: Channel =
-      this.chatService.findProtectedChannelByRoomId(jsonData.roomId);
-    // console.log('protectedChannel : ', protectedChannel);
-    if (protectedChannel == null) {
+    let channel: Channel = this.chatService.findProtectedChannelByRoomId(
+      jsonData.roomId,
+    );
+    if (channel == null) {
       this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
-      protectedChannel = this.chatService.findPublicChannelByRoomId(
-        jsonData.roomId,
-      );
+      channel = this.chatService.findPublicChannelByRoomId(jsonData.roomId);
     } else {
       this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
       // 2. 비밀번호 확인
-      if (protectedChannel != null) {
-        if (protectedChannel.getPassword !== jsonData.password) {
+      if (channel != null) {
+        if (channel.getPassword !== jsonData.password) {
           client.emit('wrong_password');
           this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
           return new error('wrong_password');
         }
       }
     }
-    return this.chatService.enterChatRoom(client, jsonData, protectedChannel);
+    return this.chatService.enterChatRoom(client, jsonData, channel);
   }
 }
 
