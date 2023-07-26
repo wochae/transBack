@@ -12,7 +12,7 @@ export class ChatService {
   /***************************** Find Channel *****************************/
   // TODO: { member[], channelIdx } 이 두개를 반환할건데... 어떻게 해야할까?
   // TODO: 에러처리 catch ~ throw
-  enterChatRoom(client: Socket, clientData: any, channel: Channel): Channel {
+  enterChatRoom(client: Socket, clientData: any, channel: Channel): any {
     // // 2. 비밀번호 확인
     // if (channel != null) {
     //   if (channel.getPassword !== clientData.password) {
@@ -28,10 +28,10 @@ export class ChatService {
     channel.setMember = clientData.nickname;
     // 인메모리에 넣는 곳이 필요함
     // 채널을 찾아야한다. 그리고 넣어야한다.
-    client.emit('enter_chat_room', {
-      member: channel.getMember,
-      channelIdx: channel.getChannelIdx,
-    });
+    // client.emit('enter_chat_room', {
+    //   member: channel.getMember,
+    //   channelIdx: channel.getChannelIdx,
+    // });
     // API: MAIN_CHAT_6.1
     client
       .to(`Room${channel.getRoomId.toString()}`)
@@ -39,7 +39,10 @@ export class ChatService {
     this.logger.log(
       `[ 💬 Socket API ] ${clientData.nickname} Success enterChatRomm _ roomId: ${channel.getRoomId}`,
     );
-    return;
+    return {
+      member: channel.getMember,
+      channelIdx: channel.getChannelIdx,
+    };
   }
 
   // TODO: 아래 세가지 함수로 하나로 합치는게 좋을까? 논의 필요
