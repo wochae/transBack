@@ -5,10 +5,11 @@ import { Chat } from './class/chat.class';
 import { Channel } from './class/channel.class';
 import { Message } from './class/message.class';
 import { Mode } from './entities/chat.entity';
+import { Test } from './datafortest/main_enter';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함
-  providers: [ChatGateway, ChatService, Chat],
+  providers: [ChatGateway, ChatService, Chat, Test],
 })
 export class ChatModule {
   private logger: Logger = new Logger('ChatModule');
