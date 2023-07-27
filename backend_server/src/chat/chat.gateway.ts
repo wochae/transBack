@@ -14,6 +14,8 @@ import { ChatService } from './chat.service';
 import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
+import { Mode } from './entities/chat.entity';
+import { Message } from './class/message.class';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -51,7 +53,7 @@ export class ChatGateway
   }
 
   /***************************** SOCKET API  *****************************/
-  // FIXME: DTO 로 Json.parse 대체하기
+  // FIXME: 매개변수 DTO 로 Json.parse 대체하기
   // API: MAIN_ENTER_0
   @SubscribeMessage('main_enter')
   enterMainPage(
@@ -59,6 +61,10 @@ export class ChatGateway
     @MessageBody() intra: string,
   ) {
     // API: MAIN_ENTER_1
+    // this.server.emit('BR_main_enter', {
+    //   nickname: 'jaekim',
+    //   isOnline: true,
+    // });
     this.server.emit('BR_main_enter', {
       nickname: 'jaekim',
       isOnline: true,
@@ -141,10 +147,29 @@ export class ChatGateway
 
   // API: MAIN_CHAT_4
   @SubscribeMessage('chat_send_msg')
-  sendChatMessage(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: string,
-  ) {
+  sendChatMessage(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
+    const jsonData = JSON.parse(data);
+    this.logger.log(
+      `[ 💬 Socket API CALL ] 'chat_send_msg' _ nickname: ${client.handshake.auth}`,
+    );
+    // // 채널 찾기
+    const channel = this.chatService.findChannelByRoomId(jsonData.roomId);
+
+    // // 메시지 저장 - 여기 부터는 service 로 옮기기
+    // if (channel.getMode == Mode.PRIVATE) {
+    //   // FIXME: client 소켓으로 sender 의 idx 를 찾아야한다.
+    //   const message = new Message(channel.getChannelIdx, 1, jsonData.message);
+    //   message.setMsgDate = new Date();
+    //   channel.setMessage = message;
+    //   this.chat.getPrivateChannels.push(channel);
+    //   // TODO: DB 에 저장해야함.
+    // } else {
+    //   const message = new Message(channel.getChannelIdx, 1, jsonData.message);
+    //   message.setMsgDate = new Date();
+    //   channel.setMessage = message;
+    //   this.chat.getProtectedChannels.push(channel);
+    // }
+    client.to(`Room${channel.getRoomId.toString()}`).emit('jsonData.message');
     // request data
     // {
     //   roomId,
