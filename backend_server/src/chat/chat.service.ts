@@ -16,10 +16,9 @@ export class ChatService {
     clientData: any,
     channel: Channel,
   ): any | Error {
-    // // 2. 비밀번호 확인
+    // // 비밀번호 확인
     if (channel.getPassword !== null) {
       if (channel.getPassword !== clientData.password) {
-        // client.emit('wrong_password');
         this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
         return new error('Please check your password');
       }
@@ -29,16 +28,10 @@ export class ChatService {
     );
     client.join(`Room${channel.getRoomId.toString()}`);
     channel.setMember = [clientData.nickname];
-    // 인메모리에 넣는 곳이 필요함
-    // 채널을 찾아야한다. 그리고 넣어야한다.
     // API: MAIN_CHAT_3
     client
       .to(`Room${channel.getRoomId.toString()}`)
       .emit('chat_enter_noti', clientData.nickname);
-    // client.emit('chat_enter', {
-    //   member: channel.getMember,
-    //   channelIdx: channel.getChannelIdx,
-    // });
     this.logger.log(
       `[ 💬 Socket API ] ${clientData.nickname} Success enterChatRomm _ roomId: ${channel.getRoomId}`,
     );

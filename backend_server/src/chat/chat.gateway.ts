@@ -117,11 +117,8 @@ export class ChatGateway
     @MessageBody() data: any,
     // 반환형 선언하기
   ) {
-    // TODO: DTO 로 data 인자 유효성 검사
-    // const chatDTO = new ChatDTO();
-    // { nickname, roomId, password } = chatDTO;
+    // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
     const jsonData = JSON.parse(data);
-
     this.logger.log(
       `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
     );
@@ -130,7 +127,6 @@ export class ChatGateway
       // FIXME: 이미 들어와있기 때문에 데이터 전송을 해야한다. ✅ 무한스크롤 이벤트 발생으로 해결 가능
       return 'Already in Room';
     }
-    // TODO: 비밀번호 확인부 모듈로 나누기?
     let channel: Channel = this.chatService.findProtectedChannelByRoomId(
       jsonData.roomId,
     );
