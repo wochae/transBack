@@ -8,6 +8,12 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+export enum Mode {
+  PRIVATE = 'private',
+  PUBLIC = 'public',
+  PROTECTED = 'protected',
+}
+
 @Entity('direct_message_members')
 export class DirectMessageMembers extends BaseEntity {
   @PrimaryGeneratedColumn()

@@ -1,3 +1,4 @@
+import { Mode } from '../entities/chat.entity';
 import { Message } from './message.class';
 
 // FIXME: any type 을 적절하게 수정해야함
@@ -8,7 +9,7 @@ export class Channel {
   private roomId: number;
   private member: any = []; //   private member: member[];
   private messages: Message[] = [];
-  private mode: string; // TODO: enum 으로 수정
+  private mode: Mode;
   private owner: any; //   private owner: member;
   private admin: any[] = []; //   private admin: member[];
   private password: string;
@@ -29,7 +30,7 @@ export class Channel {
     return this.messages;
   }
   get getMode(): string {
-    return this.mode; //   enum 으로 수정
+    return this.mode;
   }
   get getOwner(): any {
     return this.owner; //   owner: member;
@@ -54,8 +55,8 @@ export class Channel {
   set setMessage(message: Message) {
     this.messages.push(message);
   }
-  set setMode(mode: string) {
-    this.mode = mode; // TODO: enum 으로 수정
+  set setMode(mode: Mode) {
+    this.mode = mode;
   }
   set setOwner(owner: any) {
     this.owner = owner; // owner: member;
