@@ -14,6 +14,7 @@ import { ChatService } from './chat.service';
 import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
+import { UsersService } from 'src/users/users.service';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -24,7 +25,7 @@ import { Chat } from './class/chat.class';
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private readonly chatService: ChatService, private chat: Chat) {}
+  constructor(private readonly chatService: ChatService, private chat: Chat, private usersService: UsersService) {}
   private logger: Logger = new Logger('ChatGateway');
 
   /***************************** DEFAULT *****************************/
@@ -70,10 +71,10 @@ export class ChatGateway
   @SubscribeMessage('user_profile')
   async handleGetProfile(
     @ConnectedSocket() client: Socket,
-    @MessageBody() targetNickname: string,
-  ) {
-    // const targetProfile = await this.chatService.getProfile(targetNickname);
-    // client.emit('target_profile', targetProfile);
+    @MessageBody() targetNickname: string) {
+    const targetProfile = await this.usersService.getProfile(targetNickname);
+    client.emit('target_profile', targetProfile);
+    console.log(targetProfile);
   }
 
   // API: MAIN_CHAT_0
@@ -196,6 +197,44 @@ export class ChatGateway
     // roomId 방식
     // client.to().emit('', );
   }
+
+
+
+  // @SubscribeMessage('dm_start')
+  // async handleCheckDM(
+  //   @ConnectedSocket() client: Socket,
+  //   @MessageBody() targetNickname: string) {
+  //   if (!this.chatService.checkDM(targetNickname)) {
+  //     client.emit('not_found_dm'); // 여기서 찾을 수 없다는 메시지를 받으면 그 둘의 관련된 channel 페이지로 이동시킨다.
+  //   } else { const { Message[], member[], channelIdx } = await this.chatService.getDM(targetNickname);
+  //   to().emit('found_dm', { Message[], member[], channelIdx });
+  //   }
+  // }
+  
+  // @SubscribeMessage('createChat')
+  // create(@MessageBody() createChatDto: CreateChatDto) {
+  //   return this.chatService.create(createChatDto);
+  // }
+
+  // @SubscribeMessage('findAllChat')
+  // findAll() {
+  //   return this.chatService.findAll();
+  // }
+
+  // @SubscribeMessage('findOneChat')
+  // findOne(@MessageBody() id: number) {
+  //   return this.chatService.findOne(id);
+  // }
+
+  // @SubscribeMessage('updateChat')
+  // update(@MessageBody() updateChatDto: UpdateChatDto) {
+  //   return this.chatService.update(updateChatDto.id, updateChatDto);
+  // }
+
+  // @SubscribeMessage('removeChat')
+  // remove(@MessageBody() id: number) {
+  //   return this.chatService.remove(id);
+  // }
 
   // API: MAIN_CHAT_7
   @SubscribeMessage('chat_room_password')

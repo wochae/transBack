@@ -3,6 +3,8 @@ import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
 import { Socket } from 'socket.io';
 import { error } from 'console';
+import { chatGetProfileDto } from './dto/chat.dto';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ChatService {

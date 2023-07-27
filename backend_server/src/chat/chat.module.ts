@@ -5,10 +5,14 @@ import { Chat } from './class/chat.class';
 import { Channel } from './class/channel.class';
 import { Message } from './class/message.class';
 import { Mode } from './entities/chat.entity';
+import { UsersService } from 'src/users/users.service';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함
-  providers: [ChatGateway, ChatService, Chat],
+  imports: [UsersModule],
+  providers: [ChatGateway, ChatService, Chat, UsersService],
+
 })
 export class ChatModule {
   private logger: Logger = new Logger('ChatModule');
