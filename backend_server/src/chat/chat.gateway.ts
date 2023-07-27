@@ -16,6 +16,8 @@ import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
 import { Mode } from './entities/chat.entity';
 import { Message } from './class/message.class';
+import { response } from 'express';
+import { Test } from './datafortest/main_enter';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -26,7 +28,12 @@ import { Message } from './class/message.class';
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private readonly chatService: ChatService, private chat: Chat) {}
+  // FIXME: private test: Test 는 테스트용으로 만들었음. 지워야함.
+  constructor(
+    private readonly chatService: ChatService,
+    private chat: Chat,
+    private test: Test,
+  ) {}
   private logger: Logger = new Logger('ChatGateway');
 
   /***************************** DEFAULT *****************************/
@@ -56,17 +63,21 @@ export class ChatGateway
   // FIXME: 매개변수 DTO 로 Json.parse 대체하기
   // API: MAIN_ENTER_0
   @SubscribeMessage('main_enter')
-  enterMainPage(
+  async enterMainPage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() intra: string,
+    @MessageBody() data: any,
   ) {
+    const { intra } = data;
+    // FIXME: 친구 정보 db 에서 가져오는 것 + blockList, imgUri, myNickname 인메모리에 가져오는 것
+    // FIXME: 채널 데이터 db 에서 가져오는 것 + 인메모리에 가져오는 것
+    const response = await this.test.getMainScreenData(intra);
+    // TODO: emit 이벤트와 데이터를 함수로 만들까?? ex) emitFunc(event, response) -> client.emit(event, response);
+    client.emit('main_enter', response);
+    // const response = await this.chatService.getMainScreenData(intra);
+    // client.emit('main_screen_data', response);
     // API: MAIN_ENTER_1
-    // this.server.emit('BR_main_enter', {
-    //   nickname: 'jaekim',
-    //   isOnline: true,
-    // });
     this.server.emit('BR_main_enter', {
-      nickname: 'jaekim',
+      nickname: intra,
       isOnline: true,
     });
     return;
