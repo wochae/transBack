@@ -51,6 +51,20 @@ export class ChatGateway
   }
 
   /***************************** SOCKET API  *****************************/
+  // API: MAIN_ENTER_0
+  @SubscribeMessage('main_enter')
+  enterMainPage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() intra: string,
+  ) {
+    // API: MAIN_ENTER_1
+    this.server.emit('BR_main_enter', {
+      nickname: 'jaekim',
+      isOnline: true,
+    });
+    return;
+  }
+
   // API: MAIN_PROFILE
   @SubscribeMessage('user_profile')
   async handleGetProfile(
@@ -72,6 +86,27 @@ export class ChatGateway
     // } else { const { Message[], member[], channelIdx } = await this.chatService.getDM(targetNickname);
     // client.emit('found_dm', { Message[], member[], channelIdx });
     // }
+  }
+
+  // API: MAIN_CHAT_1
+  @SubscribeMessage('create_dm')
+  async createDM(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() targetNickname: string,
+  ) {
+    // request data
+    // {
+    //   targetNickname,
+    //   content(message),
+    // }
+    // response data
+    // {
+    //   Message,
+    //   member[],
+    //   channelIdx
+    // }
+    // roomId 방식
+    // this.server.to().emit('', );
   }
 
   // API: MAIN_CHAT_2
@@ -106,12 +141,186 @@ export class ChatGateway
     }
     return this.chatService.enterChatRoom(client, jsonData, channel);
   }
-}
 
-// length 테스트할 때 썼던 코드
-// jsonData.nickname = new Channel();
-// jsonData.nickname.setChannelIdx = 1;
-// console.log('jaekim ChannelIdx: ', jsonData.nickname.getChannelIdx);
-// this.chat.setPrivateChannels = jsonData.nickname;
-// console.log('Push Success');
-// console.log('length: ', this.chat.getPrivateChannels.length);
+  // API: MAIN_CHAT_4
+  @SubscribeMessage('chat_send_msg')
+  sendChatMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: string,
+  ) {
+    // request data
+    // {
+    //   roomId,
+    //   message
+    // }
+    // response data
+    // {
+    //   message
+    // }
+    // 방식
+    // client.to().emit('', );
+  }
+
+  // API: MAIN_CHAT_5
+  @SubscribeMessage('chat_create_room')
+  createPrivateAndPublicChatRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: string,
+  ) {
+    // request data
+    // {
+    //   password?,
+    //   type
+    // }
+    // response data
+    // {
+    //   channel :{
+    //     member[]?,
+    //     channelIdx,
+    //     password : true / false
+    //   }
+    // }
+    // braodcast 방식
+  }
+
+  // API: MAIN_CHAT_6
+  @SubscribeMessage('chat_room_admin')
+  setChatAdmin(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
+    // request data
+    // {
+    //   member,
+    //   grant : boolean
+    // }
+    // response data
+    // {
+    //   member,
+    //   grant
+    // }
+    // roomId 방식
+    // client.to().emit('', );
+  }
+
+  // API: MAIN_CHAT_7
+  @SubscribeMessage('chat_room_password')
+  setPassword(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
+    // request data
+    // {
+    //   changed_password,
+    // }
+    // response data
+    // {
+    //   channel :{
+    //     member[]?,
+    //     channelIdx,
+    //     password : true / false
+    //   }
+    // }
+    // broadcast 방식
+  }
+
+  // API: MAIN_CHAT_8
+  @SubscribeMessage('chat_room_exit')
+  exitRoom(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
+    // request data
+    // {
+    //   chat_user_id
+    // }
+    // response data
+    // owner 가 나갈 경우 전달하고 나감.
+    // {
+    //  left_members[],
+    //  owner
+    // }
+    // roomId 방식
+  }
+
+  // API: MAIN_CHAT_9
+  @SubscribeMessage('chat_goto_lobby')
+  goToLooby(@ConnectedSocket() client: Socket) {
+    // request data
+    // response data
+    // {
+    //   channel :{
+    //     member[]?,
+    //     channelIdx,
+    //     password : true / false
+    //   }
+    // }
+    // client 방식
+  }
+
+  // API: MAIN_CHAT_10
+  @SubscribeMessage('chat_rooom_delete')
+  deleteRoom(@ConnectedSocket() client: Socket) {
+    // request data
+    // response data
+    //   {
+    //     channel[] :{
+    //      member[]?,
+    //      channelIdx,
+    //      password : true / false
+    //    }
+    //  }
+    // broadcast 방식
+  }
+
+  // API: MAIN_CHAT_12
+  @SubscribeMessage('chat_mute')
+  setMute(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
+    // request data
+    // {
+    //   target_nickname
+    // }
+    // response data
+    // {
+    //   friend[]
+    // }
+    // client 방식
+  }
+
+  // API: MAIN_CHAT_13
+  @SubscribeMessage('chat_kick')
+  kickMember(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
+    // request data
+    //  {
+    //     roomId,
+    //     target_nickname
+    //  }
+    // response data
+    // {
+    //   targetNickname,
+    //   left_member[]
+    // }
+    // RoomId 방식
+  }
+
+  // API: MAIN_CHAT_14
+  @SubscribeMessage('chat_ban')
+  banMember(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
+    // request data
+    //  {
+    //     roomId,
+    //     target_nickname
+    //  }
+    // response data
+    // {
+    //   targetNickname,
+    //   left_member[]
+    // }
+    // RoomId 방식
+  }
+
+  // API: MAIN_CHAT_15
+  @SubscribeMessage('chat_block')
+  blockMember(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
+    // request data
+    //  {
+    //     target_nickname
+    //  }
+    // response data
+    // {
+    //   blockList[]
+    // }
+    // client 방식
+  }
+}
