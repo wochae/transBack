@@ -14,7 +14,6 @@ import { ChatService } from './chat.service';
 import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
-import { error } from 'console';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -52,7 +51,6 @@ export class ChatGateway
   }
 
   /***************************** SOCKET API  *****************************/
-
   // API: MAIN_PROFILE
   @SubscribeMessage('user_profile')
   async handleGetProfile(
@@ -93,25 +91,18 @@ export class ChatGateway
     );
     if (this.chatService.checkAlreadyInRoom(jsonData)) {
       console.log('Already in Room');
+      // FIXME: 이미 들어와있기 때문에 데이터 전송을 해야한다. ✅ 무한스크롤 이벤트 발생으로 해결 가능
       return 'Already in Room';
     }
     // TODO: 비밀번호 확인부 모듈로 나누기?
     let channel: Channel = this.chatService.findProtectedChannelByRoomId(
       jsonData.roomId,
     );
-    if (channel == null) {
+    if (channel === null) {
       this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
       channel = this.chatService.findPublicChannelByRoomId(jsonData.roomId);
     } else {
       this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
-      // 2. 비밀번호 확인
-      if (channel != null) {
-        if (channel.getPassword !== jsonData.password) {
-          client.emit('wrong_password');
-          this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
-          return new error('wrong_password');
-        }
-      }
     }
     return this.chatService.enterChatRoom(client, jsonData, channel);
   }

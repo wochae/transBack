@@ -10,15 +10,20 @@ export class ChatService {
   private logger: Logger = new Logger('ChatService');
 
   // TODO: 에러처리 catch ~ throw
-  enterChatRoom(client: Socket, clientData: any, channel: Channel): any {
+  // FIXME: Error 객체반환하는거 맞는지 확인해야함
+  enterChatRoom(
+    client: Socket,
+    clientData: any,
+    channel: Channel,
+  ): any | Error {
     // // 2. 비밀번호 확인
-    // if (channel != null) {
-    //   if (channel.getPassword !== clientData.password) {
-    //     client.emit('wrong_password');
-    //     this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
-    //     return new error('wrong_password');
-    //   }
-    // }
+    if (channel.getPassword !== null) {
+      if (channel.getPassword !== clientData.password) {
+        // client.emit('wrong_password');
+        this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
+        return new error('Please check your password');
+      }
+    }
     this.logger.log(
       `[ 💬 Socket API ] enterChatRomm _ roomId: ${channel.getRoomId}`,
     );
@@ -30,6 +35,10 @@ export class ChatService {
     client
       .to(`Room${channel.getRoomId.toString()}`)
       .emit('chat_enter_noti', clientData.nickname);
+    // client.emit('chat_enter', {
+    //   member: channel.getMember,
+    //   channelIdx: channel.getChannelIdx,
+    // });
     this.logger.log(
       `[ 💬 Socket API ] ${clientData.nickname} Success enterChatRomm _ roomId: ${channel.getRoomId}`,
     );
