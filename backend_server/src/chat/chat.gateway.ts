@@ -15,7 +15,9 @@ import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
 import { UsersService } from 'src/users/users.service';
+import { chatCreateRoomReqDto, chatCreateRoomResDto } from './dto/chat.dto';
 
+const connectedClients = new Set<Socket>();
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
@@ -40,12 +42,14 @@ export class ChatGateway
   handleConnection(client: Socket, ...args: any[]) {
     // TODO: 인메모리에 유저에 대한 정보 저장하기
     // TODO: 해당 socket 을 갖고 있는 유저 intra 또는 nicnkname 찾아서 출력?
+    connectedClients.add(client);
     this.logger.log(
       `[ 💬 Client ] { NickName } Connected _ 일단 소켓 ID 출력 ${client.id}`,
     );
   }
 
   handleDisconnect(client: Socket) {
+    connectedClients.delete(client);
     this.logger.log(
       `[ 💬 Client ] { NickName } Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
     );
@@ -161,15 +165,24 @@ export class ChatGateway
 
   // API: MAIN_CHAT_5
   @SubscribeMessage('chat_create_room')
-  createPrivateAndPublicChatRoom(
+  async createPrivateAndPublicChatRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: string,
+    @MessageBody() req: chatCreateRoomReqDto, // chatCreateRoomReqDto
   ) {
-    // request data
-    // {
-    //   password?,
-    //   type
-    // }
+    // socket 을 통해 유저 식별값을 가지고 있다고 가정
+    let res  = null;
+    if (req.password === '') {
+      res = await this.chatService.createPublicChatRoom(req);
+    } else if (req.password !== '') {
+      res = await this.chatService.createProtectedChatRoom(req);
+    } else {
+      throw new Error('비밀번호가 없습니다.');
+    }
+    client.emit('chat_room_created', res);
+
+    const roomName = 'chat_' + res.channelIdx;
+    client.join(roomName);
+    client.to(roomName).emit('chat_room_created', res);
     // response data
     // {
     //   channel :{
@@ -179,6 +192,11 @@ export class ChatGateway
     //   }
     // }
     // braodcast 방식
+    const message = {
+      event: 'chat_create_room',
+      data: JSON.parse(res),
+    };
+    connectedClients.forEach(client => client.emit(message.event, message.data.toString()));
   }
 
   // API: MAIN_CHAT_6

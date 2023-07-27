@@ -16,6 +16,25 @@ export class Channel {
 
   /******************************* 메서드 *******************************/
   // TODO: 생성자가 필요할 듯 하다.
+  // constructor(
+  //   channelIdx: number,
+  //   roomId: number,
+  //   member: any,
+  //   messages: Message[],
+  //   mode: Mode,
+  //   owner: any,
+  //   admin: any,
+  //   password: string,
+  // ) {
+  //   this.channelIdx = channelIdx;
+  //   this.roomId = roomId;
+  //   this.member = member;
+  //   this.messages = messages;
+  //   this.mode = mode;
+  //   this.owner = owner;
+  //   this.admin = admin;
+  //   this.password = password;
+  // }
   // getter
   get getChannelIdx(): number {
     return this.channelIdx;
@@ -44,7 +63,7 @@ export class Channel {
 
   // setter
   set setChannelIdx(channelIdx: number) {
-    this.channelIdx = channelIdx;
+    this.channelIdx = channelIdx++;
   }
   set setRoomId(roomId: number) {
     this.roomId = roomId;

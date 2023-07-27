@@ -3,14 +3,16 @@ import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
 import { Socket } from 'socket.io';
 import { error } from 'console';
-import { chatGetProfileDto } from './dto/chat.dto';
+import { chatCreateRoomReqDto, chatCreateRoomResDto, chatGetProfileDto } from './dto/chat.dto';
 import { UsersService } from 'src/users/users.service';
+import { Mode } from './entities/chat.entity';
 
 @Injectable()
 export class ChatService {
+  static channelIdx: number = 0;
   constructor(private chat: Chat) {}
   private logger: Logger = new Logger('ChatService');
-
+  
   // TODO: 에러처리 catch ~ throw
   // FIXME: Error 객체반환하는거 맞는지 확인해야함
   enterChatRoom(
@@ -40,6 +42,45 @@ export class ChatService {
     return {
       member: channel.getMember,
       channelIdx: channel.getChannelIdx,
+    };
+  }
+
+  // API: MAIN_CHAT_5
+  createPublicChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
+    const channel = new Channel();
+    channel.setChannelIdx = ChatService.channelIdx;
+    channel.setRoomId = ChatService.channelIdx;
+    channel.setPassword = null;
+    channel.setMember = ["wochae"];
+    channel.setMode = Mode.PUBLIC;
+    channel.setMessage = null;    
+    channel.setOwner = req.nickname;
+    channel.setAdmin = "wochae";
+    console.log("ChatService.channelIdx", ChatService.channelIdx);
+    console.log("channel", channel);
+    this.chat.setProtectedChannels = channel;
+    return {
+      member: channel.getMember,
+      channelIdx: channel.getChannelIdx,
+      password: false
+    };
+  }
+  createProtectedChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
+    const channel = new Channel();
+    channel.setChannelIdx = ChatService.channelIdx;
+    channel.setRoomId = ChatService.channelIdx++;
+    channel.setPassword = "pw";
+    channel.setMember = ["wochae"];
+    channel.setMode = Mode.PROTECTED;
+    channel.setMessage = null;    
+    channel.setOwner = req.nickname;
+    channel.setAdmin = "wochae";
+    
+    this.chat.setProtectedChannels = channel;
+    return {
+      member: channel.getMember,
+      channelIdx: channel.getChannelIdx,
+      password: true
     };
   }
 
