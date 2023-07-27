@@ -51,6 +51,7 @@ export class ChatGateway
   }
 
   /***************************** SOCKET API  *****************************/
+  // FIXME: DTO 로 Json.parse 대체하기
   // API: MAIN_ENTER_0
   @SubscribeMessage('main_enter')
   enterMainPage(
