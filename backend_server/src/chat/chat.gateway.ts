@@ -71,7 +71,8 @@ export class ChatGateway
     // FIXME: 친구 정보 db 에서 가져오는 것 + blockList, imgUri, myNickname 인메모리에 가져오는 것
     // FIXME: 채널 데이터 db 에서 가져오는 것 + 인메모리에 가져오는 것
     const response = await this.test.getMainScreenData(intra);
-    this.server.emit('BR_main_enter', response);
+    // TODO: emit 이벤트와 데이터를 함수로 만들까?? ex) emitFunc(event, response) -> client.emit(event, response);
+    client.emit('main_enter', response);
     // const response = await this.chatService.getMainScreenData(intra);
     // client.emit('main_screen_data', response);
     // API: MAIN_ENTER_1
