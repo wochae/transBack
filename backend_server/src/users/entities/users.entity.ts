@@ -7,6 +7,8 @@ import {
   PrimaryColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { FriendList } from './friendList.entity';
+import { BlockList } from './blockList.entity';
 
 export enum HistoriesType {
   NORMAL = 'NORMAL',
@@ -23,6 +25,8 @@ export enum ResultType {
 export class UserObject extends BaseEntity {
   @PrimaryGeneratedColumn()
   @OneToMany(() => Histories, (idx) => idx.userId)
+  @OneToMany(() => FriendList, (idx) => idx.userId)
+  @OneToMany(() => BlockList, (idx) => idx.userId)
   idx: number;
 
   @Column()
