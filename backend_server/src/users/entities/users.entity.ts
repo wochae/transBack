@@ -24,9 +24,9 @@ export enum ResultType {
 @Entity('users')
 export class UserObject extends BaseEntity {
   @PrimaryGeneratedColumn()
-  @OneToMany(() => Histories, (idx) => idx.userId)
-  @OneToMany(() => FriendList, (idx) => idx.userId)
-  @OneToMany(() => BlockList, (idx) => idx.userId)
+  //   @OneToMany(() => Histories, (idx) => idx.userId)
+  //   @OneToMany(() => FriendList, (idx) => idx.userId)
+  //   @OneToMany(() => BlockList, (idx) => idx.userId)
   idx: number;
 
   @Column()
