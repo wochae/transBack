@@ -28,7 +28,7 @@ export class UsersService {
 
   async signIn(createUsersDto: CreateUsersDto): Promise<string> {
     const { intra } = createUsersDto;
-    const user = this.userObjectRepository.findOne({
+    const user = await this.userObjectRepository.findOne({
       where: { intra: intra },
     });
     if (user === null || user === undefined) {
