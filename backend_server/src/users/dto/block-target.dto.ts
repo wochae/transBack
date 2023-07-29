@@ -6,7 +6,7 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 
-export class InsertFriendDto {
+export class BlockTargetDto {
   @IsNotEmpty()
   @IsString()
   @MaxLength(100)
