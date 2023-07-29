@@ -48,38 +48,38 @@ export class UserObject extends BaseEntity {
   @Column()
   lose: number;
 
-  @OneToOne(() => CertificateObject, (idx) => idx.userId)
+  @OneToOne(() => CertificateObject, (idx) => idx.userIdx)
   certificate: CertificateObject;
 
-  @OneToMany(() => FriendList, (idx) => idx.userId)
+  @OneToMany(() => FriendList, (idx) => idx.userIdx)
   friendList: FriendList[];
 
   @OneToMany(() => BlockList, (userIdx) => userIdx.userIdx)
   blockedList: BlockList[];
 }
 
-@Entity('histories')
-export class Histories extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  userIdx: number;
+// @Entity('histories')
+// export class Histories extends BaseEntity {
+//   @PrimaryGeneratedColumn()
+//   userIdx: number;
 
-  @Column()
-  gameId: number;
+//   @Column()
+//   gameId: number;
 
-  @ManyToOne(() => UserObject, (userId) => userId.idx)
-  userId: number;
+//   @ManyToOne(() => UserObject, (userIdx) => userId.userIdx)
+//   userIdx: number;
 
-  @Column({
-    type: 'enum',
-    enum: HistoriesType,
-    default: HistoriesType.NORMAL,
-  })
-  type: HistoriesType;
+//   @Column({
+//     type: 'enum',
+//     enum: HistoriesType,
+//     default: HistoriesType.NORMAL,
+//   })
+//   type: HistoriesType;
 
-  @Column({
-    type: 'enum',
-    enum: ResultType,
-    default: ResultType.DEF,
-  })
-  result: ResultType;
-}
+//   @Column({
+//     type: 'enum',
+//     enum: ResultType,
+//     default: ResultType.DEF,
+//   })
+//   result: ResultType;
+// }

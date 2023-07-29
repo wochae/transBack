@@ -5,6 +5,7 @@ import { UserObjectRepository } from './users.repository';
 import { BlockList } from './entities/blockList.entity';
 import { BlockTargetDto } from './dto/block-target.dto';
 
+//
 @CustomRepository(BlockList)
 export class BlockListRepository extends Repository<BlockList> {
   async blockTarget(

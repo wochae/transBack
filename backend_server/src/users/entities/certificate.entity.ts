@@ -2,23 +2,23 @@ import {
   Entity,
   BaseEntity,
   Column,
-  PrimaryColumn,
   PrimaryGeneratedColumn,
   OneToOne,
+  PrimaryColumn,
 } from 'typeorm';
 import { UserObject } from './users.entity';
 
 @Entity('certificate')
 export class CertificateObject extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  idx: number;
-
   @PrimaryColumn()
-  userId: number;
+  token: string;
+
+  @Column()
+  userIdx: number;
 
   @Column({ default: false })
   check2Auth: boolean;
 
-  @OneToOne(() => UserObject, (userId) => userId.userIdx)
+  @OneToOne(() => UserObject, (userIdx) => userIdx.userIdx)
   userObject: UserObject;
 }

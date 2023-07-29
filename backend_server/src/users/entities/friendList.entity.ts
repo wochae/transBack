@@ -5,7 +5,6 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
 } from 'typeorm';
-import { UserObject } from './users.entity';
 
 @Entity('friendList')
 export class FriendList extends BaseEntity {
@@ -13,10 +12,10 @@ export class FriendList extends BaseEntity {
   idx: number;
 
   @Column()
-  userId: number;
+  userIdx: number;
 
   @Column()
-  friendId: number;
+  friendIdx: number;
 
   @Column()
   friendNickname: string;

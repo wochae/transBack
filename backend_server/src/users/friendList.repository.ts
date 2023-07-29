@@ -21,8 +21,8 @@ export class FriendListRepository extends Repository<FriendList> {
     }
 
     const target = this.create({
-      userId: user.userIdx,
-      friendId: friend.userIdx,
+      userIdx: user.userIdx,
+      friendIdx: friend.userIdx,
       friendNickname: targetNickname,
     });
 
