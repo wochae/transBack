@@ -4,7 +4,6 @@ import {
   Column,
   PrimaryColumn,
   PrimaryGeneratedColumn,
-  ManyToOne,
   OneToOne,
 } from 'typeorm';
 import { UserObject } from './users.entity';
@@ -15,9 +14,11 @@ export class CertificateObject extends BaseEntity {
   idx: number;
 
   @PrimaryColumn()
-  @OneToOne(() => UserObject, (userId) => userId.idx)
   userId: number;
 
   @Column({ default: false })
   check2Auth: boolean;
+
+  @OneToOne(() => UserObject, (userId) => userId.userIdx)
+  userObject: UserObject;
 }

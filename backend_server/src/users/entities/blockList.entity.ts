@@ -12,12 +12,15 @@ export class BlockList extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 
-  @PrimaryColumn()
-  userId: number;
+  @Column()
+  userIdx: number;
 
   @Column()
-  blockUserId: number;
+  blockedUserIdx: number;
 
-  @CreateDateColumn()
+  @Column()
+  blockedNickname: string;
+
+  @CreateDateColumn() // 해당 컬럼은 자동으로 입력됨.
   blockedTime: Date;
 }

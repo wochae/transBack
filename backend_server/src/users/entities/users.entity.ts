@@ -3,12 +3,13 @@ import {
   Entity,
   Column,
   ManyToOne,
-  OneToMany,
-  PrimaryColumn,
+  OneToOne,
   PrimaryGeneratedColumn,
+  OneToMany,
 } from 'typeorm';
 import { FriendList } from './friendList.entity';
 import { BlockList } from './blockList.entity';
+import { CertificateObject } from './certificate.entity';
 
 export enum HistoriesType {
   NORMAL = 'NORMAL',
@@ -24,10 +25,7 @@ export enum ResultType {
 @Entity('users')
 export class UserObject extends BaseEntity {
   @PrimaryGeneratedColumn()
-  //   @OneToMany(() => Histories, (idx) => idx.userId)
-  //   @OneToMany(() => FriendList, (idx) => idx.userId)
-  //   @OneToMany(() => BlockList, (idx) => idx.userId)
-  idx: number;
+  userIdx: number;
 
   @Column()
   intra: string;
@@ -49,6 +47,15 @@ export class UserObject extends BaseEntity {
 
   @Column()
   lose: number;
+
+  @OneToOne(() => CertificateObject, (idx) => idx.userId)
+  certificate: CertificateObject;
+
+  @OneToMany(() => FriendList, (idx) => idx.userId)
+  friendList: FriendList[];
+
+  @OneToMany(() => BlockList, (userIdx) => userIdx.userIdx)
+  blockedList: BlockList[];
 }
 
 @Entity('histories')
