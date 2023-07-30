@@ -9,7 +9,6 @@ import { Mode } from './entities/chat.entity';
 
 @Injectable()
 export class ChatService {
-  static channelIdx: number = 0;
   constructor(private chat: Chat) {}
   private logger: Logger = new Logger('ChatService');
   
@@ -48,15 +47,15 @@ export class ChatService {
   // API: MAIN_CHAT_5
   createPublicChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
     const channel = new Channel();
-    channel.setChannelIdx = ChatService.channelIdx;
-    channel.setRoomId = ChatService.channelIdx;
+    channel.setChannelIdx = Chat.idxForSetChannelIdx;
+    channel.setRoomId = Chat.idxForSetChannelIdx++;
     channel.setPassword = null;
     channel.setMember = ["wochae"];
     channel.setMode = Mode.PUBLIC;
     channel.setMessage = null;    
     channel.setOwner = req.nickname;
     channel.setAdmin = "wochae";
-    console.log("ChatService.channelIdx", ChatService.channelIdx);
+    console.log("ChatService.channelIdx", Chat.idxForSetChannelIdx);
     console.log("channel", channel);
     this.chat.setProtectedChannels = channel;
     return {
@@ -67,8 +66,8 @@ export class ChatService {
   }
   createProtectedChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
     const channel = new Channel();
-    channel.setChannelIdx = ChatService.channelIdx;
-    channel.setRoomId = ChatService.channelIdx++;
+    channel.setChannelIdx = Chat.idxForSetChannelIdx;
+    channel.setRoomId = Chat.idxForSetChannelIdx++;
     channel.setPassword = "pw";
     channel.setMember = ["wochae"];
     channel.setMode = Mode.PROTECTED;

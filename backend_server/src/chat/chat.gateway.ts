@@ -37,9 +37,11 @@ export class ChatGateway
   afterInit() {
     this.logger.log('[ 💬 Chat ] Initialized!');
   }
+  
 
   // TODO: MAIN_ENTER_0 구현을 여기에 해야하지 않을까 싶음.
   handleConnection(client: Socket, ...args: any[]) {
+    this.server.emit('main_enter', 'hello everyone!');  
     // TODO: 인메모리에 유저에 대한 정보 저장하기
     // TODO: 해당 socket 을 갖고 있는 유저 intra 또는 nicnkname 찾아서 출력?
     connectedClients.add(client);
@@ -178,10 +180,15 @@ export class ChatGateway
     } else {
       throw new Error('비밀번호가 없습니다.');
     }
+    console.log("chat_room_created for client : ");
     client.emit('chat_room_created', res);
 
+
     const roomName = 'chat_' + res.channelIdx;
+    console.log("join the specific room : roonName", roomName);
     client.join(roomName);
+
+    console.log("chat_room_created msg to joined room : res", res);
     client.to(roomName).emit('chat_room_created', res);
     // response data
     // {
@@ -192,10 +199,11 @@ export class ChatGateway
     //   }
     // }
     // braodcast 방식
-    const message = {
+    let message = {
       event: 'chat_create_room',
-      data: JSON.parse(res),
+      data: res,
     };
+    console.log("cnted clients : ",connectedClients);
     connectedClients.forEach(client => client.emit(message.event, message.data.toString()));
   }
 
