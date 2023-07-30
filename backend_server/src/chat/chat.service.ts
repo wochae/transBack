@@ -121,7 +121,7 @@ export class ChatService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     let ret = true;
-    const list = this.dmChannelRepository.createChannel(
+    const list = await this.dmChannelRepository.createChannel(
       client,
       target,
       channelIdx,
