@@ -3,10 +3,20 @@ import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
 import { Socket } from 'socket.io';
 import { error } from 'console';
+import { DataSource } from 'typeorm';
+import { UserObject } from 'src/users/entities/users.entity';
+import { DMChannel, DirectMessage } from './entities/chat.entity';
+import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
+import { SendDMDto } from './dto/send-dm.dto';
 
 @Injectable()
 export class ChatService {
-  constructor(private chat: Chat) {}
+  constructor(
+    private chat: Chat,
+    private dataSource: DataSource,
+    private dmChannelRepository: DMChannelRepository,
+    private directMessagesRepository: DirectMessageRepository,
+  ) {}
   private logger: Logger = new Logger('ChatService');
 
   /***************************** Find Channel *****************************/
@@ -98,5 +108,36 @@ export class ChatService {
       return null;
     }
     return privateChannel;
+  }
+
+  async createDmChannel(
+    client: UserObject,
+    target: UserObject,
+    channelIdx: number,
+    // msg: SendDMDto,
+  ): Promise<boolean> {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    let ret = true;
+    const list = this.dmChannelRepository.createChannel(
+      client,
+      target,
+      channelIdx,
+    );
+
+    try {
+      await queryRunner.manager.save(list[0]);
+      await queryRunner.manager.save(list[1]);
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      ret = false;
+    } finally {
+      await queryRunner.release();
+    }
+    return ret;
   }
 }
