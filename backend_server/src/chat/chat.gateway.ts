@@ -21,7 +21,7 @@ const connectedClients = new Set<Socket>();
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://localhost:3000'],
+    origin: ['http://localhost:3001'],
   },
 })
 export class ChatGateway
