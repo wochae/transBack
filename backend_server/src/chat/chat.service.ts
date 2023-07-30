@@ -114,7 +114,7 @@ export class ChatService {
     client: UserObject,
     target: UserObject,
     channelIdx: number,
-    // msg: SendDMDto,
+    msg: SendDMDto,
   ): Promise<boolean> {
     const queryRunner = this.dataSource.createQueryRunner();
 
@@ -126,6 +126,13 @@ export class ChatService {
       target,
       channelIdx,
     );
+    const firstDM = await this.directMessagesRepository.sendDm(
+      msg,
+      client,
+      channelIdx,
+    );
+
+    await this.directMessagesRepository.save(firstDM);
 
     try {
       await queryRunner.manager.save(list[0]);
