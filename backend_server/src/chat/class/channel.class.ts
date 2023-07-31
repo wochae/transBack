@@ -1,3 +1,4 @@
+import { Mode } from '../entities/chat.entity';
 import { Message } from './message.class';
 
 // FIXME: any type 을 적절하게 수정해야함
@@ -6,15 +7,34 @@ export class Channel {
   /******************************* 멤버 변수 *******************************/
   private channelIdx: number;
   private roomId: number;
-  private member: any[] = []; //   private member: member[];
+  private member: any = []; //   private member: member[];
   private messages: Message[] = [];
-  private mode: string; // TODO: enum 으로 수정
+  private mode: Mode;
   private owner: any; //   private owner: member;
   private admin: any[] = []; //   private admin: member[];
   private password: string;
 
   /******************************* 메서드 *******************************/
   // TODO: 생성자가 필요할 듯 하다.
+  // constructor(
+  //   channelIdx: number,
+  //   roomId: number,
+  //   member: any,
+  //   messages: Message[],
+  //   mode: Mode,
+  //   owner: any,
+  //   admin: any,
+  //   password: string,
+  // ) {
+  //   this.channelIdx = channelIdx;
+  //   this.roomId = roomId;
+  //   this.member = member;
+  //   this.messages = messages;
+  //   this.mode = mode;
+  //   this.owner = owner;
+  //   this.admin = admin;
+  //   this.password = password;
+  // }
   // getter
   get getChannelIdx(): number {
     return this.channelIdx;
@@ -29,7 +49,7 @@ export class Channel {
     return this.messages;
   }
   get getMode(): string {
-    return this.mode; //   enum 으로 수정
+    return this.mode;
   }
   get getOwner(): any {
     return this.owner; //   owner: member;
@@ -43,7 +63,7 @@ export class Channel {
 
   // setter
   set setChannelIdx(channelIdx: number) {
-    this.channelIdx = channelIdx;
+    this.channelIdx = channelIdx++;
   }
   set setRoomId(roomId: number) {
     this.roomId = roomId;
@@ -54,8 +74,8 @@ export class Channel {
   set setMessage(message: Message) {
     this.messages.push(message);
   }
-  set setMode(mode: string) {
-    this.mode = mode; // TODO: enum 으로 수정
+  set setMode(mode: Mode) {
+    this.mode = mode;
   }
   set setOwner(owner: any) {
     this.owner = owner; // owner: member;

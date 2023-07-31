@@ -19,7 +19,4 @@ declare class Message {
   set setChannelIdx(channelIdx: number);
   set setSender(sender: number);
   set setMsgDate(msgDate: Date);
-
-  //   get getMessage(): string;
-  //   set setMessage(message: string);
 }
