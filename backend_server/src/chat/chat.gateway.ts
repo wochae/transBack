@@ -76,9 +76,9 @@ export class ChatGateway
   async handleGetProfile(
     @ConnectedSocket() client: Socket,
     @MessageBody() targetNickname: string) {
-    const targetProfile = await this.usersService.getProfile(targetNickname);
-    client.emit('target_profile', targetProfile);
-    console.log(targetProfile);
+    // // const targetProfile = await this.usersService.getProfile(targetNickname);
+    // client.emit('target_profile', targetProfile);
+    // console.log(targetProfile);
   }
 
   // API: MAIN_CHAT_0
