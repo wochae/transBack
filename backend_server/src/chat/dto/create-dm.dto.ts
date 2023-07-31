@@ -6,7 +6,7 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 
-export class CreateChatDto {
+export class CreateDMDto {
   @IsNotEmpty()
   @IsString()
   @MaxLength(100)

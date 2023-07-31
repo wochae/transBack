@@ -4,15 +4,18 @@ import { ChatGateway } from './chat.gateway';
 import { Chat } from './class/chat.class';
 import { Channel } from './class/channel.class';
 import { Message } from './class/message.class';
-import { Mode } from './entities/chat.entity';
-import { UsersService } from 'src/users/users.service';
-import { UsersModule } from 'src/users/users.module';
+import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
+import { TypeOrmExModule } from '../typeorm-ex.module';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함
-  imports: [UsersModule],
-  providers: [ChatGateway, ChatService, Chat, UsersService],
-
+  imports: [
+    TypeOrmExModule.forCustomRepository([
+      DMChannelRepository,
+      DirectMessageRepository,
+    ]),
+  ],
+  providers: [ChatGateway, ChatService, Chat], // FIXME: Channel 은 어차피 Chat 으로 접근할거니까 필요 없겠지?
 })
 export class ChatModule {
   private logger: Logger = new Logger('ChatModule');
