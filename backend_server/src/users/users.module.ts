@@ -18,6 +18,6 @@ import { CertificateRepository } from './certificate.repository';
   ],
   controllers: [UsersController],
   providers: [UsersService],
-  exports: [UsersModule],
+  exports: [UsersService],
 })
 export class UsersModule {}

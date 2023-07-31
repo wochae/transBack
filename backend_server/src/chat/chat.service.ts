@@ -5,9 +5,10 @@ import { Socket } from 'socket.io';
 import { error } from 'console';
 import { DataSource } from 'typeorm';
 import { UserObject } from 'src/users/entities/users.entity';
-import { DMChannel, DirectMessage } from './entities/chat.entity';
+import { DMChannel, DirectMessage, Mode } from './entities/chat.entity';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
+import { chatCreateRoomReqDto, chatCreateRoomResDto } from './dto/chat.dto';
 
 @Injectable()
 export class ChatService {
@@ -18,31 +19,27 @@ export class ChatService {
     private directMessagesRepository: DirectMessageRepository,
   ) {}
   private logger: Logger = new Logger('ChatService');
-
-  /***************************** Find Channel *****************************/
-  // TODO: { member[], channelIdx } 이 두개를 반환할건데... 어떻게 해야할까?
+  
   // TODO: 에러처리 catch ~ throw
-  enterChatRoom(client: Socket, clientData: any, channel: Channel): any {
-    // // 2. 비밀번호 확인
-    // if (channel != null) {
-    //   if (channel.getPassword !== clientData.password) {
-    //     client.emit('wrong_password');
-    //     this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
-    //     return new error('wrong_password');
-    //   }
-    // }
+  // FIXME: Error 객체반환하는거 맞는지 확인해야함
+  enterChatRoom(
+    client: Socket,
+    clientData: any,
+    channel: Channel,
+  ): any | Error {
+    // // 비밀번호 확인
+    if (channel.getPassword !== null) {
+      if (channel.getPassword !== clientData.password) {
+        this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
+        return new error('Please check your password');
+      }
+    }
     this.logger.log(
       `[ 💬 Socket API ] enterChatRomm _ roomId: ${channel.getRoomId}`,
     );
     client.join(`Room${channel.getRoomId.toString()}`);
-    channel.setMember = clientData.nickname;
-    // 인메모리에 넣는 곳이 필요함
-    // 채널을 찾아야한다. 그리고 넣어야한다.
-    // client.emit('enter_chat_room', {
-    //   member: channel.getMember,
-    //   channelIdx: channel.getChannelIdx,
-    // });
-    // API: MAIN_CHAT_6.1
+    channel.setMember = [clientData.nickname];
+    // API: MAIN_CHAT_3
     client
       .to(`Room${channel.getRoomId.toString()}`)
       .emit('chat_enter_noti', clientData.nickname);
@@ -55,6 +52,62 @@ export class ChatService {
     };
   }
 
+  // API: MAIN_CHAT_5
+  createPublicChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
+    const channel = new Channel();
+    channel.setChannelIdx = Chat.idxForSetChannelIdx;
+    channel.setRoomId = Chat.idxForSetChannelIdx;
+    channel.setPassword = null;
+    channel.setMember = ["wochae"];
+    channel.setMode = Mode.PUBLIC;
+    channel.setMessage = null;    
+    channel.setOwner = req.nickname;
+    channel.setAdmin = "";
+    console.log("channel", channel);
+    this.chat.setProtectedChannels = channel;
+    return {
+      member: channel.getMember,
+      channelIdx: channel.getChannelIdx,
+      password: false
+    };
+  }
+  createProtectedChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
+    const channel = new Channel();
+    channel.setChannelIdx = Chat.idxForSetChannelIdx;
+    channel.setRoomId = Chat.idxForSetChannelIdx++;
+    channel.setPassword = "pw";
+    channel.setMember = ["wochae"];
+    channel.setMode = Mode.PROTECTED;
+    channel.setMessage = null;    
+    channel.setOwner = req.nickname;
+    channel.setAdmin = "wochae";
+    
+    this.chat.setProtectedChannels = channel;
+    return {
+      member: channel.getMember,
+      channelIdx: channel.getChannelIdx,
+      password: true
+    };
+  }
+
+  /********************* check Room Member & client *********************/
+  checkAlreadyInRoom(clientData: any): boolean {
+    // find() 사용
+    const channel = this.findChannelByRoomId(clientData.roomId);
+    // if (channel == null) {
+    //   return false;
+    // }
+    return channel.getMember.flat().find((member) => {
+      return member === clientData.nickname;
+    });
+    // Set 사용
+    // const channel = this.findChannelByRoomId(clientData.roomId);
+    // const membersSet = new Set(channel.getMember.flat());
+    // console.log(membersSet);
+    // return membersSet.has(clientData.nickname);
+  }
+
+  /***************************** Find Channel *****************************/
   // TODO: 아래 세가지 함수로 하나로 합치는게 좋을까? 논의 필요
   // 합치게 되면, 반환되는 채널이 어떤 채널인지 구분할 수 있는 방법이 필요함.
   findChannelByRoomId(roomId: number): Channel {
@@ -77,7 +130,6 @@ export class ChatService {
     const protectedChannel: Channel = this.chat.getProtectedChannels.find(
       (channel) => channel.getRoomId === roomId,
     );
-    // protectedChannel 은 Public 과 Protected 둘 다 있을 수 있음.
     if (protectedChannel == undefined || protectedChannel.getPassword == null) {
       return null;
     }

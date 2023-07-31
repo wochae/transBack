@@ -8,7 +8,13 @@ import {
   OneToOne,
 } from 'typeorm';
 
-@Entity('DMChannel')
+export enum Mode {
+  PRIVATE = 'private',
+  PUBLIC = 'public',
+  PROTECTED = 'protected',
+}
+
+@Entity('direct_message_members')
 export class DMChannel extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
