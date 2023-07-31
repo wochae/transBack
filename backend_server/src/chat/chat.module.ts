@@ -6,6 +6,8 @@ import { Channel } from './class/channel.class';
 import { Message } from './class/message.class';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { TypeOrmExModule } from '../typeorm-ex.module';
+import { Mode } from './entities/chat.entity';
+import { Test } from './datafortest/main_enter';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함
@@ -15,7 +17,7 @@ import { TypeOrmExModule } from '../typeorm-ex.module';
       DirectMessageRepository,
     ]),
   ],
-  providers: [ChatGateway, ChatService, Chat], // FIXME: Channel 은 어차피 Chat 으로 접근할거니까 필요 없겠지?
+  providers: [ChatGateway, ChatService, Chat, Test], // FIXME: Channel 은 어차피 Chat 으로 접근할거니까 필요 없겠지?
 })
 export class ChatModule {
   private logger: Logger = new Logger('ChatModule');
