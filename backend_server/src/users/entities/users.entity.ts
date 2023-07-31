@@ -10,6 +10,7 @@ import {
 import { FriendList } from './friendList.entity';
 import { BlockList } from './blockList.entity';
 import { CertificateObject } from './certificate.entity';
+import { DMChannel } from 'src/chat/entities/chat.entity';
 
 export enum HistoriesType {
   NORMAL = 'NORMAL',
@@ -56,6 +57,9 @@ export class UserObject extends BaseEntity {
 
   @OneToMany(() => BlockList, (userIdx) => userIdx.userIdx)
   blockedList: BlockList[];
+
+  @OneToMany(() => DMChannel, (userIdx) => userIdx.userIdx1)
+  dmChannelList: DMChannel[];
 }
 
 // @Entity('histories')

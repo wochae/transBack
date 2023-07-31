@@ -1,15 +1,15 @@
+import { UserObject } from 'src/users/entities/users.entity';
 import {
   BaseEntity,
   Column,
   Entity,
-  ManyToOne,
   OneToMany,
-  PrimaryColumn,
   PrimaryGeneratedColumn,
+  OneToOne,
 } from 'typeorm';
 
-@Entity('direct_message_members')
-export class DirectMessageMembers extends BaseEntity {
+@Entity('DMChannel')
+export class DMChannel extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 
@@ -19,12 +19,27 @@ export class DirectMessageMembers extends BaseEntity {
   @Column()
   userIdx2: number;
 
-  @OneToMany(() => DirectMessages, (message) => message.channelMember)
-  messages: DirectMessages[];
+  @Column()
+  userNickname1: string;
+
+  @Column()
+  userNickname2: string;
+
+  @Column()
+  channelIdx: number;
+
+  @OneToMany(() => DirectMessage, (channelIdx) => channelIdx.channelIdx)
+  targetChannelMessages: DirectMessage[];
+
+  @OneToOne(() => UserObject, (userIdx1) => userIdx1)
+  user1: UserObject;
+
+  @OneToOne(() => UserObject, (userIdx2) => userIdx2)
+  user2: UserObject;
 }
 
-@Entity('direct_messages')
-export class DirectMessages extends BaseEntity {
+@Entity('directMessage')
+export class DirectMessage extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 
@@ -32,17 +47,11 @@ export class DirectMessages extends BaseEntity {
   channelIdx: number;
 
   @Column()
-  sender: number;
+  sender: string;
 
   @Column()
   msg: string;
 
   @Column()
   msgDate: Date;
-
-  @ManyToOne(
-    () => DirectMessageMembers,
-    (channelMember) => channelMember.messages,
-  )
-  channelMember: DirectMessageMembers;
 }
