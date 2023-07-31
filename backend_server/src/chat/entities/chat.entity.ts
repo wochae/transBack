@@ -15,7 +15,7 @@ export enum Mode {
 }
 
 @Entity('direct_message_members')
-export class DirectMessageMembers extends BaseEntity {
+export class DMChannel extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 

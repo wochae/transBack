@@ -5,9 +5,10 @@ import { Socket } from 'socket.io';
 import { error } from 'console';
 import { DataSource } from 'typeorm';
 import { UserObject } from 'src/users/entities/users.entity';
-import { DMChannel, DirectMessage } from './entities/chat.entity';
+import { DMChannel, DirectMessage, Mode } from './entities/chat.entity';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
+import { chatCreateRoomReqDto, chatCreateRoomResDto } from './dto/chat.dto';
 
 @Injectable()
 export class ChatService {
@@ -54,15 +55,14 @@ export class ChatService {
   // API: MAIN_CHAT_5
   createPublicChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
     const channel = new Channel();
-    channel.setChannelIdx = ChatService.channelIdx;
-    channel.setRoomId = ChatService.channelIdx;
+    channel.setChannelIdx = Chat.idxForSetChannelIdx;
+    channel.setRoomId = Chat.idxForSetChannelIdx;
     channel.setPassword = null;
     channel.setMember = ["wochae"];
     channel.setMode = Mode.PUBLIC;
     channel.setMessage = null;    
     channel.setOwner = req.nickname;
-    channel.setAdmin = "wochae";
-    console.log("ChatService.channelIdx", ChatService.channelIdx);
+    channel.setAdmin = "";
     console.log("channel", channel);
     this.chat.setProtectedChannels = channel;
     return {
@@ -73,8 +73,8 @@ export class ChatService {
   }
   createProtectedChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
     const channel = new Channel();
-    channel.setChannelIdx = ChatService.channelIdx;
-    channel.setRoomId = ChatService.channelIdx++;
+    channel.setChannelIdx = Chat.idxForSetChannelIdx;
+    channel.setRoomId = Chat.idxForSetChannelIdx++;
     channel.setPassword = "pw";
     channel.setMember = ["wochae"];
     channel.setMode = Mode.PROTECTED;
