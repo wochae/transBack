@@ -3,10 +3,14 @@ import {
   Entity,
   Column,
   ManyToOne,
-  OneToMany,
-  PrimaryColumn,
+  OneToOne,
   PrimaryGeneratedColumn,
+  OneToMany,
 } from 'typeorm';
+import { FriendList } from './friendList.entity';
+import { BlockList } from './blockList.entity';
+import { CertificateObject } from './certificate.entity';
+import { DMChannel } from 'src/chat/entities/chat.entity';
 
 export enum HistoriesType {
   NORMAL = 'NORMAL',
@@ -22,8 +26,7 @@ export enum ResultType {
 @Entity('users')
 export class UserObject extends BaseEntity {
   @PrimaryGeneratedColumn()
-  @OneToMany(() => Histories, (idx) => idx.userId)
-  idx: number;
+  userIdx: number;
 
   @Column()
   intra: string;
@@ -45,30 +48,42 @@ export class UserObject extends BaseEntity {
 
   @Column()
   lose: number;
+
+  @OneToOne(() => CertificateObject, (idx) => idx.userIdx)
+  certificate: CertificateObject;
+
+  @OneToMany(() => FriendList, (idx) => idx.userIdx)
+  friendList: FriendList[];
+
+  @OneToMany(() => BlockList, (userIdx) => userIdx.userIdx)
+  blockedList: BlockList[];
+
+  @OneToMany(() => DMChannel, (userIdx) => userIdx.userIdx1)
+  dmChannelList: DMChannel[];
 }
 
-@Entity('histories')
-export class Histories extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  userIdx: number;
+// @Entity('histories')
+// export class Histories extends BaseEntity {
+//   @PrimaryGeneratedColumn()
+//   userIdx: number;
 
-  @Column()
-  gameId: number;
+//   @Column()
+//   gameId: number;
 
-  @ManyToOne(() => UserObject, (userId) => userId.idx)
-  userId: number;
+//   @ManyToOne(() => UserObject, (userIdx) => userId.userIdx)
+//   userIdx: number;
 
-  @Column({
-    type: 'enum',
-    enum: HistoriesType,
-    default: HistoriesType.NORMAL,
-  })
-  type: HistoriesType;
+//   @Column({
+//     type: 'enum',
+//     enum: HistoriesType,
+//     default: HistoriesType.NORMAL,
+//   })
+//   type: HistoriesType;
 
-  @Column({
-    type: 'enum',
-    enum: ResultType,
-    default: ResultType.DEF,
-  })
-  result: ResultType;
-}
+//   @Column({
+//     type: 'enum',
+//     enum: ResultType,
+//     default: ResultType.DEF,
+//   })
+//   result: ResultType;
+// }
