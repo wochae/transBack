@@ -11,7 +11,6 @@ import { InsertFriendDto } from './dto/insert-friend.dto';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(UserObjectRepository)
     private userObjectRepository: UserObjectRepository,
     private blockedRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
