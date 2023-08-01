@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity('BlockList')
+@Entity('blockList')
 export class BlockList extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;

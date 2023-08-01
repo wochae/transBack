@@ -12,6 +12,7 @@ export class UserObjectRepository extends Repository<UserObject> {
       intra: intra,
       nickname: intra,
       rankpoint: 0,
+      imgUri: 'https://cdn.intra.42.fr/users/medium_default.png',
       isOnline: true,
       available: true,
       win: 0,
