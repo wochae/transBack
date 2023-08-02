@@ -1,9 +1,17 @@
+import { Socket } from 'socket.io';
 import { Channel } from './channel.class';
+import { UserObject } from 'src/users/entities/users.entity';
+
+interface SocketObject {
+  socket: Socket;
+  user: UserObject;
+}
 
 export class Chat {
   /******************************* 변수 *******************************/
   private protectedChannels: Channel[];
   private privateChannels: Channel[];
+  private socektList: SocketObject[] = [];
   static idxForSetChannelIdx = 0;
 
   /******************************* 메서드 *******************************/
@@ -19,6 +27,9 @@ export class Chat {
   get getPrivateChannels(): Channel[] {
     return this.privateChannels;
   }
+  get getSocketList(): SocketObject[] {
+    return this.socektList;
+  }
 
   // setter
   set setProtectedChannels(protectedChannel: Channel) {
@@ -26,6 +37,14 @@ export class Chat {
   }
   set setPrivateChannels(privateChannel: Channel) {
     this.privateChannels.push(privateChannel);
+  }
+  // setSocketList(setSocketObject(socket: Socket, user: UserObject): SocketObject))
+  set setSocketList(SocketObject: SocketObject) {
+    this.socektList.push(SocketObject);
+  }
+  setSocketObject(socket: Socket, user: UserObject): SocketObject {
+    const socketObject = { socket, user };
+    return socketObject;
   }
 
   // method

@@ -60,16 +60,24 @@ export class ChatGateway
   }
 
   /***************************** SOCKET API  *****************************/
-  // FIXME: DTO 로 Json.parse 대체하기
+  // FIXME: 매개변수 DTO 로 Json.parse 대체하기
   // API: MAIN_ENTER_0
   @SubscribeMessage('main_enter')
-  enterMainPage(
+  async enterMainPage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() intra: string,
+    @MessageBody() data: any,
   ) {
+    const { intra } = data;
+    // FIXME: 친구 정보 db 에서 가져오는 것 + blockList, imgUri, myNickname 인메모리에 가져오는 것
+    // FIXME: 채널 데이터 db 에서 가져오는 것 + 인메모리에 가져오는 것
+    // const response = await this.test.getMainScreenData(intra);
+    // TODO: emit 이벤트와 데이터를 함수로 만들까?? ex) emitFunc(event, response) -> client.emit(event, response);
+    // client.emit('main_enter', response);
+    // const response = await this.chatService.getMainScreenData(intra);
+    // client.emit('main_screen_data', response);
     // API: MAIN_ENTER_1
     this.server.emit('BR_main_enter', {
-      nickname: 'jaekim',
+      nickname: intra,
       isOnline: true,
     });
     return;
@@ -151,10 +159,29 @@ export class ChatGateway
 
   // API: MAIN_CHAT_4
   @SubscribeMessage('chat_send_msg')
-  sendChatMessage(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: string,
-  ) {
+  sendChatMessage(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
+    const jsonData = JSON.parse(data);
+    this.logger.log(
+      `[ 💬 Socket API CALL ] 'chat_send_msg' _ nickname: ${client.handshake.auth}`,
+    );
+    // // 채널 찾기
+    const channel = this.chatService.findChannelByRoomId(jsonData.roomId);
+
+    // // 메시지 저장 - 여기 부터는 service 로 옮기기
+    // if (channel.getMode == Mode.PRIVATE) {
+    //   // FIXME: client 소켓으로 sender 의 idx 를 찾아야한다.
+    //   const message = new Message(channel.getChannelIdx, 1, jsonData.message);
+    //   message.setMsgDate = new Date();
+    //   channel.setMessage = message;
+    //   this.chat.getPrivateChannels.push(channel);
+    //   // TODO: DB 에 저장해야함.
+    // } else {
+    //   const message = new Message(channel.getChannelIdx, 1, jsonData.message);
+    //   message.setMsgDate = new Date();
+    //   channel.setMessage = message;
+    //   this.chat.getProtectedChannels.push(channel);
+    // }
+    client.to(`Room${channel.getRoomId.toString()}`).emit('jsonData.message');
     // request data
     // {
     //   roomId,
