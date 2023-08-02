@@ -44,7 +44,7 @@ export class DMChannel extends BaseEntity {
   user2: UserObject;
 }
 
-@Entity('directMessage')
+@Entity('direct_message')
 export class DirectMessage extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
