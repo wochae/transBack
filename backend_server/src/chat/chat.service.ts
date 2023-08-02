@@ -19,7 +19,7 @@ export class ChatService {
     private directMessagesRepository: DirectMessageRepository,
   ) {}
   private logger: Logger = new Logger('ChatService');
-  
+
   // TODO: 에러처리 catch ~ throw
   // FIXME: Error 객체반환하는거 맞는지 확인해야함
   enterChatRoom(
@@ -58,35 +58,35 @@ export class ChatService {
     channel.setChannelIdx = Chat.idxForSetChannelIdx;
     channel.setRoomId = Chat.idxForSetChannelIdx;
     channel.setPassword = null;
-    channel.setMember = ["wochae"];
+    channel.setMember = ['wochae'];
     channel.setMode = Mode.PUBLIC;
-    channel.setMessage = null;    
+    channel.setMessage = null;
     channel.setOwner = req.nickname;
-    channel.setAdmin = "";
-    console.log("channel", channel);
+    channel.setAdmin = '';
+    console.log('channel', channel);
     this.chat.setProtectedChannels = channel;
     return {
       member: channel.getMember,
       channelIdx: channel.getChannelIdx,
-      password: false
+      password: false,
     };
   }
   createProtectedChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
     const channel = new Channel();
     channel.setChannelIdx = Chat.idxForSetChannelIdx;
     channel.setRoomId = Chat.idxForSetChannelIdx++;
-    channel.setPassword = "pw";
-    channel.setMember = ["wochae"];
+    channel.setPassword = 'pw';
+    channel.setMember = ['wochae'];
     channel.setMode = Mode.PROTECTED;
-    channel.setMessage = null;    
+    channel.setMessage = null;
     channel.setOwner = req.nickname;
-    channel.setAdmin = "wochae";
-    
+    channel.setAdmin = 'wochae';
+
     this.chat.setProtectedChannels = channel;
     return {
       member: channel.getMember,
       channelIdx: channel.getChannelIdx,
-      password: true
+      password: true,
     };
   }
 

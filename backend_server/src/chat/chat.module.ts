@@ -19,7 +19,7 @@ import { UsersService } from 'src/users/users.service';
     ]),
     UsersModule,
   ],
-  providers: [ChatGateway, ChatService, Chat], // FIXME: Channel 은 어차피 Chat 으로 접근할거니까 필요 없겠지?
+  providers: [ChatGateway, ChatService, Chat],
 })
 export class ChatModule {
   private logger: Logger = new Logger('ChatModule');
