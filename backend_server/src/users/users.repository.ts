@@ -23,6 +23,10 @@ export class UserObjectRepository extends Repository<UserObject> {
 
     return user.intra;
   }
+
+  async setIsOnline(user: UserObject) {
+    return;
+  }
 }
 
 // @CustomRepository(Histories)

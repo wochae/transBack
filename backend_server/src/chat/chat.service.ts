@@ -22,76 +22,80 @@ export class ChatService {
 
   // TODO: 에러처리 catch ~ throw
   // FIXME: Error 객체반환하는거 맞는지 확인해야함
-  enterChatRoom(
-    client: Socket,
-    clientData: any,
-    channel: Channel,
-  ): any | Error {
-    // // 비밀번호 확인
-    if (channel.getPassword !== null) {
-      if (channel.getPassword !== clientData.password) {
-        this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
-        return new error('Please check your password');
-      }
-    }
-    this.logger.log(
-      `[ 💬 Socket API ] enterChatRomm _ roomId: ${channel.getRoomId}`,
-    );
-    client.join(`Room${channel.getRoomId.toString()}`);
-    channel.setMember = [clientData.nickname];
-    // API: MAIN_CHAT_3
-    client
-      .to(`Room${channel.getRoomId.toString()}`)
-      .emit('chat_enter_noti', clientData.nickname);
-    this.logger.log(
-      `[ 💬 Socket API ] ${clientData.nickname} Success enterChatRomm _ roomId: ${channel.getRoomId}`,
-    );
-    return {
-      member: channel.getMember,
-      channelIdx: channel.getChannelIdx,
-    };
-  }
+  // enterChatRoom(
+  //   client: Socket,
+  //   clientData: any,
+  //   channel: Channel,
+  // ): any | Error {
+  //   // // 비밀번호 확인
+  //   if (channel.getPassword !== null) {
+  //     if (channel.getPassword !== clientData.password) {
+  //       this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
+  //       return new error('Please check your password');
+  //     }
+  //   }
+  //   this.logger.log(
+  //     `[ 💬 Socket API ] enterChatRomm _ roomId: ${channel.getRoomId}`,
+  //   );
+  //   client.join(`Room${channel.getRoomId.toString()}`);
+  //   channel.setMember = [clientData.nickname];
+  //   // API: MAIN_CHAT_3
+  //   client
+  //     .to(`Room${channel.getRoomId.toString()}`)
+  //     .emit('chat_enter_noti', clientData.nickname);
+  //   this.logger.log(
+  //     `[ 💬 Socket API ] ${clientData.nickname} Success enterChatRomm _ roomId: ${channel.getRoomId}`,
+  //   );
+  //   return {
+  //     member: channel.getMember,
+  //     channelIdx: channel.getChannelIdx,
+  //   };
+  // }
 
   // API: MAIN_CHAT_5
-  createPublicChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
+  createPublicChatRoom(req: chatCreateRoomReqDto) {
     const channel = new Channel();
+    const user = new UserObject();
+    user.nickname = 'wochae';
     channel.setChannelIdx = Chat.idxForSetChannelIdx;
     channel.setRoomId = Chat.idxForSetChannelIdx;
     channel.setPassword = null;
-    channel.setMember = ['wochae'];
+    channel.setMember = user;
     channel.setMode = Mode.PUBLIC;
     channel.setMessage = null;
     channel.setOwner = req.nickname;
     channel.setAdmin = '';
     console.log('channel', channel);
     this.chat.setProtectedChannels = channel;
-    return {
-      member: channel.getMember,
-      channelIdx: channel.getChannelIdx,
-      password: false,
-    };
+    // return {
+    //   // member: channel.getMember,
+    //   channelIdx: channel.getChannelIdx,
+    //   password: false,
+    // };
   }
-  createProtectedChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
+  createProtectedChatRoom(req: chatCreateRoomReqDto) {
     const channel = new Channel();
+    const user = new UserObject();
+    user.nickname = 'wochae';
     channel.setChannelIdx = Chat.idxForSetChannelIdx;
     channel.setRoomId = Chat.idxForSetChannelIdx++;
     channel.setPassword = 'pw';
-    channel.setMember = ['wochae'];
+    channel.setMember = user;
     channel.setMode = Mode.PROTECTED;
     channel.setMessage = null;
     channel.setOwner = req.nickname;
     channel.setAdmin = 'wochae';
 
     this.chat.setProtectedChannels = channel;
-    return {
-      member: channel.getMember,
-      channelIdx: channel.getChannelIdx,
-      password: true,
-    };
+    // return {
+    //   member: channel.getMember,
+    //   channelIdx: channel.getChannelIdx,
+    //   password: true,
+    // };
   }
 
   /********************* check Room Member & client *********************/
-  checkAlreadyInRoom(clientData: any): boolean {
+  checkAlreadyInRoom(clientData: any) {
     // find() 사용
     const channel = this.findChannelByRoomId(clientData.roomId);
     // if (channel == null) {
