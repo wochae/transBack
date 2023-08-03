@@ -35,9 +35,20 @@ export class Chat {
   set setSocketList(SocketObject: SocketObject) {
     this.socektList.push(SocketObject);
   }
+  // TODO: socketID 저장?
   setSocketObject(socket: Socket, user: UserObject): SocketObject {
     const socketObject = { socket, user };
     return socketObject;
+  }
+
+  // TODO: test 필요
+  removeSocketObject(socketObject: SocketObject): void {
+    const socketIdx = this.socektList.findIndex(
+      (client) => client.user.nickname === socketObject.user.nickname,
+    );
+    if (socketIdx !== -1) {
+      this.socektList.splice(socketIdx, 1);
+    }
   }
 
   // method

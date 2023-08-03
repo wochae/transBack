@@ -18,8 +18,8 @@ import { UsersService } from 'src/users/users.service';
 import { chatCreateRoomReqDto } from './dto/chat.dto';
 import { Mode } from './entities/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
-
-const connectedClients = new Set<Socket>();
+import { UserObject } from 'src/users/entities/users.entity';
+import { disconnect } from 'process';
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
@@ -46,22 +46,34 @@ export class ChatGateway
   }
 
   // TODO: MAIN_ENTER_0 구현을 여기에 해야하지 않을까 싶음.
-  handleConnection(client: Socket, ...args: any[]) {
-    // TODO: 인메모리에 유저에 대한 정보 저장하기
-    // TODO: 해당 socket 을 갖고 있는 유저 intra 또는 nicnkname 찾아서 출력?
-    // connectedClients 를 new SocketObject 로 만들어서 저장하기
-    connectedClients.add(client);
-    this.logger.log(
-      `[ 💬 Client ] { NickName } Connected _ 일단 소켓 ID 출력 ${client.id}`,
+  handleConnection(client: Socket) {
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
     );
-    console.log(this.inMemoryUsers.inMemoryUsers);
+    const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
+      return user.userIdx === userId;
+    });
+    if (!user) {
+      this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
+      this.handleDisconnect(client);
+    }
+    // TODO: 이미 존재하는 member 인지 확인 필요
+    // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
+    this.chat.setSocketList = this.chat.setSocketObject(client, user);
+    this.logger.log(`[ 💬 Client ] ${user.nickname} Connected`);
+    console.log('socketObject: ', this.chat.getSocketList);
   }
 
-  handleDisconnect(client: Socket) {
-    connectedClients.delete(client);
-    this.logger.log(
-      `[ 💬 Client ] { NickName } Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
-    );
+  handleDisconnect(client: Socket, nickname?: string) {
+    // this.chat.deleteSocketObject(client);
+    if (nickname) {
+      // TODO: room 나가기, 소켓 리스트 지우기 등.
+      this.logger.log(
+        `[ 💬 Client ] ${nickname} Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
+      );
+    }
+    client.disconnect();
   }
 
   /***************************** SOCKET API  *****************************/
@@ -266,9 +278,9 @@ export class ChatGateway
       event: 'chat_create_room',
       data: JSON.parse(res),
     };
-    connectedClients.forEach((client) =>
-      client.emit(message.event, message.data.toString()),
-    );
+    // connectedClients.forEach((client) =>
+    //   client.emit(message.event, message.data.toString()),
+    // );
   }
 
   // API: MAIN_CHAT_6
