@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserObjectRepository } from './users.repository';
 import { CreateUsersDto } from './dto/create-users.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { BlockTargetDto } from './dto/block-target.dto';
 import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
@@ -12,7 +11,7 @@ import { InsertFriendDto } from './dto/insert-friend.dto';
 export class UsersService {
   constructor(
     private userObjectRepository: UserObjectRepository,
-    private blockedRepository: BlockListRepository,
+    private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
   ) {}
 
@@ -40,7 +39,7 @@ export class UsersService {
     blockTarget: BlockTargetDto,
     user: UserObject,
   ): Promise<string> {
-    return this.blockedRepository.blockTarget(
+    return this.blockedListRepository.blockTarget(
       blockTarget,
       user,
       this.userObjectRepository,
@@ -56,5 +55,28 @@ export class UsersService {
       user,
       this.userObjectRepository,
     );
+  }
+
+  async getUserInfo(intra: string): Promise<UserObject> {
+    return this.userObjectRepository.findOne({ where: { intra: intra } });
+  }
+
+  async getFriendList(
+    intra: string,
+  ): Promise<{ friendNicname: string; isOnline: boolean }[]> {
+    const user: UserObject = await this.userObjectRepository.findOne({
+      where: { intra: intra },
+    });
+    return this.friendListRepository.getFriendList(
+      user.userIdx,
+      this.userObjectRepository,
+    );
+  }
+
+  async getBlockedList(intra: string) {
+    const user: UserObject = await this.userObjectRepository.findOne({
+      where: { intra: intra },
+    });
+    return this.blockedListRepository.getBlockedList(user);
   }
 }

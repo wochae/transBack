@@ -15,7 +15,8 @@ import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
 import { Chat } from './class/chat.class';
 import { UsersService } from 'src/users/users.service';
-import { chatCreateRoomReqDto, chatCreateRoomResDto } from './dto/chat.dto';
+import { chatCreateRoomReqDto } from './dto/chat.dto';
+import { Mode } from './entities/chat.entity';
 
 const connectedClients = new Set<Socket>();
 @WebSocketGateway({
@@ -29,8 +30,8 @@ export class ChatGateway
 {
   constructor(
     private readonly chatService: ChatService,
+    private readonly usersService: UsersService,
     private chat: Chat,
-    private usersService: UsersService,
   ) {}
   private logger: Logger = new Logger('ChatGateway');
 
@@ -46,6 +47,7 @@ export class ChatGateway
   handleConnection(client: Socket, ...args: any[]) {
     // TODO: 인메모리에 유저에 대한 정보 저장하기
     // TODO: 해당 socket 을 갖고 있는 유저 intra 또는 nicnkname 찾아서 출력?
+    // connectedClients 를 new SocketObject 로 만들어서 저장하기
     connectedClients.add(client);
     this.logger.log(
       `[ 💬 Client ] { NickName } Connected _ 일단 소켓 ID 출력 ${client.id}`,
@@ -61,25 +63,54 @@ export class ChatGateway
 
   /***************************** SOCKET API  *****************************/
   // FIXME: 매개변수 DTO 로 Json.parse 대체하기
-  // API: MAIN_ENTER_0
   @SubscribeMessage('main_enter')
   async enterMainPage(
     @ConnectedSocket() client: Socket,
+    // TODO: intra 를 class 로 만들어서 DTO 처리?
     @MessageBody() data: any,
   ) {
-    const { intra } = data;
-    // FIXME: 친구 정보 db 에서 가져오는 것 + blockList, imgUri, myNickname 인메모리에 가져오는 것
-    // FIXME: 채널 데이터 db 에서 가져오는 것 + 인메모리에 가져오는 것
-    // const response = await this.test.getMainScreenData(intra);
-    // TODO: emit 이벤트와 데이터를 함수로 만들까?? ex) emitFunc(event, response) -> client.emit(event, response);
-    // client.emit('main_enter', response);
-    // const response = await this.chatService.getMainScreenData(intra);
-    // client.emit('main_screen_data', response);
+    // FIXME: Test 용으로 만들었기 때문에 지워야함. channel 생성하는 코드.
+    // const testChannel = new Channel();
+    // testChannel.setOwner = 'test';
+    // testChannel.setChannelIdx = 0;
+    // testChannel.setMode = Mode.PROTECTED;
+    // this.chat.setProtectedChannels = testChannel;
+    // // console.log('channelList1 : ', this.chat.getProtectedChannels);
+
+    // const testChannel1 = new Channel();
+    // testChannel1.setOwner = 'test1';
+    // testChannel1.setChannelIdx = 1;
+    // testChannel1.setMode = Mode.PUBLIC;
+    // this.chat.setProtectedChannels = testChannel1;
+    // // console.log('channelList2 : ', this.chat.getProtectedChannels);
+
+    const { intra } = JSON.parse(data);
+
+    // API: MAIN_ENTER_0
+    const friendList = await this.usersService.getFriendList(intra);
+    const blockList = await this.usersService.getBlockedList(intra);
+    const channels = this.chat.getProtectedChannels;
+    const channelList = channels.map(
+      ({ getOwner: owner, getChannelIdx: channelIdx, getMode: mode }) => ({
+        owner,
+        channelIdx,
+        mode,
+      }),
+    );
+    const user = await this.usersService.getUserInfo(intra);
+    const userObject = {
+      imgUri: user.imgUri,
+      nickname: user.nickname,
+      userIdx: user.userIdx,
+    };
+    const result = { friendList, channelList, blockList, userObject };
+    client.emit('main_enter', result);
+
     // API: MAIN_ENTER_1
-    this.server.emit('BR_main_enter', {
-      nickname: intra,
-      isOnline: true,
-    });
+    // this.server.emit('BR_main_enter', {
+    //   nickname: intra,
+    //   isOnline: true,
+    // });
     return;
   }
 
