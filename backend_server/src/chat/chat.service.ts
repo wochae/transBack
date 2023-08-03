@@ -117,10 +117,7 @@ export class ChatService {
     const protectedChannel: Channel = this.chat.getProtectedChannels.find(
       (channel) => channel.getRoomId === roomId,
     );
-    const privateChannel: Channel = this.chat.getPrivateChannels.find(
-      (channel) => channel.getRoomId === roomId,
-    );
-    return protectedChannel || privateChannel || null;
+    return protectedChannel || null;
   }
 
   findProtectedChannelByRoomId(roomId: number): Channel {
@@ -153,13 +150,15 @@ export class ChatService {
     this.logger.log(
       `[ 💬 Socket API ] findChannelByRoomId _ roomId: ${roomId}`,
     );
-    const privateChannel = this.chat.getPrivateChannels.find(
-      (channel) => channel.getRoomId === roomId,
-    );
-    if (privateChannel == undefined) {
-      return null;
-    }
-    return privateChannel;
+    // DB 에서 찾아야함
+    // const privateChannel = this.chat.getPrivateChannels.find(
+    //   (channel) => channel.getRoomId === roomId,
+    // );
+    // if (privateChannel == undefined) {
+    //   return null;
+    // }
+    // return privateChannel;
+    return null;
   }
 
   async createDmChannel(
