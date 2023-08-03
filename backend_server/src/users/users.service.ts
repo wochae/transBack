@@ -57,6 +57,10 @@ export class UsersService {
     );
   }
 
+  async getAllUsers(): Promise<UserObject[]> {
+    return this.userObjectRepository.find();
+  }
+
   async getUserInfo(intra: string): Promise<UserObject> {
     return this.userObjectRepository.findOne({ where: { intra: intra } });
   }
@@ -78,5 +82,13 @@ export class UsersService {
       where: { intra: intra },
     });
     return this.blockedListRepository.getBlockedList(user);
+  }
+
+  async setIsOnline(intra: string) {
+    // DB 먼저 바꾸고 -> In memory 바꾸기
+    const userObject = await this.userObjectRepository.findOne({
+      where: { intra: intra },
+    });
+    return this.userObjectRepository.setIsOnline(userObject);
   }
 }

@@ -17,6 +17,7 @@ import { Chat } from './class/chat.class';
 import { UsersService } from 'src/users/users.service';
 import { chatCreateRoomReqDto } from './dto/chat.dto';
 import { Mode } from './entities/chat.entity';
+import { InMemoryUsers } from 'src/users/users.provider';
 
 const connectedClients = new Set<Socket>();
 @WebSocketGateway({
@@ -31,6 +32,7 @@ export class ChatGateway
   constructor(
     private readonly chatService: ChatService,
     private readonly usersService: UsersService,
+    private readonly inMemoryUsers: InMemoryUsers,
     private chat: Chat,
   ) {}
   private logger: Logger = new Logger('ChatGateway');
@@ -52,6 +54,7 @@ export class ChatGateway
     this.logger.log(
       `[ 💬 Client ] { NickName } Connected _ 일단 소켓 ID 출력 ${client.id}`,
     );
+    console.log(this.inMemoryUsers.inMemoryUsers);
   }
 
   handleDisconnect(client: Socket) {
@@ -97,6 +100,7 @@ export class ChatGateway
         mode,
       }),
     );
+    // FIXME: 지금은 DB 에서 가져옴. In Memory 로 바꿔야함.
     const user = await this.usersService.getUserInfo(intra);
     const userObject = {
       imgUri: user.imgUri,
@@ -107,6 +111,9 @@ export class ChatGateway
     client.emit('main_enter', result);
 
     // API: MAIN_ENTER_1
+    // DB 에 isOnline 을 true 로 바꿔주는 코드
+    // member 객체 찾기
+    const OnOffInfo = await this.usersService.setIsOnline(intra);
     // this.server.emit('BR_main_enter', {
     //   nickname: intra,
     //   isOnline: true,
@@ -185,7 +192,7 @@ export class ChatGateway
     } else {
       this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
     }
-    return this.chatService.enterChatRoom(client, jsonData, channel);
+    // return this.chatService.enterChatRoom(client, jsonData, channel);
   }
 
   // API: MAIN_CHAT_4
