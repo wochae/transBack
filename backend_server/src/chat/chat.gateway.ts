@@ -92,7 +92,7 @@ export class ChatGateway
   async enterMainPage(
     @ConnectedSocket() client: Socket,
     // TODO: intra 를 class 로 만들어서 DTO 처리?
-    @MessageBody() data: any,
+    @MessageBody() payload: any,
   ) {
     // FIXME: Test 용으로 만들었기 때문에 지워야함. channel 생성하는 코드.
     // const testChannel = new Channel();
@@ -109,7 +109,7 @@ export class ChatGateway
     // this.chat.setProtectedChannels = testChannel1;
     // // console.log('channelList2 : ', this.chat.getProtectedChannels);
 
-    const { intra } = JSON.parse(data);
+    const { intra } = JSON.parse(payload);
 
     // API: MAIN_ENTER_0
     const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
@@ -153,11 +153,17 @@ export class ChatGateway
   @SubscribeMessage('user_profile')
   async handleGetProfile(
     @ConnectedSocket() client: Socket,
-    @MessageBody() targetNickname: string,
+    @MessageBody() payload: any,
   ) {
-    // // const targetProfile = await this.usersService.getProfile(targetNickname);
-    // client.emit('target_profile', targetProfile);
-    // console.log(targetProfile);
+    const { targetNickname, targetIdx } = JSON.parse(payload);
+
+    const targetProfile = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+    if (!targetProfile || targetProfile.nickname !== targetNickname) {
+      this.logger.log(`[ ❗️ Client ] ${targetNickname} Not Found`);
+      client.disconnect();
+    }
+    // TODO: game 기록도 인메모리에서 관리하기로 했었나?? 전적 데이터 추가 필요
+    client.emit('user_profile', targetProfile);
   }
 
   // API: MAIN_CHAT_0
