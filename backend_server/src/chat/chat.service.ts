@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Channel } from './class/channel.class';
-import { Chat } from './class/chat.class';
+import { Chat, MessageInfo } from './class/chat.class';
 import { Socket } from 'socket.io';
 import { error } from 'console';
 import { DataSource } from 'typeorm';
@@ -201,5 +201,34 @@ export class ChatService {
       await queryRunner.release();
     }
     return ret;
+  }
+
+  async checkDM(userIdx: number, targetIdx: number): Promise<MessageInfo | []> {
+    const dmList: DMChannel = await this.dmChannelRepository.findDMChannel(
+      userIdx,
+      targetIdx,
+    );
+    if (!dmList) {
+      return [];
+    }
+    const dmMessageList = await Promise.all(
+      (
+        await this.directMessagesRepository.findMessageList(dmList.channelIdx)
+      ).map(async (dm) => {
+        return {
+          sender: dm.sender,
+          msg: dm.msg,
+        };
+      }),
+    );
+    const messageInfo: MessageInfo = {
+      message: dmMessageList,
+      userIdx1: dmList.userIdx1,
+      userIdx2: dmList.userIdx2,
+      userNickname1: dmList.userNickname1,
+      userNickname2: dmList.userNickname2,
+      channelIdx: dmList.channelIdx,
+    };
+    return messageInfo;
   }
 }

@@ -37,6 +37,13 @@ export class DMChannelRepository extends Repository<DMChannel> {
 
     return list;
   }
+
+  async findDMChannel(userIdx1: number, userIdx2: number): Promise<DMChannel> {
+    const channels = await this.findOne({
+      where: [{ userIdx1: userIdx1, userIdx2: userIdx2 }],
+    });
+    return channels;
+  }
 }
 
 @CustomRepository(DirectMessage)
@@ -56,5 +63,12 @@ export class DirectMessageRepository extends Repository<DirectMessage> {
     });
 
     return firstDM;
+  }
+
+  async findMessageList(channelIdx: number): Promise<DirectMessage[]> {
+    const dmMessageList: DirectMessage[] = await this.find({
+      where: [{ channelIdx: channelIdx }],
+    });
+    return dmMessageList;
   }
 }

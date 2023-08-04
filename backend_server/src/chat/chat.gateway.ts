@@ -13,7 +13,7 @@ import {
 import { ChatService } from './chat.service';
 import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
-import { Chat } from './class/chat.class';
+import { Chat, MessageInfo } from './class/chat.class';
 import { UsersService } from 'src/users/users.service';
 import { chatCreateRoomReqDto } from './dto/chat.dto';
 import { Mode } from './entities/chat.entity';
@@ -46,6 +46,7 @@ export class ChatGateway
   }
 
   handleConnection(client: Socket) {
+    // TODO: 함수로 빼기
     const userId: number = parseInt(
       client.handshake.query.userId as string,
       10,
@@ -70,9 +71,6 @@ export class ChatGateway
       10,
     );
     const user = this.inMemoryUsers.getUserByIdFromIM(userId);
-    // const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
-    //   return user.userIdx === userId;
-    // });
     if (user) {
       // TODO: disconnect 도 BR??
       // TODO: room 나가기, 소켓 리스트 지우기 등.
@@ -87,6 +85,7 @@ export class ChatGateway
   }
 
   /***************************** SOCKET API  *****************************/
+  // FIXME: gateway 에서 in memory 처리하는 것. service 로 보내기?
   // FIXME: 매개변수 DTO 로 Json.parse 대체하기
   @SubscribeMessage('main_enter')
   async enterMainPage(
@@ -112,6 +111,7 @@ export class ChatGateway
     const { intra } = JSON.parse(payload);
 
     // API: MAIN_ENTER_0
+    // TODO: 정리가 필요할듯
     const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
     if (!user) {
       this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
@@ -131,21 +131,22 @@ export class ChatGateway
         mode,
       }),
     );
-
-    client.emit('main_enter', {
+    const main_enter = {
       friendList,
       channelList,
       blockList,
       userObject,
-    });
+    };
+    client.emit('main_enter', main_enter);
 
     // API: MAIN_ENTER_1
     await this.usersService.setIsOnline(user, true);
-    this.server.emit('BR_main_enter', {
+    const BR_main_enter = {
       targetNickname: user.nickname,
       targetIdx: user.userIdx,
       isOnline: user.isOnline,
-    });
+    };
+    this.server.emit('BR_main_enter', BR_main_enter);
     return;
   }
 
@@ -157,26 +158,31 @@ export class ChatGateway
   ) {
     const { targetNickname, targetIdx } = JSON.parse(payload);
 
-    const targetProfile = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
-    if (!targetProfile || targetProfile.nickname !== targetNickname) {
+    const user_profile = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+    if (!user_profile || user_profile.nickname !== targetNickname) {
       this.logger.log(`[ ❗️ Client ] ${targetNickname} Not Found`);
       client.disconnect();
     }
     // TODO: game 기록도 인메모리에서 관리하기로 했었나?? 전적 데이터 추가 필요
-    client.emit('user_profile', targetProfile);
+    client.emit('user_profile', user_profile);
   }
 
   // API: MAIN_CHAT_0
   @SubscribeMessage('check_dm')
   async handleCheckDM(
     @ConnectedSocket() client: Socket,
-    @MessageBody() targetNickname: string,
+    @MessageBody() payload: any,
   ) {
-    // if (!this.chatService.checkDM(targetNickname)) {
-    //   client.emit('not_found_dm'); // 여기서 찾을 수 없다는 메시지를 받으면 그 둘의 관련된 channel 페이지로 이동시킨다.
-    // } else { const { Message[], member[], channelIdx } = await this.chatService.getDM(targetNickname);
-    // client.emit('found_dm', { Message[], member[], channelIdx });
-    // }
+    const { targetIdx } = JSON.parse(payload);
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
+    );
+    const check_dm: MessageInfo | [] = await this.chatService.checkDM(
+      userId,
+      targetIdx,
+    );
+    client.emit('check_dm', check_dm);
   }
 
   // API: MAIN_CHAT_1

@@ -7,6 +7,19 @@ interface SocketObject {
   user: UserObject;
 }
 
+interface Message {
+  sender: string;
+  msg: string;
+}
+export interface MessageInfo {
+  message: Message[];
+  userIdx1: number;
+  userIdx2: number;
+  userNickname1: string;
+  userNickname2: string;
+  channelIdx: number;
+}
+
 export class Chat {
   /******************************* 변수 *******************************/
   private protectedChannels: Channel[];
