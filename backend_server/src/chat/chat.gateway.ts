@@ -55,13 +55,12 @@ export class ChatGateway
     });
     if (!user) {
       this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
-      this.handleDisconnect(client);
+      client.disconnect();
     }
     // TODO: 이미 존재하는 member 인지 확인 필요
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
     this.logger.log(`[ 💬 Client ] ${user.nickname} Connected`);
-    // console.log('socketObject: ', this.chat.getSocketList);
   }
 
   // nickname 대신 UserObject
@@ -77,9 +76,9 @@ export class ChatGateway
     if (user) {
       // TODO: disconnect 도 BR??
       // TODO: room 나가기, 소켓 리스트 지우기 등.
-      // const member = this.inMemoryUsers.inMemoryUsers.find(
-      //   (member) => member.intra === intra,
-      // );
+      await this.chat.removeSocketObject(
+        this.chat.setSocketObject(client, user),
+      );
       // TODO: inmemory 도 체크해보기
       await this.usersService.setIsOnline(user, false);
       this.logger.log(
