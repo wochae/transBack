@@ -131,18 +131,16 @@ export class ChatGateway
     client.emit('main_enter', result);
 
     // API: MAIN_ENTER_1
-    // const member = this.inMemoryUsers.inMemoryUsers.find(
-    //   (member) => member.intra === intra,
-    // );
     const member = this.inMemoryUsers.getUserFromIM(intra);
     if (!member) {
       this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
       this.handleDisconnect(client);
     }
-    const isOnline = await this.usersService.setIsOnline(member, true);
+    await this.usersService.setIsOnline(member, true);
     this.server.emit('BR_main_enter', {
-      nickname: intra,
-      isOnline: isOnline,
+      targetNickname: member.nickname,
+      targetIdx: member.userIdx,
+      isOnline: member.isOnline,
     });
     return;
   }
