@@ -5,7 +5,11 @@ import { UserObject } from './entities/users.entity';
 export class InMemoryUsers {
   inMemoryUsers: UserObject[] = [];
 
-  getUserFromIM(intra: string): UserObject {
+  getUserByIntraFromIM(intra: string): UserObject {
     return this.inMemoryUsers.find((user) => user.intra === intra);
+  }
+
+  getUserByIdFromIM(userId: number): UserObject {
+    return this.inMemoryUsers.find((user) => user.userIdx === userId);
   }
 }

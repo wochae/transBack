@@ -50,6 +50,7 @@ export class ChatGateway
       client.handshake.query.userId as string,
       10,
     );
+    // TODO: client.handshake.query.userId 와 intra 가 db 에 있는 userIdx & intra 와 일치한지 확인하는 함수 추가
     const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
       return user.userIdx === userId;
     });
@@ -68,16 +69,17 @@ export class ChatGateway
       client.handshake.query.userId as string,
       10,
     );
-    const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
-      return user.userIdx === userId;
-    });
+    const user = this.inMemoryUsers.getUserByIdFromIM(userId);
+    // const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
+    //   return user.userIdx === userId;
+    // });
     if (user) {
       // TODO: disconnect 도 BR??
       // TODO: room 나가기, 소켓 리스트 지우기 등.
+      await this.usersService.setIsOnline(user, false);
       await this.chat.removeSocketObject(
         this.chat.setSocketObject(client, user),
       );
-      await this.usersService.setIsOnline(user, false);
       this.logger.log(
         `[ 💬 Client ] ${user.nickname} Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
       );
@@ -110,37 +112,39 @@ export class ChatGateway
     const { intra } = JSON.parse(data);
 
     // API: MAIN_ENTER_0
+    const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
+    if (!user) {
+      this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
+      client.disconnect();
+    }
+    const userObject = {
+      imgUri: user.imgUri,
+      nickname: user.nickname,
+      userIdx: user.userIdx,
+    };
     const friendList = await this.usersService.getFriendList(intra);
     const blockList = await this.usersService.getBlockedList(intra);
-    const channels = this.chat.getProtectedChannels;
-    const channelList = channels.map(
+    const channelList = this.chat.getProtectedChannels.map(
       ({ getOwner: owner, getChannelIdx: channelIdx, getMode: mode }) => ({
         owner,
         channelIdx,
         mode,
       }),
     );
-    // FIXME: 지금은 DB 에서 가져옴. In Memory 로 바꿔야함.
-    const user = await this.usersService.getUserInfoFromDB(intra);
-    const userObject = {
-      imgUri: user.imgUri,
-      nickname: user.nickname,
-      userIdx: user.userIdx,
-    };
-    const result = { friendList, channelList, blockList, userObject };
-    client.emit('main_enter', result);
+
+    client.emit('main_enter', {
+      friendList,
+      channelList,
+      blockList,
+      userObject,
+    });
 
     // API: MAIN_ENTER_1
-    const member = this.inMemoryUsers.getUserFromIM(intra);
-    if (!member) {
-      this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
-      this.handleDisconnect(client);
-    }
-    await this.usersService.setIsOnline(member, true);
+    await this.usersService.setIsOnline(user, true);
     this.server.emit('BR_main_enter', {
-      targetNickname: member.nickname,
-      targetIdx: member.userIdx,
-      isOnline: member.isOnline,
+      targetNickname: user.nickname,
+      targetIdx: user.userIdx,
+      isOnline: user.isOnline,
     });
     return;
   }
