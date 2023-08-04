@@ -57,11 +57,11 @@ export class UsersService {
     );
   }
 
-  async getAllUsers(): Promise<UserObject[]> {
+  async getAllUsersFromDB(): Promise<UserObject[]> {
     return this.userObjectRepository.find();
   }
 
-  async getUserInfo(intra: string): Promise<UserObject> {
+  async getUserInfoFromDB(intra: string): Promise<UserObject> {
     return this.userObjectRepository.findOne({ where: { intra: intra } });
   }
 

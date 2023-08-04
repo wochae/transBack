@@ -19,7 +19,7 @@ import { chatCreateRoomReqDto } from './dto/chat.dto';
 import { Mode } from './entities/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { UserObject } from 'src/users/entities/users.entity';
-import { disconnect } from 'process';
+
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
@@ -63,9 +63,7 @@ export class ChatGateway
     this.logger.log(`[ 💬 Client ] ${user.nickname} Connected`);
   }
 
-  // nickname 대신 UserObject
   async handleDisconnect(client: Socket) {
-    // this.chat.deleteSocketObject(client);
     const userId: number = parseInt(
       client.handshake.query.userId as string,
       10,
@@ -79,7 +77,6 @@ export class ChatGateway
       await this.chat.removeSocketObject(
         this.chat.setSocketObject(client, user),
       );
-      // TODO: inmemory 도 체크해보기
       await this.usersService.setIsOnline(user, false);
       this.logger.log(
         `[ 💬 Client ] ${user.nickname} Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
@@ -124,7 +121,7 @@ export class ChatGateway
       }),
     );
     // FIXME: 지금은 DB 에서 가져옴. In Memory 로 바꿔야함.
-    const user = await this.usersService.getUserInfo(intra);
+    const user = await this.usersService.getUserInfoFromDB(intra);
     const userObject = {
       imgUri: user.imgUri,
       nickname: user.nickname,
@@ -134,11 +131,10 @@ export class ChatGateway
     client.emit('main_enter', result);
 
     // API: MAIN_ENTER_1
-    // DB 에 isOnline 을 true 로 바꿔주는 코드
-    // in memory 에서 member 객체 찾기. 그 후 아래 함수에서 넣어주기
-    const member = this.inMemoryUsers.inMemoryUsers.find(
-      (member) => member.intra === intra,
-    );
+    // const member = this.inMemoryUsers.inMemoryUsers.find(
+    //   (member) => member.intra === intra,
+    // );
+    const member = this.inMemoryUsers.getUserFromIM(intra);
     if (!member) {
       this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
       this.handleDisconnect(client);

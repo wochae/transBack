@@ -33,7 +33,7 @@ export class ChatModule {
   }
 
   private async initializeInMemoryDataFromDatabase() {
-    const usersFromDatabase = await this.usersService.getAllUsers();
+    const usersFromDatabase = await this.usersService.getAllUsersFromDB();
     this.inMemoryUsers.inMemoryUsers = usersFromDatabase;
   }
 }
