@@ -24,8 +24,11 @@ export class UserObjectRepository extends Repository<UserObject> {
     return user.intra;
   }
 
-  async setIsOnline(user: UserObject) {
-    return;
+  async setIsOnline(user: UserObject, isOnline: boolean): Promise<boolean> {
+    user.isOnline = isOnline;
+    console.log('isOnline: ', user.isOnline);
+    await this.save(user);
+    return user.isOnline;
   }
 }
 

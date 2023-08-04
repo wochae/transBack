@@ -84,11 +84,16 @@ export class UsersService {
     return this.blockedListRepository.getBlockedList(user);
   }
 
-  async setIsOnline(intra: string) {
+  async setIsOnline(member: UserObject, isOnline: boolean) {
     // DB 먼저 바꾸고 -> In memory 바꾸기
     const userObject = await this.userObjectRepository.findOne({
-      where: { intra: intra },
+      where: { intra: member.intra },
     });
-    return this.userObjectRepository.setIsOnline(userObject);
+    // TODO: 이 예외처리가 필요한가??
+    if (!userObject) {
+      return false;
+    }
+    member.isOnline = isOnline;
+    return this.userObjectRepository.setIsOnline(userObject, isOnline);
   }
 }

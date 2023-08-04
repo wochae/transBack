@@ -45,7 +45,6 @@ export class ChatGateway
     this.logger.log('[ 💬 Chat ] Initialized!');
   }
 
-  // TODO: MAIN_ENTER_0 구현을 여기에 해야하지 않을까 싶음.
   handleConnection(client: Socket) {
     const userId: number = parseInt(
       client.handshake.query.userId as string,
@@ -62,18 +61,31 @@ export class ChatGateway
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
     this.logger.log(`[ 💬 Client ] ${user.nickname} Connected`);
-    console.log('socketObject: ', this.chat.getSocketList);
+    // console.log('socketObject: ', this.chat.getSocketList);
   }
 
-  handleDisconnect(client: Socket, nickname?: string) {
+  // nickname 대신 UserObject
+  async handleDisconnect(client: Socket) {
     // this.chat.deleteSocketObject(client);
-    if (nickname) {
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
+    );
+    const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
+      return user.userIdx === userId;
+    });
+    if (user) {
+      // TODO: disconnect 도 BR??
       // TODO: room 나가기, 소켓 리스트 지우기 등.
+      // const member = this.inMemoryUsers.inMemoryUsers.find(
+      //   (member) => member.intra === intra,
+      // );
+      // TODO: inmemory 도 체크해보기
+      await this.usersService.setIsOnline(user, false);
       this.logger.log(
-        `[ 💬 Client ] ${nickname} Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
+        `[ 💬 Client ] ${user.nickname} Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
       );
     }
-    client.disconnect();
   }
 
   /***************************** SOCKET API  *****************************/
@@ -124,12 +136,19 @@ export class ChatGateway
 
     // API: MAIN_ENTER_1
     // DB 에 isOnline 을 true 로 바꿔주는 코드
-    // member 객체 찾기
-    const OnOffInfo = await this.usersService.setIsOnline(intra);
-    // this.server.emit('BR_main_enter', {
-    //   nickname: intra,
-    //   isOnline: true,
-    // });
+    // in memory 에서 member 객체 찾기. 그 후 아래 함수에서 넣어주기
+    const member = this.inMemoryUsers.inMemoryUsers.find(
+      (member) => member.intra === intra,
+    );
+    if (!member) {
+      this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
+      this.handleDisconnect(client);
+    }
+    const isOnline = await this.usersService.setIsOnline(member, true);
+    this.server.emit('BR_main_enter', {
+      nickname: intra,
+      isOnline: isOnline,
+    });
     return;
   }
 
