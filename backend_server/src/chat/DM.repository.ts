@@ -66,9 +66,13 @@ export class DirectMessageRepository extends Repository<DirectMessage> {
   }
 
   async findMessageList(channelIdx: number): Promise<DirectMessage[]> {
-    const dmMessageList: DirectMessage[] = await this.find({
-      where: [{ channelIdx: channelIdx }],
-    });
+    // const dmMessageList: DirectMessage[] = await this.find({
+    //   where: [{ channelIdx: channelIdx }],
+    // });
+    // return dmMessageList;
+    const dmMessageList: DirectMessage[] = await this.createQueryBuilder('dm')
+      .where('dm.channelIdx = :channelIdx', { channelIdx })
+      .getMany();
     return dmMessageList;
   }
 }
