@@ -2,7 +2,6 @@ import {
   BaseEntity,
   Entity,
   Column,
-  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
   OneToMany,
@@ -12,6 +11,7 @@ import { BlockList } from './blockList.entity';
 import { CertificateObject } from './certificate.entity';
 import { DMChannel } from 'src/chat/entities/chat.entity';
 import { GameRecord } from 'src/game/entity/gameRecord.entity';
+import { GameChannel } from 'src/game/entity/gameChannel.entity';
 
 @Entity('users')
 export class UserObject extends BaseEntity {
@@ -53,6 +53,9 @@ export class UserObject extends BaseEntity {
 
   @OneToMany(() => GameRecord, (userIdx) => userIdx)
   userRecordList: GameRecord[];
+
+  @OneToMany(() => GameChannel, (userIdx) => userIdx)
+  userGameChannelList: GameChannel[];
 }
 
 // @Entity('histories')

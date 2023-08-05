@@ -1,23 +1,21 @@
 import { Module } from '@nestjs/common';
 import { GameGateway } from './game.gateway';
 import { GameService } from './game.service';
-import { GameRecordRepository } from './game.repository';
-import { GameChannelRepository } from './channel.repository';
+import { GameRecordRepository } from './game.record.repository';
+import { GameChannelRepository } from './game.channel.repository';
 import { TypeOrmExModule } from 'src/typeorm-ex.module';
 import { UsersModule } from 'src/users/users.module';
-import { UserObjectRepository } from 'src/users/users.repository';
 
 @Module({
   imports: [
+    // TypeOrmModule.forFeature([GameRecordRepository, GameChannelRepository]),
     TypeOrmExModule.forCustomRepository([
       GameRecordRepository,
       GameChannelRepository,
-      UserObjectRepository,
     ]),
     UsersModule,
   ],
-  //   controllers: [GameController],
   providers: [GameGateway, GameService],
-  //   exports: [GameModule],
+  exports: [GameModule],
 })
 export class GameModule {}

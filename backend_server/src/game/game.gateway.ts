@@ -10,6 +10,7 @@ import { Socket, Server } from 'socket.io';
 import { GameService } from './game.service';
 
 import { ErrorMsgDto } from './dto/errorMessage.dto';
+import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   namespace: 'game',
@@ -25,18 +26,18 @@ export class GameGateway
   @WebSocketServer()
   server: Server;
 
-  //   @SubscribeMessage('message')
-  //   handleMessage(client: any, payload: any): string {
-  //     return 'Hello world!';
-  //   }
+  private logger: Logger = new Logger('GameGateway');
+
   handleDisconnect(client: any) {
     throw new Error('Method not implemented.');
   }
+
   handleConnection(client: any, ...args: any[]) {
     throw new Error('Method not implemented.');
   }
+
   afterInit(server: any) {
-    throw new Error('Method not implemented.');
+    this.logger.log('[ 🎮 Game ] Initialized!');
   }
 
   @SubscribeMessage('game_option')

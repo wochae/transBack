@@ -1,13 +1,12 @@
-import { UserObject } from 'src/users/entities/users.entity';
+// import { UserObject } from 'src/users/entities/users.entity';
 import {
   BaseEntity,
   Entity,
   Column,
-  ManyToOne,
   OneToOne,
-  PrimaryGeneratedColumn,
-  OneToMany,
   PrimaryColumn,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { GameRecord, RecordResult, RecordType } from './gameRecord.entity';
 
@@ -34,11 +33,13 @@ export class GameChannel extends BaseEntity {
   @Column()
   status: RecordResult;
 
-  @OneToOne(() => UserObject, (UserIdx1) => UserIdx1)
-  User1: UserObject;
+  //   @ManyToOne(() => UserObject, (user) => user.userGameChannelList)
+  //   @JoinColumn([{ referencedColumnName: 'useridx' }])
+  //   User1: UserObject;
 
-  @OneToOne(() => UserObject, (UserIdx2) => UserIdx2)
-  User2: UserObject;
+  //   @ManyToOne(() => UserObject, (user) => user.userGameChannelList)
+  //   @JoinColumn([{ referencedColumnName: 'useridx' }])
+  //   User2: UserObject;
 
   @OneToOne(() => GameRecord, (gameIdx) => gameIdx)
   record: GameRecord;
