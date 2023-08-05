@@ -6,6 +6,7 @@ import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
 import { UserObject } from './entities/users.entity';
 import { InsertFriendDto } from './dto/insert-friend.dto';
+import { Socket } from 'socket.io';
 
 @Injectable()
 export class UsersService {
@@ -88,4 +89,8 @@ export class UsersService {
     // user.isOnline = isOnline;
     return this.userObjectRepository.setIsOnline(user, isOnline);
   }
+
+  // async getUserId(client: Socket): Promise<number> {
+  //   return parseInt(client.handshake.query.userId as string, 10);
+  // }
 }

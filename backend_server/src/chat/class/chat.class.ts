@@ -7,12 +7,13 @@ interface SocketObject {
   user: UserObject;
 }
 
-interface Message {
+export interface MessageInteface {
   sender: string;
   msg: string;
 }
+
 export interface MessageInfo {
-  message: Message[];
+  message: MessageInteface[];
   userIdx1: number;
   userIdx2: number;
   userNickname1: string;
@@ -38,6 +39,23 @@ export class Chat {
   }
   get getSocketList(): SocketObject[] {
     return this.socektList;
+  }
+  getSocketObject(userIdx: number): SocketObject {
+    for (const socketObject of this.socektList) {
+      if (socketObject.user.userIdx === userIdx) {
+        return socketObject;
+      }
+    }
+  }
+
+  getMaxChannelIdxInIM(): number {
+    let maxIdx = -1;
+    for (const channel of this.protectedChannels) {
+      if (channel.getChannelIdx > maxIdx) {
+        maxIdx = channel.getChannelIdx;
+      }
+    }
+    return maxIdx;
   }
 
   // setter

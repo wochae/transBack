@@ -3,7 +3,6 @@ import { CustomRepository } from 'src/typeorm-ex.decorator';
 import { DMChannel, DirectMessage } from './entities/chat.entity';
 import { SendDMDto } from './dto/send-dm.dto';
 import { UserObject } from 'src/users/entities/users.entity';
-import { first } from 'rxjs';
 
 @CustomRepository(DMChannel)
 export class DMChannelRepository extends Repository<DMChannel> {
@@ -11,8 +10,10 @@ export class DMChannelRepository extends Repository<DMChannel> {
     client: UserObject,
     target: UserObject,
     channelIdx: number,
-  ): Promise<DMChannel[]> {
-    let list;
+  ) {
+    // ): Promise<DMChannel[]> {
+    // FIXME: 인메모리때문에 넣어둔 건가?
+    // let list;
     const channel1 = await this.create({
       userIdx1: client.userIdx,
       userIdx2: target.userIdx,
@@ -32,10 +33,13 @@ export class DMChannelRepository extends Repository<DMChannel> {
       user1: target,
       user2: client,
     });
-    list.push(channel1);
-    list.push(channel2);
 
-    return list;
+    await this.insert(channel1);
+    await this.insert(channel2);
+    // list.add(channel1);
+    // list.add(channel2);
+
+    // return list;
   }
 
   async findDMChannel(userIdx1: number, userIdx2: number): Promise<DMChannel> {
@@ -43,6 +47,13 @@ export class DMChannelRepository extends Repository<DMChannel> {
       where: [{ userIdx1: userIdx1, userIdx2: userIdx2 }],
     });
     return channels;
+  }
+
+  async getMaxChannelIdxInDB(): Promise<number> {
+    const maxChannelIdx = await this.createQueryBuilder('dm')
+      .select('MAX(dm.channelIdx)', 'max')
+      .getRawOne();
+    return maxChannelIdx.max;
   }
 }
 
@@ -61,15 +72,13 @@ export class DirectMessageRepository extends Repository<DirectMessage> {
       msg: msg,
       msgDate: new Date(),
     });
+    console.log('firstDM: ', firstDM);
+    await this.save(firstDM);
 
     return firstDM;
   }
 
   async findMessageList(channelIdx: number): Promise<DirectMessage[]> {
-    // const dmMessageList: DirectMessage[] = await this.find({
-    //   where: [{ channelIdx: channelIdx }],
-    // });
-    // return dmMessageList;
     const dmMessageList: DirectMessage[] = await this.createQueryBuilder('dm')
       .where('dm.channelIdx = :channelIdx', { channelIdx })
       .getMany();

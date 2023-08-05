@@ -19,6 +19,8 @@ import { chatCreateRoomReqDto } from './dto/chat.dto';
 import { Mode } from './entities/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { UserObject } from 'src/users/entities/users.entity';
+import { Client } from 'socket.io/dist/client';
+import { SendDMDto } from './dto/send-dm.dto';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -51,14 +53,16 @@ export class ChatGateway
       client.handshake.query.userId as string,
       10,
     );
-    // TODO: client.handshake.query.userId 와 intra 가 db 에 있는 userIdx & intra 와 일치한지 확인하는 함수 추가
+    // TODO: client.handshake.query.userId & intra 가 db 에 있는 userIdx & intra 와 일치한지 확인하는 함수 추가
     const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
       return user.userIdx === userId;
     });
     if (!user) {
       this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
       client.disconnect();
+      return;
     }
+    // TODO: 본인이 속한 DM 채널 idx 찾아서 roomId 에 join 하기
     // TODO: 이미 존재하는 member 인지 확인 필요
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
@@ -157,8 +161,8 @@ export class ChatGateway
     @MessageBody() payload: any,
   ) {
     const { targetNickname, targetIdx } = JSON.parse(payload);
-
     const user_profile = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+
     if (!user_profile || user_profile.nickname !== targetNickname) {
       this.logger.log(`[ ❗️ Client ] ${targetNickname} Not Found`);
       client.disconnect();
@@ -178,7 +182,8 @@ export class ChatGateway
       client.handshake.query.userId as string,
       10,
     );
-    const check_dm: MessageInfo | [] = await this.chatService.checkDM(
+    // TODO: 논의 사항. 빈배열 대신에 boolean 해도 되나..?
+    const check_dm: MessageInfo | boolean = await this.chatService.checkDM(
       userId,
       targetIdx,
     );
@@ -189,21 +194,43 @@ export class ChatGateway
   @SubscribeMessage('create_dm')
   async createDM(
     @ConnectedSocket() client: Socket,
-    @MessageBody() targetNickname: string,
+    @MessageBody() payload: string,
   ) {
-    // request data
-    // {
-    //   targetNickname,
-    //   content(message),
-    // }
-    // response data
-    // {
-    //   Message,
-    //   member[],
-    //   channelIdx
-    // }
-    // roomId 방식
-    // this.server.to().emit('', );
+    const { targetNickname, targetIdx, msg } = JSON.parse(payload);
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
+    );
+    const user: UserObject = await this.usersService.getUserInfoFromDB(
+      this.inMemoryUsers.getUserByIdFromIM(userId).nickname,
+    );
+    // 오프라인일 수도 있기 때문에 db 에서 가져옴
+    const targetUser: UserObject = await this.usersService.getUserInfoFromDB(
+      targetNickname,
+    );
+    // TODO: connect 할 때 검사하는데 필요할까?
+    if (!user || !targetUser) {
+      this.logger.log(`[ ❗️ Client ] Not Found`);
+      client.disconnect();
+      return;
+    }
+    // DM 존재 여부 파악한다. 근데 이미 이전 단계에서 검사하기 때문에 필요없을 듯...? 하지만 동시에 생성될 수도 있다..?
+    if (await this.chatService.checkDM(user.userIdx, targetUser.userIdx)) {
+      console.log('이미 존재하는 DM 채널입니다.');
+      return;
+    }
+    const message: SendDMDto = { msg: msg };
+    const newChannelAndMsg = await this.chatService.createDM(
+      client,
+      user,
+      targetUser,
+      message,
+    );
+
+    this.server
+      .to(`chat_room_${newChannelAndMsg.channelIdx}`)
+      .emit('create_dm', newChannelAndMsg);
+    return;
   }
 
   // API: MAIN_CHAT_2
@@ -274,42 +301,42 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_5
-  @SubscribeMessage('chat_create_room')
-  async createPrivateAndPublicChatRoom(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() req: chatCreateRoomReqDto, // chatCreateRoomReqDto
-  ) {
-    // socket 을 통해 유저 식별값을 가지고 있다고 가정
-    let res = null;
-    if (req.password === '') {
-      res = await this.chatService.createPublicChatRoom(req);
-    } else if (req.password !== '') {
-      res = await this.chatService.createProtectedChatRoom(req);
-    } else {
-      throw new Error('비밀번호가 없습니다.');
-    }
-    client.emit('chat_room_created', res);
+  // @SubscribeMessage('chat_create_room')
+  // async createPrivateAndPublicChatRoom(
+  //   @ConnectedSocket() client: Socket,
+  //   @MessageBody() req: chatCreateRoomReqDto, // chatCreateRoomReqDto
+  // ) {
+  //   // socket 을 통해 유저 식별값을 가지고 있다고 가정
+  //   let res = null;
+  //   if (req.password === '') {
+  //     res = await this.chatService.createPublicChatRoom(req);
+  //   } else if (req.password !== '') {
+  //     res = await this.chatService.createProtectedChatRoom(req);
+  //   } else {
+  //     throw new Error('비밀번호가 없습니다.');
+  //   }
+  //   client.emit('chat_room_created', res);
 
-    const roomName = 'chat_' + res.channelIdx;
-    client.join(roomName);
-    client.to(roomName).emit('chat_room_created', res);
-    // response data
-    // {
-    //   channel :{
-    //     member[]?,
-    //     channelIdx,
-    //     password : true / false
-    //   }
-    // }
-    // braodcast 방식
-    const message = {
-      event: 'chat_create_room',
-      data: JSON.parse(res),
-    };
-    // connectedClients.forEach((client) =>
-    //   client.emit(message.event, message.data.toString()),
-    // );
-  }
+  //   const roomName = 'chat_' + res.channelIdx;
+  //   client.join(roomName);
+  //   client.to(roomName).emit('chat_room_created', res);
+  // response data
+  // {
+  //   channel :{
+  //     member[]?,
+  //     channelIdx,
+  //     password : true / false
+  //   }
+  // }
+  // braodcast 방식
+  // const message = {
+  //   event: 'chat_create_room',
+  //   data: JSON.parse(res),
+  // };
+  // connectedClients.forEach((client) =>
+  //   client.emit(message.event, message.data.toString()),
+  // );
+  // }
 
   // API: MAIN_CHAT_6
   @SubscribeMessage('chat_room_admin')
