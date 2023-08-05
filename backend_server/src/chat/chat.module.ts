@@ -8,7 +8,6 @@ import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { TypeOrmExModule } from '../typeorm-ex.module';
 import { Mode } from './entities/chat.entity';
 import { UsersModule } from 'src/users/users.module';
-import { UsersService } from 'src/users/users.service';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함

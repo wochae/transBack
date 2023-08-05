@@ -4,6 +4,10 @@ import * as config from 'config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(3000);
+
+  const server = config.get('server');
+
+  await app.listen(server.port);
+  console.log(`listening on port, ${server.port}`);
 }
 bootstrap();
