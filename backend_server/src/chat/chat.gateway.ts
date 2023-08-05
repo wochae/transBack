@@ -27,7 +27,11 @@ const connectedClients = new Set<Socket>();
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private readonly chatService: ChatService, private chat: Chat, private usersService: UsersService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private chat: Chat,
+    private usersService: UsersService,
+  ) {}
   private logger: Logger = new Logger('ChatGateway');
 
   /***************************** DEFAULT *****************************/
@@ -75,7 +79,8 @@ export class ChatGateway
   @SubscribeMessage('user_profile')
   async handleGetProfile(
     @ConnectedSocket() client: Socket,
-    @MessageBody() targetNickname: string) {
+    @MessageBody() targetNickname: string,
+  ) {
     // // const targetProfile = await this.usersService.getProfile(targetNickname);
     // client.emit('target_profile', targetProfile);
     // console.log(targetProfile);
@@ -170,7 +175,7 @@ export class ChatGateway
     @MessageBody() req: chatCreateRoomReqDto, // chatCreateRoomReqDto
   ) {
     // socket 을 통해 유저 식별값을 가지고 있다고 가정
-    let res  = null;
+    let res = null;
     if (req.password === '') {
       res = await this.chatService.createPublicChatRoom(req);
     } else if (req.password !== '') {
@@ -196,7 +201,9 @@ export class ChatGateway
       event: 'chat_create_room',
       data: JSON.parse(res),
     };
-    connectedClients.forEach(client => client.emit(message.event, message.data.toString()));
+    connectedClients.forEach((client) =>
+      client.emit(message.event, message.data.toString()),
+    );
   }
 
   // API: MAIN_CHAT_6
@@ -216,8 +223,6 @@ export class ChatGateway
     // client.to().emit('', );
   }
 
-
-
   // @SubscribeMessage('dm_start')
   // async handleCheckDM(
   //   @ConnectedSocket() client: Socket,
@@ -228,7 +233,7 @@ export class ChatGateway
   //   to().emit('found_dm', { Message[], member[], channelIdx });
   //   }
   // }
-  
+
   // @SubscribeMessage('createChat')
   // create(@MessageBody() createChatDto: CreateChatDto) {
   //   return this.chatService.create(createChatDto);
