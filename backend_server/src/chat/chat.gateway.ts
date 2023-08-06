@@ -16,7 +16,7 @@ import { Channel } from './class/channel.class';
 import { Chat, MessageInfo } from './class/chat.class';
 import { UsersService } from 'src/users/users.service';
 import { chatCreateRoomReqDto } from './dto/chat.dto';
-import { Mode } from './entities/chat.entity';
+import { DMChannel, Mode } from './entities/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { UserObject } from 'src/users/entities/users.entity';
 import { Client } from 'socket.io/dist/client';
@@ -63,6 +63,14 @@ export class ChatGateway
       return;
     }
     // TODO: 본인이 속한 DM 채널 idx 찾아서 roomId 에 join 하기
+    const dmChannelList: Promise<DMChannel[]> =
+      this.chatService.findPrivateChannelByUserIdx(user.userIdx);
+    dmChannelList.then((channels) => {
+      channels.forEach((channel) => {
+        console.log(channel.channelIdx);
+        client.join(`chat_room_${channel.channelIdx}`);
+      });
+    });
     // TODO: 이미 존재하는 member 인지 확인 필요
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
@@ -82,6 +90,15 @@ export class ChatGateway
       await this.chat.removeSocketObject(
         this.chat.setSocketObject(client, user),
       );
+      // TODO: Public, Protected 도 채널 나가기
+      const dmChannelList: Promise<DMChannel[]> =
+        this.chatService.findPrivateChannelByUserIdx(user.userIdx);
+      dmChannelList.then((channels) => {
+        channels.forEach((channel) => {
+          console.log(channel.channelIdx);
+          client.leave(`chat_room_${channel.channelIdx}`);
+        });
+      });
       this.logger.log(
         `[ 💬 Client ] ${user.nickname} Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
       );
@@ -172,6 +189,7 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_0
+  // FIXME: msgDate 같이 반환, DM 이 없는 경우 return 으로 false
   @SubscribeMessage('check_dm')
   async handleCheckDM(
     @ConnectedSocket() client: Socket,
@@ -191,6 +209,7 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_1
+  // FIXME: msgDate 같이 반환
   @SubscribeMessage('create_dm')
   async createDM(
     @ConnectedSocket() client: Socket,
@@ -265,12 +284,18 @@ export class ChatGateway
   // API: MAIN_CHAT_4
   @SubscribeMessage('chat_send_msg')
   sendChatMessage(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
-    const jsonData = JSON.parse(data);
-    this.logger.log(
-      `[ 💬 Socket API CALL ] 'chat_send_msg' _ nickname: ${client.handshake.auth}`,
-    );
+    const { channelIdx, sendefIdx, msg } = JSON.parse(data);
+
+    this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', 'test');
+    // Protected, Public & Private 으로 구분
+    // Protected, Public 은 in memory 에 저장, Private 는 DB 에 저장
+    // emit roomId
+
+    // this.logger.log(
+    //   `[ 💬 Socket API CALL ] 'chat_send_msg' _ nickname: ${client.handshake.auth}`,
+    // );
     // // 채널 찾기
-    const channel = this.chatService.findChannelByRoomId(jsonData.roomId);
+    // const channel = this.chatService.findChannelByRoomId(jsonData.roomId);
 
     // // 메시지 저장 - 여기 부터는 service 로 옮기기
     // if (channel.getMode == Mode.PRIVATE) {
@@ -286,18 +311,15 @@ export class ChatGateway
     //   channel.setMessage = message;
     //   this.chat.getProtectedChannels.push(channel);
     // }
-    client.to(`Room${channel.getRoomId.toString()}`).emit('jsonData.message');
-    // request data
-    // {
-    //   roomId,
-    //   message
-    // }
+    // client.to(`Room${channel.getRoomId.toString()}`).emit('jsonData.message');
     // response data
     // {
-    //   message
+    //   message,
+    //   msg,
+    //   msgDate,
     // }
     // 방식
-    // client.to().emit('', );
+    // this.server.to().emit('', );
   }
 
   // API: MAIN_CHAT_5

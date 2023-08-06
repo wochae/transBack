@@ -92,6 +92,19 @@ export class ChatService {
     return null;
   }
 
+  async findPrivateChannelByUserIdx(userIdx: number): Promise<DMChannel[]> {
+    this.logger.log(
+      `[ 💬 Socket API ] findChannelByUserIdx _ userIdx: ${userIdx}`,
+    );
+    // DB 에서 찾아야함
+    const privateChannelList: DMChannel[] =
+      await this.dmChannelRepository.findDMChannelsByUserIdx(userIdx);
+    if (!privateChannelList) {
+      return null;
+    }
+    return privateChannelList;
+  }
+
   async createDmChannel(
     client: UserObject,
     target: UserObject,

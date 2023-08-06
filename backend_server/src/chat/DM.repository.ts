@@ -48,6 +48,14 @@ export class DMChannelRepository extends Repository<DMChannel> {
     return channels;
   }
 
+  async findDMChannelsByUserIdx(userIdx: number): Promise<DMChannel[]> {
+    const channels = await this.find({
+      where: [{ userIdx1: userIdx }],
+    });
+    console.log(channels);
+    return channels;
+  }
+
   async getMaxChannelIdxInDB(): Promise<number> {
     const maxChannelIdx = await this.createQueryBuilder('dm')
       .select('MAX(dm.channelIdx)', 'max')
