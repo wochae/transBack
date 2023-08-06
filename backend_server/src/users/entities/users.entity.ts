@@ -25,9 +25,6 @@ export class UserObject extends BaseEntity {
   nickname: string;
 
   @Column()
-  imgUri: string;
-
-  @Column()
   rankpoint: number;
 
   @Column()
@@ -36,10 +33,10 @@ export class UserObject extends BaseEntity {
   @Column()
   available: boolean;
 
-  @Column({ default: 0 })
+  @Column()
   win: number;
 
-  @Column({ default: 0 })
+  @Column()
   lose: number;
 
   @OneToOne(() => CertificateObject, (idx) => idx.userIdx)

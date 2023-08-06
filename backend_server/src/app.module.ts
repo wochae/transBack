@@ -6,7 +6,6 @@ import { ChatModule } from './chat/chat.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeORMConfig } from './configs/typeorm.config';
 import { GameModule } from './game/game.module';
-import { InMemoryUsers } from './users/users.provider';
 
 @Module({
   imports: [
@@ -16,6 +15,6 @@ import { InMemoryUsers } from './users/users.provider';
     GameModule,
   ],
   controllers: [AppController],
-  providers: [AppService, InMemoryUsers],
+  providers: [AppService],
 })
 export class AppModule {}

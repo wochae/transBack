@@ -6,7 +6,7 @@ import {
   OneToOne,
 } from 'typeorm';
 
-@Entity('friend_list')
+@Entity('friendList')
 export class FriendList extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
