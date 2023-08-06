@@ -281,7 +281,6 @@ export class ChatGateway
       );
     }
     //
-    this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', 'test');
     this.logger.log(
       `[ 💬 Socket API CALL ] 'chat_send_msg' _ nickname: ${client.handshake.auth}`,
     );
@@ -291,6 +290,8 @@ export class ChatGateway
     console.log('channel:', channel);
     if (channel instanceof Channel) {
       // TODO: In Memory 에 저장
+      this.chatService.saveMessageInIM(channelIdx, senderIdx, msg);
+      this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msg);
       // channel이 Channel 타입일 경우 처리
       console.log('This is a Channel:', channel);
     } else if (channel instanceof DMChannel) {

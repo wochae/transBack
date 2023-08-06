@@ -8,6 +8,7 @@ import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { Socket } from 'socket.io';
+import { Message } from './class/message.class';
 
 @Injectable()
 export class ChatService {
@@ -224,5 +225,21 @@ export class ChatService {
     // FIXME: chat 클래스에 있는 정적 변수는 지워도 되지 않을까?
     const channelIdx = Math.max(maxChannelIdxInIM, maxChannelIdxInDB) + 1;
     return channelIdx;
+  }
+
+  async saveMessageInIM(channelIdx: number, senderIdx: number, msg: string) {
+    const msgInfo = new Message(channelIdx, senderIdx, msg);
+    msgInfo.setMsgDate = new Date();
+    console.log('-------------------------------------');
+    console.log(this.chat.getProtectedChannels);
+    const channel = await this.chat.getProtectedChannels.find(
+      (channel) => channel.getChannelIdx === channelIdx,
+    );
+    if (channel) {
+      channel.setMessage = msgInfo;
+      console.log(channel.getMessages);
+    } else {
+      console.log('Channel not found.');
+    }
   }
 }
