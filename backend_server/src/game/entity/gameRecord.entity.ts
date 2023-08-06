@@ -53,11 +53,11 @@ export class GameRecord extends BaseEntity {
   @Column()
   matchDate: Date;
 
-  @ManyToOne(() => UserObject, (userIdx) => userIdx.userIdx)
+  @ManyToOne(() => UserObject, (user) => user.userIdx)
   @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
   user: UserObject;
 
-  @ManyToOne(() => UserObject, (matchUserIdx) => matchUserIdx.userIdx)
+  @ManyToOne(() => UserObject, (matchUser) => matchUser.userIdx)
   @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
   matchUser: UserObject;
 

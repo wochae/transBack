@@ -1,5 +1,3 @@
-import { BooleanSupportOption } from 'prettier';
-
 export enum Vector {
   UPRIGHT = 'upRight',
   UPLEFT = 'upLeft',
