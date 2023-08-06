@@ -24,8 +24,8 @@ export class UserObject extends BaseEntity {
   @Column()
   nickname: string;
 
-  @Column()
-  imgUri: string;
+  @Column('varchar', { nullable: true })
+  imgUri: string | null;
 
   @Column()
   rankpoint: number;
@@ -54,7 +54,7 @@ export class UserObject extends BaseEntity {
   @OneToMany(() => DMChannel, (userIdx) => userIdx.userIdx1)
   dmChannelList: DMChannel[];
 
-  @OneToMany(() => GameRecord, (userIdx) => userIdx)
+  @OneToMany(() => GameRecord, (userRecordList) => userRecordList.userIdx)
   userRecordList: GameRecord[];
 
   @OneToMany(
