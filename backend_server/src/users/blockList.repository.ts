@@ -31,4 +31,19 @@ export class BlockListRepository extends Repository<BlockList> {
 
     return data.nickname;
   }
+
+  async getBlockedList(user: UserObject) {
+    const blockedList = await this.find({
+      where: { userIdx: user.userIdx },
+    });
+    const members = await Promise.all(
+      blockedList.map(async (blocked) => {
+        return {
+          targetNickname: blocked.blockedNickname,
+          targetIdx: blocked.blockedUserIdx,
+        };
+      }),
+    );
+    return members;
+  }
 }

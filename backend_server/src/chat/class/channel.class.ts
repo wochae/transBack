@@ -1,3 +1,4 @@
+import { UserObject } from 'src/users/entities/users.entity';
 import { Mode } from '../entities/chat.entity';
 import { Message } from './message.class';
 
@@ -7,7 +8,7 @@ export class Channel {
   /******************************* 멤버 변수 *******************************/
   private channelIdx: number;
   private roomId: number;
-  private member: any = []; //   private member: member[];
+  private member: UserObject[] = []; //   private member: member[];
   private messages: Message[] = [];
   private mode: Mode;
   private owner: any; //   private owner: member;
@@ -42,7 +43,7 @@ export class Channel {
   get getRoomId(): number {
     return this.roomId;
   }
-  get getMember(): any {
+  get getMember(): UserObject[] {
     return this.member; //   member: member[];
   }
   get getMessages(): Message[] {
@@ -68,7 +69,7 @@ export class Channel {
   set setRoomId(roomId: number) {
     this.roomId = roomId;
   }
-  set setMember(member: any[]) {
+  set setMember(member: UserObject) {
     this.member.push(member); // member: member[];
   }
   set setMessage(message: Message) {

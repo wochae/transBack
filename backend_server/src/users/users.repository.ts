@@ -12,6 +12,7 @@ export class UserObjectRepository extends Repository<UserObject> {
       intra: intra,
       nickname: intra,
       rankpoint: 0,
+      imgUri: 'https://cdn.intra.42.fr/users/medium_default.png',
       isOnline: true,
       available: true,
       win: 0,
@@ -21,6 +22,12 @@ export class UserObjectRepository extends Repository<UserObject> {
     await this.save(user);
 
     return user.intra;
+  }
+
+  async setIsOnline(user: UserObject, isOnline: boolean): Promise<boolean> {
+    user.isOnline = isOnline;
+    await this.update(user.userIdx, { isOnline: user.isOnline });
+    return user.isOnline;
   }
 }
 

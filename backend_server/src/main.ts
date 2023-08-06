@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as config from 'config';
+import { config } from 'config';
 
 // declare const module: any;
 
