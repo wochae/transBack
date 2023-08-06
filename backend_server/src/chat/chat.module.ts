@@ -7,7 +7,6 @@ import { TypeOrmExModule } from '../typeorm-ex.module';
 import { UsersModule } from 'src/users/users.module';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { UsersService } from 'src/users/users.service';
-import { UserObject } from 'src/users/entities/users.entity';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함

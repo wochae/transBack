@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -27,4 +28,7 @@ export class BlockList extends BaseEntity {
 
   @ManyToOne(() => BlockList, (idx) => idx.userIdx)
   userObjectList: UserObject[];
+  //   @ManyToOne(() => UserObject, (userIdx) => userIdx)
+  //   @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
+  //   user: UserObject;
 }

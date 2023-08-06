@@ -2,7 +2,6 @@ import {
   BaseEntity,
   Entity,
   Column,
-  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
   OneToMany,
@@ -11,17 +10,8 @@ import { FriendList } from './friendList.entity';
 import { BlockList } from './blockList.entity';
 import { CertificateObject } from './certificate.entity';
 import { DMChannel } from 'src/chat/entities/chat.entity';
-
-export enum HistoriesType {
-  NORMAL = 'NORMAL',
-  RANDOM = 'RANDOM',
-}
-
-export enum ResultType {
-  DEF = 'DEFAULT',
-  WIN = 'WIN',
-  LOSE = 'LOSE',
-}
+import { GameRecord } from 'src/game/entity/gameRecord.entity';
+import { GameChannel } from 'src/game/entity/gameChannel.entity';
 
 @Entity('users')
 export class UserObject extends BaseEntity {
@@ -63,6 +53,12 @@ export class UserObject extends BaseEntity {
 
   @OneToMany(() => DMChannel, (userIdx) => userIdx.userIdx1)
   dmChannelList: DMChannel[];
+
+  @OneToMany(() => GameRecord, (userIdx) => userIdx)
+  userRecordList: GameRecord[];
+
+  @OneToMany(() => GameChannel, (userIdx) => userIdx)
+  userGameChannelList: GameChannel[];
 }
 
 // @Entity('histories')
