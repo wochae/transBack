@@ -66,6 +66,10 @@ export class UsersService {
     return this.userObjectRepository.findOne({ where: { intra: intra } });
   }
 
+  async getUserInfoFromDBById(userId: number): Promise<UserObject> {
+    return this.userObjectRepository.findOne({ where: { userIdx: userId } });
+  }
+
   async getFriendList(
     intra: string,
   ): Promise<{ friendNicname: string; isOnline: boolean }[]> {

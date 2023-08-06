@@ -22,33 +22,38 @@ export class ChatService {
   private logger: Logger = new Logger('ChatService');
 
   /********************* check Room Member & client *********************/
-  checkAlreadyInRoom(clientData: any) {
-    // find() 사용
-    const channel = this.findChannelByRoomId(clientData.roomId);
-    // if (channel == null) {
-    //   return false;
-    // }
-    return channel.getMember.flat().find((member) => {
-      return member === clientData.nickname;
-    });
-    // Set 사용
-    // const channel = this.findChannelByRoomId(clientData.roomId);
-    // const membersSet = new Set(channel.getMember.flat());
-    // console.log(membersSet);
-    // return membersSet.has(clientData.nickname);
-  }
+  // async checkAlreadyInRoom(clientData: any) {
+  //   // find() 사용
+  //   const channel = await this.findChannelByRoomId(clientData.roomId);
+  //   // if (channel == null) {
+  //   //   return false;
+  //   // }
+  //   return await channel.getMember.flat().find((member) => {
+  //     return member === clientData.nickname;
+  //   });
+  //   // Set 사용
+  //   // const channel = this.findChannelByRoomId(clientData.roomId);
+  //   // const membersSet = new Set(channel.getMember.flat());
+  //   // console.log(membersSet);
+  //   // return membersSet.has(clientData.nickname);
+  // }
 
   /***************************** Find Channel *****************************/
   // TODO: 아래 세가지 함수로 하나로 합치는게 좋을까? 논의 필요
   // 합치게 되면, 반환되는 채널이 어떤 채널인지 구분할 수 있는 방법이 필요함.
-  findChannelByRoomId(roomId: number): Channel {
+  async findChannelByRoomId(channelIdx: number): Promise<Channel | DMChannel> {
     this.logger.log(
-      `[ 💬 Socket API ] findChannelByRoomId _ roomId: ${roomId}`,
+      `[ 💬 Socket API ] findChannelByRoomId _ roomId: ${channelIdx}`,
     );
-    const protectedChannel: Channel = this.chat.getProtectedChannels.find(
-      (channel) => channel.getRoomId === roomId,
+    let channel: Channel | DMChannel = this.chat.getProtectedChannels.find(
+      (channel) => channel.getChannelIdx === channelIdx,
     );
-    return protectedChannel || null;
+    if (!channel) {
+      channel = await this.dmChannelRepository.findDMChannelByChannelIdx(
+        channelIdx,
+      );
+    }
+    return channel;
   }
 
   findProtectedChannelByRoomId(roomId: number): Channel {
@@ -126,7 +131,6 @@ export class ChatService {
       client,
       channelIdx,
     );
-    console.log(firstDM);
     await this.directMessagesRepository.save(firstDM);
 
     try {

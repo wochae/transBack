@@ -52,8 +52,14 @@ export class DMChannelRepository extends Repository<DMChannel> {
     const channels = await this.find({
       where: [{ userIdx1: userIdx }],
     });
-    console.log(channels);
     return channels;
+  }
+
+  async findDMChannelByChannelIdx(channelIdx: number): Promise<DMChannel> {
+    const channel = await this.findOne({
+      where: [{ channelIdx: channelIdx }],
+    });
+    return channel;
   }
 
   async getMaxChannelIdxInDB(): Promise<number> {
