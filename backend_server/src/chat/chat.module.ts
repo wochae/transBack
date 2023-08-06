@@ -31,17 +31,19 @@ export class ChatModule {
 
   async onModuleInit() {
     await this.initializeInMemoryDataFromDatabase();
+    // FIXME: Test 용으로 만들었기 때문에 지워야함. channel 생성하는 코드.
     // channel 10 에는 jakeim 과 클라이언트
     // channel 11 에는 haryu 와 클라이언트가 들어가있음.비번은 1234
-    // FIXME: Test 용으로 만들었기 때문에 지워야함. channel 생성하는 코드.
     const testChannel = new Channel();
     testChannel.setOwner = await this.usersService.getUserInfoFromDB('jaekim');
+    testChannel.setMember = await this.usersService.getUserInfoFromDB('jaekim');
     testChannel.setChannelIdx = 10;
     testChannel.setMode = Mode.PUBLIC;
     this.chat.setProtectedChannels = testChannel;
 
     const testChannel1 = new Channel();
     testChannel1.setOwner = await this.usersService.getUserInfoFromDB('haryu');
+    testChannel1.setMember = await this.usersService.getUserInfoFromDB('haryu');
     testChannel1.setChannelIdx = 11;
     testChannel1.setMode = Mode.PROTECTED;
     testChannel1.setPassword = '1234';
