@@ -1,12 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Channel } from './class/channel.class';
 import { Chat, MessageInfo, MessageInteface } from './class/chat.class';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager, Transaction } from 'typeorm';
 import { UserObject } from 'src/users/entities/users.entity';
 import { DMChannel, DirectMessage, Mode } from './entities/chat.entity';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
-import { chatCreateRoomReqDto, chatCreateRoomResDto } from './dto/chat.dto';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { Socket } from 'socket.io';
 
@@ -93,44 +92,43 @@ export class ChatService {
     return null;
   }
 
-  // FIXME: 오호...
-  // async createDmChannel(
-  //   client: UserObject,
-  //   target: UserObject,
-  //   channelIdx: number,
-  //   msg: SendDMDto,
-  // ): Promise<boolean> {
-  //   const queryRunner = this.dataSource.createQueryRunner();
+  async createDmChannel(
+    client: UserObject,
+    target: UserObject,
+    channelIdx: number,
+    msg: SendDMDto,
+  ): Promise<boolean> {
+    const queryRunner = this.dataSource.createQueryRunner();
 
-  //   await queryRunner.connect();
-  //   await queryRunner.startTransaction();
-  //   let ret = true;
-  //   const list = await this.dmChannelRepository.createChannel(
-  //     client,
-  //     target,
-  //     channelIdx,
-  //   );
-  //   const firstDM = await this.directMessagesRepository.sendDm(
-  //     msg,
-  //     client,
-  //     channelIdx,
-  //   );
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    let ret = true;
+    const list = await this.dmChannelRepository.createChannel(
+      client,
+      target,
+      channelIdx,
+    );
+    const firstDM = await this.directMessagesRepository.sendDm(
+      msg,
+      client,
+      channelIdx,
+    );
+    console.log(firstDM);
+    await this.directMessagesRepository.save(firstDM);
 
-  //   await this.directMessagesRepository.save(firstDM);
+    try {
+      await queryRunner.manager.save(list[0]);
+      await queryRunner.manager.save(list[1]);
 
-  //   try {
-  //     await queryRunner.manager.save(list[0]);
-  //     await queryRunner.manager.save(list[1]);
-
-  //     await queryRunner.commitTransaction();
-  //   } catch (err) {
-  //     await queryRunner.rollbackTransaction();
-  //     ret = false;
-  //   } finally {
-  //     await queryRunner.release();
-  //   }
-  //   return ret;
-  // }
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      ret = false;
+    } finally {
+      await queryRunner.release();
+    }
+    return ret;
+  }
 
   // FIXME: 반환값...
   async checkDM(
@@ -175,17 +173,17 @@ export class ChatService {
     msg: SendDMDto,
   ) {
     const channelIdx = await this.setNewChannelIdx();
-    // dmChannelRepository 에 저장 & directMessagesRepository 에 저장
-    // userId 객체, targetId 객체를 db 에서 찾기 (오프라인일 수 있으니까)
+    // await this.createDmChannel(user, targetUser, channelIdx, msg);
     await this.dmChannelRepository.createChannel(user, targetUser, channelIdx);
-    const firstDM = await this.directMessagesRepository.sendDm(
-      msg,
-      user,
-      channelIdx,
-    );
+    await this.directMessagesRepository.sendDm(msg, user, channelIdx);
+    // const firstDM = await this.directMessagesRepository.sendDm(
+    //   msg,
+    //   user,
+    //   channelIdx,
+    // );
     const message: MessageInteface = {
       sender: user.nickname,
-      msg: firstDM.msg,
+      msg: msg.msg,
     };
     const dmInfo = {
       message: message,
@@ -203,9 +201,6 @@ export class ChatService {
   }
 
   async setNewChannelIdx(): Promise<number> {
-    // In Memory 에서 가장 큰 channelIdx 찾기
-    // DB 에서 가장 큰 channelIdx 찾기
-    // 둘 중 큰 값 + 1
     const maxChannelIdxInIM = await this.chat.getMaxChannelIdxInIM();
     const maxChannelIdxInDB =
       await this.dmChannelRepository.getMaxChannelIdxInDB();

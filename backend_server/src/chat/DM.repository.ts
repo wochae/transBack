@@ -10,10 +10,9 @@ export class DMChannelRepository extends Repository<DMChannel> {
     client: UserObject,
     target: UserObject,
     channelIdx: number,
-  ) {
-    // ): Promise<DMChannel[]> {
-    // FIXME: 인메모리때문에 넣어둔 건가?
-    // let list;
+  ): Promise<DMChannel[]> {
+    const list: DMChannel[] = [];
+
     const channel1 = await this.create({
       userIdx1: client.userIdx,
       userIdx2: target.userIdx,
@@ -34,12 +33,12 @@ export class DMChannelRepository extends Repository<DMChannel> {
       user2: client,
     });
 
-    await this.insert(channel1);
-    await this.insert(channel2);
-    // list.add(channel1);
-    // list.add(channel2);
+    list.push(channel1);
+    list.push(channel2);
 
-    // return list;
+    await this.save(list);
+
+    return list;
   }
 
   async findDMChannel(userIdx1: number, userIdx2: number): Promise<DMChannel> {
@@ -72,7 +71,6 @@ export class DirectMessageRepository extends Repository<DirectMessage> {
       msg: msg,
       msgDate: new Date(),
     });
-    console.log('firstDM: ', firstDM);
     await this.save(firstDM);
 
     return firstDM;

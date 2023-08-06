@@ -1,3 +1,4 @@
+import { channel } from 'diagnostics_channel';
 import { UserObject } from 'src/users/entities/users.entity';
 import {
   BaseEntity,
@@ -6,6 +7,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   OneToOne,
+  ManyToOne,
 } from 'typeorm';
 
 export enum Mode {
@@ -60,4 +62,7 @@ export class DirectMessage extends BaseEntity {
 
   @Column()
   msgDate: Date;
+
+  @ManyToOne(() => DMChannel, (channelIdx) => channelIdx.channelIdx)
+  channel: DMChannel;
 }
