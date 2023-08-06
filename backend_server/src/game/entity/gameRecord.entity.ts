@@ -7,8 +7,10 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { GameChannel } from './gameChannel.entity';
+import { type } from 'os';
 
 export enum RecordType {
   NORMAL = 'NORMAL',
@@ -22,7 +24,7 @@ export enum RecordResult {
   SHUTDOWN = 'SHUTDOWN',
 }
 
-@Entity('gameRecord')
+@Entity('game_record')
 export class GameRecord extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
@@ -39,10 +41,10 @@ export class GameRecord extends BaseEntity {
   @Column()
   matchUserIdx: number;
 
-  @Column()
+  @Column('smallint')
   type: RecordType;
 
-  @Column()
+  @Column('smallint')
   result: RecordResult;
 
   @Column()
@@ -51,12 +53,19 @@ export class GameRecord extends BaseEntity {
   @Column()
   matchDate: Date;
 
-  @ManyToOne(() => UserObject, (userIdx) => userIdx)
+  @ManyToOne(() => UserObject, (userIdx) => userIdx.userIdx)
+  @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
   user: UserObject;
 
-  @ManyToOne(() => UserObject, (matchUserIdx) => matchUserIdx)
+  @ManyToOne(() => UserObject, (matchUserIdx) => matchUserIdx.userIdx)
+  @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
   matchUser: UserObject;
 
-  @OneToOne(() => GameChannel, (gameIdx) => gameIdx)
+  @OneToOne(() => GameChannel, (channel) => channel.record)
+  @JoinColumn()
   channel: GameChannel;
+
+  @ManyToOne(() => UserObject, (historyUser) => historyUser.userRecordList)
+  @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
+  historyUser: UserObject;
 }

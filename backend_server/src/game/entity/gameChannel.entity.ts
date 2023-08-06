@@ -1,4 +1,4 @@
-// import { UserObject } from 'src/users/entities/users.entity';
+import { UserObject } from 'src/users/entities/users.entity';
 import {
   BaseEntity,
   Entity,
@@ -33,14 +33,14 @@ export class GameChannel extends BaseEntity {
   @Column()
   status: RecordResult;
 
-  //   @ManyToOne(() => UserObject, (user) => user.userGameChannelList)
-  //   @JoinColumn([{ referencedColumnName: 'useridx' }])
-  //   User1: UserObject;
+  @ManyToOne(() => UserObject, (user1) => user1.userGameChannelList)
+  @JoinColumn([{ name: 'userIdx1', referencedColumnName: 'userIdx' }])
+  user1: UserObject;
 
-  //   @ManyToOne(() => UserObject, (user) => user.userGameChannelList)
-  //   @JoinColumn([{ referencedColumnName: 'useridx' }])
-  //   User2: UserObject;
+  @ManyToOne(() => UserObject, (user2) => user2.userGameChannelList)
+  @JoinColumn([{ name: 'userIdx2', referencedColumnName: 'userIdx' }])
+  user2: UserObject;
 
-  @OneToOne(() => GameRecord, (gameIdx) => gameIdx)
+  @OneToOne(() => GameRecord, (record) => record.channel)
   record: GameRecord;
 }

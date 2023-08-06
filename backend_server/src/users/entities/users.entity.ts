@@ -54,32 +54,9 @@ export class UserObject extends BaseEntity {
   @OneToMany(() => GameRecord, (userIdx) => userIdx)
   userRecordList: GameRecord[];
 
-  @OneToMany(() => GameChannel, (userIdx) => userIdx)
+  @OneToMany(
+    () => GameChannel,
+    (userGameChannelList) => userGameChannelList.user1,
+  )
   userGameChannelList: GameChannel[];
 }
-
-// @Entity('histories')
-// export class Histories extends BaseEntity {
-//   @PrimaryGeneratedColumn()
-//   userIdx: number;
-
-//   @Column()
-//   gameId: number;
-
-//   @ManyToOne(() => UserObject, (userIdx) => userId.userIdx)
-//   userIdx: number;
-
-//   @Column({
-//     type: 'enum',
-//     enum: HistoriesType,
-//     default: HistoriesType.NORMAL,
-//   })
-//   type: HistoriesType;
-
-//   @Column({
-//     type: 'enum',
-//     enum: ResultType,
-//     default: ResultType.DEF,
-//   })
-//   result: ResultType;
-// }
