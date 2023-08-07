@@ -260,7 +260,16 @@ export class ChatService {
       channel.setMessage = msgInfo;
     } else {
       console.log('Channel not found.');
+      return;
     }
+    const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
+    const message = {
+      sender: sender.nickname,
+      msg: msgInfo.getMessage,
+      msgDate: msgInfo.getMsgDate,
+    };
+    return message;
+    // sender, msg, msgDate
   }
 
   async saveMessageInDB(channelIdx: number, senderIdx: number, msg: SendDMDto) {

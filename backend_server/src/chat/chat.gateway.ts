@@ -294,8 +294,14 @@ export class ChatGateway
     const channel: Channel | DMChannel =
       await this.chatService.findChannelByRoomId(channelIdx);
     if (channel instanceof Channel) {
-      this.chatService.saveMessageInIM(channelIdx, senderIdx, msg);
-      this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msg);
+      const msgInfo = await this.chatService.saveMessageInIM(
+        channelIdx,
+        senderIdx,
+        msg,
+      );
+      // sender, msg, msgDate
+      console.log(msgInfo);
+      this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else if (channel instanceof DMChannel) {
       // TODO: DB 에 저장
       // channel이 DMChannel 타입일 경우 처리
