@@ -24,12 +24,13 @@ export class UserObject extends BaseEntity {
   @Column()
   nickname: string;
 
-  @Column()
-  imgUri: string;
+  @Column('varchar', { nullable: true })
+  imgUri: string | null;
 
   @Column()
   rankpoint: number;
 
+  // 온라인 오프라인 게임 중으로
   @Column()
   isOnline: boolean;
 
@@ -54,35 +55,12 @@ export class UserObject extends BaseEntity {
   @OneToMany(() => DMChannel, (userIdx) => userIdx.userIdx1)
   dmChannelList: DMChannel[];
 
-  @OneToMany(() => GameRecord, (userIdx) => userIdx)
+  @OneToMany(() => GameRecord, (userRecordList) => userRecordList.userIdx)
   userRecordList: GameRecord[];
 
-  @OneToMany(() => GameChannel, (userIdx) => userIdx)
+  @OneToMany(
+    () => GameChannel,
+    (userGameChannelList) => userGameChannelList.user1,
+  )
   userGameChannelList: GameChannel[];
 }
-
-// @Entity('histories')
-// export class Histories extends BaseEntity {
-//   @PrimaryGeneratedColumn()
-//   userIdx: number;
-
-//   @Column()
-//   gameId: number;
-
-//   @ManyToOne(() => UserObject, (userIdx) => userId.userIdx)
-//   userIdx: number;
-
-//   @Column({
-//     type: 'enum',
-//     enum: HistoriesType,
-//     default: HistoriesType.NORMAL,
-//   })
-//   type: HistoriesType;
-
-//   @Column({
-//     type: 'enum',
-//     enum: ResultType,
-//     default: ResultType.DEF,
-//   })
-//   result: ResultType;
-// }

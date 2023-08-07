@@ -8,6 +8,7 @@ import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { Socket } from 'socket.io';
+import { Message } from './class/message.class';
 
 @Injectable()
 export class ChatService {
@@ -17,38 +18,43 @@ export class ChatService {
     private dmChannelRepository: DMChannelRepository,
     private directMessagesRepository: DirectMessageRepository,
     // TODO: gateway에서도 InmemoryUsers 를 사용하는데, service 로 옮기자
-    private inmemoryDB: InMemoryUsers,
+    private inMemoryUsers: InMemoryUsers,
   ) {}
   private logger: Logger = new Logger('ChatService');
 
   /********************* check Room Member & client *********************/
-  checkAlreadyInRoom(clientData: any) {
-    // find() 사용
-    const channel = this.findChannelByRoomId(clientData.roomId);
-    // if (channel == null) {
-    //   return false;
-    // }
-    return channel.getMember.flat().find((member) => {
-      return member === clientData.nickname;
-    });
-    // Set 사용
-    // const channel = this.findChannelByRoomId(clientData.roomId);
-    // const membersSet = new Set(channel.getMember.flat());
-    // console.log(membersSet);
-    // return membersSet.has(clientData.nickname);
-  }
+  // async checkAlreadyInRoom(clientData: any) {
+  //   // find() 사용
+  //   const channel = await this.findChannelByRoomId(clientData.roomId);
+  //   // if (channel == null) {
+  //   //   return false;
+  //   // }
+  //   return await channel.getMember.flat().find((member) => {
+  //     return member === clientData.nickname;
+  //   });
+  //   // Set 사용
+  //   // const channel = this.findChannelByRoomId(clientData.roomId);
+  //   // const membersSet = new Set(channel.getMember.flat());
+  //   // console.log(membersSet);
+  //   // return membersSet.has(clientData.nickname);
+  // }
 
   /***************************** Find Channel *****************************/
   // TODO: 아래 세가지 함수로 하나로 합치는게 좋을까? 논의 필요
   // 합치게 되면, 반환되는 채널이 어떤 채널인지 구분할 수 있는 방법이 필요함.
-  findChannelByRoomId(roomId: number): Channel {
+  async findChannelByRoomId(channelIdx: number): Promise<Channel | DMChannel> {
     this.logger.log(
-      `[ 💬 Socket API ] findChannelByRoomId _ roomId: ${roomId}`,
+      `[ 💬 Socket API ] findChannelByRoomId _ roomId: ${channelIdx}`,
     );
-    const protectedChannel: Channel = this.chat.getProtectedChannels.find(
-      (channel) => channel.getRoomId === roomId,
+    let channel: Channel | DMChannel = this.chat.getProtectedChannels.find(
+      (channel) => channel.getChannelIdx === channelIdx,
     );
-    return protectedChannel || null;
+    if (!channel) {
+      channel = await this.dmChannelRepository.findDMChannelByChannelIdx(
+        channelIdx,
+      );
+    }
+    return channel;
   }
 
   findProtectedChannelByRoomId(roomId: number): Channel {
@@ -92,6 +98,19 @@ export class ChatService {
     return null;
   }
 
+  async findPrivateChannelByUserIdx(userIdx: number): Promise<DMChannel[]> {
+    this.logger.log(
+      `[ 💬 Socket API ] findChannelByUserIdx _ userIdx: ${userIdx}`,
+    );
+    // DB 에서 찾아야함
+    const privateChannelList: DMChannel[] =
+      await this.dmChannelRepository.findDMChannelsByUserIdx(userIdx);
+    if (!privateChannelList) {
+      return null;
+    }
+    return privateChannelList;
+  }
+
   async createDmChannel(
     client: UserObject,
     target: UserObject,
@@ -113,7 +132,6 @@ export class ChatService {
       client,
       channelIdx,
     );
-    console.log(firstDM);
     await this.directMessagesRepository.save(firstDM);
 
     try {
@@ -200,6 +218,29 @@ export class ChatService {
     return dmInfo;
   }
 
+  async createPublicAndProtected(password: string, user: UserObject) {
+    const channelIdx = await this.setNewChannelIdx();
+    // TODO: 함수로 빼기?
+    const channel = new Channel();
+    channel.setChannelIdx = channelIdx;
+    channel.setRoomId = channelIdx;
+    channel.setMember = user;
+    channel.setOwner = user;
+    if (password == null) {
+      channel.setMode = Mode.PUBLIC;
+    } else if (password != null) {
+      channel.setMode = Mode.PROTECTED;
+    }
+    channel.setPassword = password;
+    this.chat.setProtectedChannels = channel;
+    const channelInfo = {
+      owner: channel.getOwner,
+      channelIdx: channel.getChannelIdx,
+      mode: channel.getMode,
+    };
+    return channelInfo;
+  }
+
   async setNewChannelIdx(): Promise<number> {
     const maxChannelIdxInIM = await this.chat.getMaxChannelIdxInIM();
     const maxChannelIdxInDB =
@@ -207,5 +248,35 @@ export class ChatService {
     // FIXME: chat 클래스에 있는 정적 변수는 지워도 되지 않을까?
     const channelIdx = Math.max(maxChannelIdxInIM, maxChannelIdxInDB) + 1;
     return channelIdx;
+  }
+
+  async saveMessageInIM(channelIdx: number, senderIdx: number, msg: string) {
+    const msgInfo = new Message(channelIdx, senderIdx, msg);
+    msgInfo.setMsgDate = new Date();
+    const channel = await this.chat.getProtectedChannels.find(
+      (channel) => channel.getChannelIdx === channelIdx,
+    );
+    if (channel) {
+      channel.setMessage = msgInfo;
+    } else {
+      console.log('Channel not found.');
+      return;
+    }
+    const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
+    const message = {
+      sender: sender.nickname,
+      msg: msgInfo.getMessage,
+      msgDate: msgInfo.getMsgDate,
+    };
+    return message;
+    // sender, msg, msgDate
+  }
+
+  async saveMessageInDB(channelIdx: number, senderIdx: number, msg: SendDMDto) {
+    const message: SendDMDto = {
+      msg: msg.msg,
+    };
+    const user = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
+    await this.directMessagesRepository.sendDm(message, user, channelIdx);
   }
 }

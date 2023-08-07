@@ -15,11 +15,9 @@ import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
 import { Chat, MessageInfo } from './class/chat.class';
 import { UsersService } from 'src/users/users.service';
-import { chatCreateRoomReqDto } from './dto/chat.dto';
-import { Mode } from './entities/chat.entity';
+import { DMChannel, Mode } from './entities/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { UserObject } from 'src/users/entities/users.entity';
-import { Client } from 'socket.io/dist/client';
 import { SendDMDto } from './dto/send-dm.dto';
 
 @WebSocketGateway({
@@ -63,6 +61,16 @@ export class ChatGateway
       return;
     }
     // TODO: 본인이 속한 DM 채널 idx 찾아서 roomId 에 join 하기
+    const dmChannelList: Promise<DMChannel[]> =
+      this.chatService.findPrivateChannelByUserIdx(user.userIdx);
+    dmChannelList.then((channels) => {
+      channels.forEach((channel) => {
+        client.join(`chat_room_${channel.channelIdx}`);
+      });
+    });
+    // FIXME: 테스트용  코드
+    client.join('chat_room_10');
+    client.join('chat_room_11');
     // TODO: 이미 존재하는 member 인지 확인 필요
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
@@ -82,6 +90,21 @@ export class ChatGateway
       await this.chat.removeSocketObject(
         this.chat.setSocketObject(client, user),
       );
+      // TODO: Public, Protected 도 채널 나가기 -> 테스트 필요 -> 근데 이게 필요한지 모르겠음.
+      const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
+      const channelForLeave: Channel[] = notDmChannelList.filter((channel) =>
+        channel.getMember.includes(user),
+      );
+      await channelForLeave.forEach((channel) => {
+        client.leave(`chat_room_${channel.getChannelIdx}`);
+      });
+      const dmChannelList: Promise<DMChannel[]> =
+        this.chatService.findPrivateChannelByUserIdx(user.userIdx);
+      await dmChannelList.then((channels) => {
+        channels.forEach((channel) => {
+          client.leave(`chat_room_${channel.channelIdx}`);
+        });
+      });
       this.logger.log(
         `[ 💬 Client ] ${user.nickname} Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
       );
@@ -97,21 +120,6 @@ export class ChatGateway
     // TODO: intra 를 class 로 만들어서 DTO 처리?
     @MessageBody() payload: any,
   ) {
-    // FIXME: Test 용으로 만들었기 때문에 지워야함. channel 생성하는 코드.
-    // const testChannel = new Channel();
-    // testChannel.setOwner = 'test';
-    // testChannel.setChannelIdx = 0;
-    // testChannel.setMode = Mode.PROTECTED;
-    // this.chat.setProtectedChannels = testChannel;
-    // // console.log('channelList1 : ', this.chat.getProtectedChannels);
-
-    // const testChannel1 = new Channel();
-    // testChannel1.setOwner = 'test1';
-    // testChannel1.setChannelIdx = 1;
-    // testChannel1.setMode = Mode.PUBLIC;
-    // this.chat.setProtectedChannels = testChannel1;
-    // // console.log('channelList2 : ', this.chat.getProtectedChannels);
-
     const { intra } = JSON.parse(payload);
 
     // API: MAIN_ENTER_0
@@ -172,6 +180,7 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_0
+  // FIXME: msgDate 같이 반환, DM 이 없는 경우 return 으로 false
   @SubscribeMessage('check_dm')
   async handleCheckDM(
     @ConnectedSocket() client: Socket,
@@ -191,6 +200,7 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_1
+  // FIXME: msgDate 같이 반환
   @SubscribeMessage('create_dm')
   async createDM(
     @ConnectedSocket() client: Socket,
@@ -234,109 +244,97 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_2
-  @SubscribeMessage('chat_enter')
-  async enterProtectedAndPublicRoom(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
-    // 반환형 선언하기
-  ) {
-    // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
-    const jsonData = JSON.parse(data);
-    this.logger.log(
-      `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
-    );
-    if (this.chatService.checkAlreadyInRoom(jsonData)) {
-      console.log('Already in Room');
-      // FIXME: 이미 들어와있기 때문에 데이터 전송을 해야한다. ✅ 무한스크롤 이벤트 발생으로 해결 가능
-      return 'Already in Room';
-    }
-    let channel: Channel = this.chatService.findProtectedChannelByRoomId(
-      jsonData.roomId,
-    );
-    if (channel === null) {
-      this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
-      channel = this.chatService.findPublicChannelByRoomId(jsonData.roomId);
-    } else {
-      this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
-    }
-    // return this.chatService.enterChatRoom(client, jsonData, channel);
-  }
+  // @SubscribeMessage('chat_enter')
+  // async enterProtectedAndPublicRoom(
+  //   @ConnectedSocket() client: Socket,
+  //   @MessageBody() data: any,
+  //   // 반환형 선언하기
+  // ) {
+  //   // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
+  //   const jsonData = JSON.parse(data);
+  //   this.logger.log(
+  //     `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
+  //   );
+  //   if (this.chatService.checkAlreadyInRoom(jsonData)) {
+  //     console.log('Already in Room');
+  //     // FIXME: 이미 들어와있기 때문에 데이터 전송을 해야한다. ✅ 무한스크롤 이벤트 발생으로 해결 가능
+  //     return 'Already in Room';
+  //   }
+  //   let channel: Channel = this.chatService.findProtectedChannelByRoomId(
+  //     jsonData.roomId,
+  //   );
+  //   if (channel === null) {
+  //     this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
+  //     channel = this.chatService.findPublicChannelByRoomId(jsonData.roomId);
+  //   } else {
+  //     this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
+  //   }
+  //   // return this.chatService.enterChatRoom(client, jsonData, channel);
+  // }
 
   // API: MAIN_CHAT_4
   @SubscribeMessage('chat_send_msg')
-  sendChatMessage(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
-    const jsonData = JSON.parse(data);
+  async sendChatMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any,
+  ) {
+    const { channelIdx, senderIdx, msg } = JSON.parse(payload);
+    // FIXME: 테스트용 코드 ------------------------------------------------------
+    const testChannel: Channel | DMChannel =
+      await this.chatService.findChannelByRoomId(channelIdx);
+    if (testChannel instanceof Channel) {
+      testChannel.setMember = await this.usersService.getUserInfoFromDBById(
+        senderIdx,
+      );
+    }
+    // ------------------------------------------------------------------------
     this.logger.log(
       `[ 💬 Socket API CALL ] 'chat_send_msg' _ nickname: ${client.handshake.auth}`,
     );
-    // // 채널 찾기
-    const channel = this.chatService.findChannelByRoomId(jsonData.roomId);
-
-    // // 메시지 저장 - 여기 부터는 service 로 옮기기
-    // if (channel.getMode == Mode.PRIVATE) {
-    //   // FIXME: client 소켓으로 sender 의 idx 를 찾아야한다.
-    //   const message = new Message(channel.getChannelIdx, 1, jsonData.message);
-    //   message.setMsgDate = new Date();
-    //   channel.setMessage = message;
-    //   this.chat.getPrivateChannels.push(channel);
-    //   // TODO: DB 에 저장해야함.
-    // } else {
-    //   const message = new Message(channel.getChannelIdx, 1, jsonData.message);
-    //   message.setMsgDate = new Date();
-    //   channel.setMessage = message;
-    //   this.chat.getProtectedChannels.push(channel);
-    // }
-    client.to(`Room${channel.getRoomId.toString()}`).emit('jsonData.message');
-    // request data
-    // {
-    //   roomId,
-    //   message
-    // }
-    // response data
-    // {
-    //   message
-    // }
-    // 방식
-    // client.to().emit('', );
+    const channel: Channel | DMChannel =
+      await this.chatService.findChannelByRoomId(channelIdx);
+    if (channel instanceof Channel) {
+      const msgInfo = await this.chatService.saveMessageInIM(
+        channelIdx,
+        senderIdx,
+        msg,
+      );
+      // sender, msg, msgDate
+      console.log(msgInfo);
+      this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
+    } else if (channel instanceof DMChannel) {
+      // TODO: DB 에 저장
+      // channel이 DMChannel 타입일 경우 처리
+      const message: SendDMDto = { msg: msg };
+      this.chatService.saveMessageInDB(channelIdx, senderIdx, message);
+      // this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msg);
+    } else {
+      // 예상하지 못한 타입일 경우 처리
+      console.log('Unexpected type of channel');
+    }
   }
 
   // API: MAIN_CHAT_5
-  // @SubscribeMessage('chat_create_room')
-  // async createPrivateAndPublicChatRoom(
-  //   @ConnectedSocket() client: Socket,
-  //   @MessageBody() req: chatCreateRoomReqDto, // chatCreateRoomReqDto
-  // ) {
-  //   // socket 을 통해 유저 식별값을 가지고 있다고 가정
-  //   let res = null;
-  //   if (req.password === '') {
-  //     res = await this.chatService.createPublicChatRoom(req);
-  //   } else if (req.password !== '') {
-  //     res = await this.chatService.createProtectedChatRoom(req);
-  //   } else {
-  //     throw new Error('비밀번호가 없습니다.');
-  //   }
-  //   client.emit('chat_room_created', res);
-
-  //   const roomName = 'chat_' + res.channelIdx;
-  //   client.join(roomName);
-  //   client.to(roomName).emit('chat_room_created', res);
-  // response data
-  // {
-  //   channel :{
-  //     member[]?,
-  //     channelIdx,
-  //     password : true / false
-  //   }
-  // }
-  // braodcast 방식
-  // const message = {
-  //   event: 'chat_create_room',
-  //   data: JSON.parse(res),
-  // };
-  // connectedClients.forEach((client) =>
-  //   client.emit(message.event, message.data.toString()),
-  // );
-  // }
+  @SubscribeMessage('BR_chat_create_room')
+  async createPrivateAndPublicChannel(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any, // chatCreateRoomReqDto
+  ) {
+    const { password = null } = JSON.parse(payload);
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
+    );
+    const user = await this.inMemoryUsers.inMemoryUsers.find((user) => {
+      return user.userIdx === userId;
+    });
+    const channelInfo = await this.chatService.createPublicAndProtected(
+      password,
+      user,
+    );
+    client.join(`chat_room_${channelInfo.channelIdx}`);
+    this.server.emit('BR_chat_create_room', channelInfo);
+  }
 
   // API: MAIN_CHAT_6
   @SubscribeMessage('chat_room_admin')

@@ -66,6 +66,10 @@ export class UsersService {
     return this.userObjectRepository.findOne({ where: { intra: intra } });
   }
 
+  async getUserInfoFromDBById(userId: number): Promise<UserObject> {
+    return this.userObjectRepository.findOne({ where: { userIdx: userId } });
+  }
+
   async getFriendList(
     intra: string,
   ): Promise<{ friendNicname: string; isOnline: boolean }[]> {
@@ -88,6 +92,10 @@ export class UsersService {
   async setIsOnline(user: UserObject, isOnline: boolean) {
     // user.isOnline = isOnline;
     return this.userObjectRepository.setIsOnline(user, isOnline);
+  }
+
+  async getUserObjectFromDB(idValue: number): Promise<UserObject> {
+    return this.userObjectRepository.findOne({ where: { userIdx: idValue } });
   }
 
   // async getUserId(client: Socket): Promise<number> {

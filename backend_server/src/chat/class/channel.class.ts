@@ -11,8 +11,8 @@ export class Channel {
   private member: UserObject[] = []; //   private member: member[];
   private messages: Message[] = [];
   private mode: Mode;
-  private owner: any; //   private owner: member;
-  private admin: any[] = []; //   private admin: member[];
+  private owner: UserObject; //   private owner: member;
+  private admin: UserObject[] = []; //   private admin: member[];
   private password: string;
 
   /******************************* 메서드 *******************************/
