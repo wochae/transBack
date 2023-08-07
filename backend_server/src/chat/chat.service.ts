@@ -18,7 +18,7 @@ export class ChatService {
     private dmChannelRepository: DMChannelRepository,
     private directMessagesRepository: DirectMessageRepository,
     // TODO: gateway에서도 InmemoryUsers 를 사용하는데, service 로 옮기자
-    private inmemoryDB: InMemoryUsers,
+    private inMemoryUsers: InMemoryUsers,
   ) {}
   private logger: Logger = new Logger('ChatService');
 
@@ -230,16 +230,21 @@ export class ChatService {
   async saveMessageInIM(channelIdx: number, senderIdx: number, msg: string) {
     const msgInfo = new Message(channelIdx, senderIdx, msg);
     msgInfo.setMsgDate = new Date();
-    console.log('-------------------------------------');
-    console.log(this.chat.getProtectedChannels);
     const channel = await this.chat.getProtectedChannels.find(
       (channel) => channel.getChannelIdx === channelIdx,
     );
     if (channel) {
       channel.setMessage = msgInfo;
-      console.log(channel.getMessages);
     } else {
       console.log('Channel not found.');
     }
+  }
+
+  async saveMessageInDB(channelIdx: number, senderIdx: number, msg: SendDMDto) {
+    const message: SendDMDto = {
+      msg: msg.msg,
+    };
+    const user = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
+    await this.directMessagesRepository.sendDm(message, user, channelIdx);
   }
 }

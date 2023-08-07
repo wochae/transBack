@@ -272,7 +272,7 @@ export class ChatGateway
     @MessageBody() payload: any,
   ) {
     const { channelIdx, senderIdx, msg } = JSON.parse(payload);
-    // FIXME: 테스트용 코드
+    // FIXME: 테스트용 코드 ------------------------------------------------------
     const testChannel: Channel | DMChannel =
       await this.chatService.findChannelByRoomId(channelIdx);
     if (testChannel instanceof Channel) {
@@ -280,7 +280,7 @@ export class ChatGateway
         senderIdx,
       );
     }
-    //
+    // ------------------------------------------------------------------------
     this.logger.log(
       `[ 💬 Socket API CALL ] 'chat_send_msg' _ nickname: ${client.handshake.auth}`,
     );
@@ -292,6 +292,8 @@ export class ChatGateway
     } else if (channel instanceof DMChannel) {
       // TODO: DB 에 저장
       // channel이 DMChannel 타입일 경우 처리
+      const message: SendDMDto = { msg: msg };
+      this.chatService.saveMessageInDB(channelIdx, senderIdx, message);
       console.log('This is a DMChannel:', channel);
     } else {
       // 예상하지 못한 타입일 경우 처리

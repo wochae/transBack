@@ -79,15 +79,15 @@ export class DirectMessageRepository extends Repository<DirectMessage> {
   ): Promise<DirectMessage> {
     const { msg } = sendDm;
 
-    const firstDM = await this.create({
+    const dmMessage = await this.create({
       channelIdx: channelIdx,
       sender: user.nickname,
       msg: msg,
       msgDate: new Date(),
     });
-    await this.save(firstDM);
+    await this.save(dmMessage);
 
-    return firstDM;
+    return dmMessage;
   }
 
   async findMessageList(channelIdx: number): Promise<DirectMessage[]> {
