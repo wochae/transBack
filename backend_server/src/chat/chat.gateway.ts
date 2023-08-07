@@ -90,10 +90,17 @@ export class ChatGateway
       await this.chat.removeSocketObject(
         this.chat.setSocketObject(client, user),
       );
-      // TODO: Public, Protected 도 채널 나가기
+      // TODO: Public, Protected 도 채널 나가기 -> 테스트 필요 -> 근데 이게 필요한지 모르겠음.
+      const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
+      const channelForLeave: Channel[] = notDmChannelList.filter((channel) =>
+        channel.getMember.includes(user),
+      );
+      await channelForLeave.forEach((channel) => {
+        client.leave(`chat_room_${channel.getChannelIdx}`);
+      });
       const dmChannelList: Promise<DMChannel[]> =
         this.chatService.findPrivateChannelByUserIdx(user.userIdx);
-      dmChannelList.then((channels) => {
+      await dmChannelList.then((channels) => {
         channels.forEach((channel) => {
           client.leave(`chat_room_${channel.channelIdx}`);
         });
@@ -294,74 +301,34 @@ export class ChatGateway
       // channel이 DMChannel 타입일 경우 처리
       const message: SendDMDto = { msg: msg };
       this.chatService.saveMessageInDB(channelIdx, senderIdx, message);
-      console.log('This is a DMChannel:', channel);
+      // this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msg);
     } else {
       // 예상하지 못한 타입일 경우 처리
       console.log('Unexpected type of channel');
     }
-
-    // 메시지 저장 - 여기 부터는 service 로 옮기기
-    // if (channel.getMode == Mode.PRIVATE) {
-    //   // FIXME: client 소켓으로 sender 의 idx 를 찾아야한다.
-    //   const message = new Message(channel.getChannelIdx, 1, jsonData.message);
-    //   message.setMsgDate = new Date();
-    //   channel.setMessage = message;
-    //   this.chat.getPrivateChannels.push(channel);
-    //   // TODO: DB 에 저장해야함.
-    // } else {
-    //   const message = new Message(channel.getChannelIdx, 1, jsonData.message);
-    //   message.setMsgDate = new Date();
-    //   channel.setMessage = message;
-    //   this.chat.getProtectedChannels.push(channel);
-    // }
-    // client.to(`Room${channel.getRoomId.toString()}`).emit('jsonData.message');
-    // response data
-    // {
-    //   message,
-    //   msg,
-    //   msgDate,
-    // }
-    // 방식
-    // this.server.to().emit('', );
   }
 
   // API: MAIN_CHAT_5
-  // @SubscribeMessage('chat_create_room')
-  // async createPrivateAndPublicChatRoom(
-  //   @ConnectedSocket() client: Socket,
-  //   @MessageBody() req: chatCreateRoomReqDto, // chatCreateRoomReqDto
-  // ) {
-  //   // socket 을 통해 유저 식별값을 가지고 있다고 가정
-  //   let res = null;
-  //   if (req.password === '') {
-  //     res = await this.chatService.createPublicChatRoom(req);
-  //   } else if (req.password !== '') {
-  //     res = await this.chatService.createProtectedChatRoom(req);
-  //   } else {
-  //     throw new Error('비밀번호가 없습니다.');
-  //   }
-  //   client.emit('chat_room_created', res);
-
-  //   const roomName = 'chat_' + res.channelIdx;
-  //   client.join(roomName);
-  //   client.to(roomName).emit('chat_room_created', res);
-  // response data
-  // {
-  //   channel :{
-  //     member[]?,
-  //     channelIdx,
-  //     password : true / false
-  //   }
-  // }
-  // braodcast 방식
-  // const message = {
-  //   event: 'chat_create_room',
-  //   data: JSON.parse(res),
-  // };
-  // connectedClients.forEach((client) =>
-  //   client.emit(message.event, message.data.toString()),
-  // );
-  // }
+  @SubscribeMessage('BR_chat_create_room')
+  async createPrivateAndPublicChannel(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any, // chatCreateRoomReqDto
+  ) {
+    const { password = null } = JSON.parse(payload);
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
+    );
+    const user = await this.inMemoryUsers.inMemoryUsers.find((user) => {
+      return user.userIdx === userId;
+    });
+    const channelInfo = await this.chatService.createPublicAndProtected(
+      password,
+      user,
+    );
+    client.join(`chat_room_${channelInfo.channelIdx}`);
+    this.server.emit('BR_chat_create_room', channelInfo);
+  }
 
   // API: MAIN_CHAT_6
   @SubscribeMessage('chat_room_admin')
