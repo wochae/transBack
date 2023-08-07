@@ -30,6 +30,7 @@ export class UserObject extends BaseEntity {
   @Column()
   rankpoint: number;
 
+  // 온라인 오프라인 게임 중으로
   @Column()
   isOnline: boolean;
 

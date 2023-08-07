@@ -218,6 +218,29 @@ export class ChatService {
     return dmInfo;
   }
 
+  async createPublicAndProtected(password: string, user: UserObject) {
+    const channelIdx = await this.setNewChannelIdx();
+    // TODO: 함수로 빼기?
+    const channel = new Channel();
+    channel.setChannelIdx = channelIdx;
+    channel.setRoomId = channelIdx;
+    channel.setMember = user;
+    channel.setOwner = user;
+    if (password == null) {
+      channel.setMode = Mode.PUBLIC;
+    } else if (password != null) {
+      channel.setMode = Mode.PROTECTED;
+    }
+    channel.setPassword = password;
+    this.chat.setProtectedChannels = channel;
+    const channelInfo = {
+      owner: channel.getOwner,
+      channelIdx: channel.getChannelIdx,
+      mode: channel.getMode,
+    };
+    return channelInfo;
+  }
+
   async setNewChannelIdx(): Promise<number> {
     const maxChannelIdxInIM = await this.chat.getMaxChannelIdxInIM();
     const maxChannelIdxInDB =
