@@ -1,13 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Channel } from './class/channel.class';
-import { Chat, MessageInfo, MessageInteface } from './class/chat.class';
-import { DataSource, EntityManager, Transaction } from 'typeorm';
+import { Chat } from './class/chat.class';
+import { Socket } from 'socket.io';
+import { error } from 'console';
+import { DataSource } from 'typeorm';
 import { UserObject } from 'src/users/entities/users.entity';
 import { DMChannel, DirectMessage, Mode } from './entities/chat.entity';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
-import { InMemoryUsers } from 'src/users/users.provider';
-import { Socket } from 'socket.io';
+import { chatCreateRoomReqDto, chatCreateRoomResDto } from './dto/chat.dto';
 
 @Injectable()
 export class ChatService {
@@ -16,13 +17,81 @@ export class ChatService {
     private dataSource: DataSource,
     private dmChannelRepository: DMChannelRepository,
     private directMessagesRepository: DirectMessageRepository,
-    // TODO: gateway에서도 InmemoryUsers 를 사용하는데, service 로 옮기자
-    private inmemoryDB: InMemoryUsers,
   ) {}
   private logger: Logger = new Logger('ChatService');
+  
+  // TODO: 에러처리 catch ~ throw
+  // FIXME: Error 객체반환하는거 맞는지 확인해야함
+  enterChatRoom(
+    client: Socket,
+    clientData: any,
+    channel: Channel,
+  ): any | Error {
+    // // 비밀번호 확인
+    if (channel.getPassword !== null) {
+      if (channel.getPassword !== clientData.password) {
+        this.logger.log(`[ 💬 Socket API ] 'chat_enter _ Wrong_password`);
+        return new error('Please check your password');
+      }
+    }
+    this.logger.log(
+      `[ 💬 Socket API ] enterChatRomm _ roomId: ${channel.getRoomId}`,
+    );
+    client.join(`Room${channel.getRoomId.toString()}`);
+    channel.setMember = [clientData.nickname];
+    // API: MAIN_CHAT_3
+    client
+      .to(`Room${channel.getRoomId.toString()}`)
+      .emit('chat_enter_noti', clientData.nickname);
+    this.logger.log(
+      `[ 💬 Socket API ] ${clientData.nickname} Success enterChatRomm _ roomId: ${channel.getRoomId}`,
+    );
+    return {
+      member: channel.getMember,
+      channelIdx: channel.getChannelIdx,
+    };
+  }
+
+  // API: MAIN_CHAT_5
+  createPublicChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
+    const channel = new Channel();
+    channel.setChannelIdx = Chat.idxForSetChannelIdx;
+    channel.setRoomId = Chat.idxForSetChannelIdx;
+    channel.setPassword = null;
+    channel.setMember = ["wochae"];
+    channel.setMode = Mode.PUBLIC;
+    channel.setMessage = null;    
+    channel.setOwner = req.nickname;
+    channel.setAdmin = "";
+    console.log("channel", channel);
+    this.chat.setProtectedChannels = channel;
+    return {
+      member: channel.getMember,
+      channelIdx: channel.getChannelIdx,
+      password: false
+    };
+  }
+  createProtectedChatRoom(req: chatCreateRoomReqDto): chatCreateRoomResDto {
+    const channel = new Channel();
+    channel.setChannelIdx = Chat.idxForSetChannelIdx;
+    channel.setRoomId = Chat.idxForSetChannelIdx++;
+    channel.setPassword = "pw";
+    channel.setMember = ["wochae"];
+    channel.setMode = Mode.PROTECTED;
+    channel.setMessage = null;    
+    channel.setOwner = req.nickname;
+    channel.setAdmin = "wochae";
+    
+    this.chat.setProtectedChannels = channel;
+    return {
+      member: channel.getMember,
+      channelIdx: channel.getChannelIdx,
+      password: true
+    };
+  }
 
   /********************* check Room Member & client *********************/
-  checkAlreadyInRoom(clientData: any) {
+  checkAlreadyInRoom(clientData: any): boolean {
     // find() 사용
     const channel = this.findChannelByRoomId(clientData.roomId);
     // if (channel == null) {
@@ -48,7 +117,10 @@ export class ChatService {
     const protectedChannel: Channel = this.chat.getProtectedChannels.find(
       (channel) => channel.getRoomId === roomId,
     );
-    return protectedChannel || null;
+    const privateChannel: Channel = this.chat.getPrivateChannels.find(
+      (channel) => channel.getRoomId === roomId,
+    );
+    return protectedChannel || privateChannel || null;
   }
 
   findProtectedChannelByRoomId(roomId: number): Channel {
@@ -81,15 +153,13 @@ export class ChatService {
     this.logger.log(
       `[ 💬 Socket API ] findChannelByRoomId _ roomId: ${roomId}`,
     );
-    // DB 에서 찾아야함
-    // const privateChannel = this.chat.getPrivateChannels.find(
-    //   (channel) => channel.getRoomId === roomId,
-    // );
-    // if (privateChannel == undefined) {
-    //   return null;
-    // }
-    // return privateChannel;
-    return null;
+    const privateChannel = this.chat.getPrivateChannels.find(
+      (channel) => channel.getRoomId === roomId,
+    );
+    if (privateChannel == undefined) {
+      return null;
+    }
+    return privateChannel;
   }
 
   async createDmChannel(
@@ -113,7 +183,7 @@ export class ChatService {
       client,
       channelIdx,
     );
-    console.log(firstDM);
+
     await this.directMessagesRepository.save(firstDM);
 
     try {
@@ -128,84 +198,5 @@ export class ChatService {
       await queryRunner.release();
     }
     return ret;
-  }
-
-  // FIXME: 반환값...
-  async checkDM(
-    userIdx: number,
-    targetIdx: number,
-  ): Promise<MessageInfo | boolean> {
-    const dmChannel: DMChannel = await this.dmChannelRepository.findDMChannel(
-      userIdx,
-      targetIdx,
-    );
-    if (!dmChannel) {
-      console.log('채널이 없습니다.');
-      return false;
-    }
-    const dmMessageList = await Promise.all(
-      (
-        await this.directMessagesRepository.findMessageList(
-          dmChannel.channelIdx,
-        )
-      ).map(async (dm) => {
-        return {
-          sender: dm.sender,
-          msg: dm.msg,
-        };
-      }),
-    );
-    const messageInfo: MessageInfo = {
-      message: dmMessageList,
-      userIdx1: dmChannel.userIdx1,
-      userIdx2: dmChannel.userIdx2,
-      userNickname1: dmChannel.userNickname1,
-      userNickname2: dmChannel.userNickname2,
-      channelIdx: dmChannel.channelIdx,
-    };
-    return messageInfo;
-  }
-
-  async createDM(
-    client: Socket,
-    user: UserObject,
-    targetUser: UserObject,
-    msg: SendDMDto,
-  ) {
-    const channelIdx = await this.setNewChannelIdx();
-    // await this.createDmChannel(user, targetUser, channelIdx, msg);
-    await this.dmChannelRepository.createChannel(user, targetUser, channelIdx);
-    await this.directMessagesRepository.sendDm(msg, user, channelIdx);
-    // const firstDM = await this.directMessagesRepository.sendDm(
-    //   msg,
-    //   user,
-    //   channelIdx,
-    // );
-    const message: MessageInteface = {
-      sender: user.nickname,
-      msg: msg.msg,
-    };
-    const dmInfo = {
-      message: message,
-      channelIdx: channelIdx,
-    };
-    // 상대방 소켓 찾아서 join 시키기
-    const targetSocket = this.chat.getSocketObject(targetUser.userIdx);
-    if (!targetSocket) {
-      console.log('상대방이 오프라인입니다.');
-      return;
-    }
-    targetSocket.socket.join(`chat_room_${channelIdx}`);
-    client.join(`chat_room_${channelIdx}`);
-    return dmInfo;
-  }
-
-  async setNewChannelIdx(): Promise<number> {
-    const maxChannelIdxInIM = await this.chat.getMaxChannelIdxInIM();
-    const maxChannelIdxInDB =
-      await this.dmChannelRepository.getMaxChannelIdxInDB();
-    // FIXME: chat 클래스에 있는 정적 변수는 지워도 되지 않을까?
-    const channelIdx = Math.max(maxChannelIdxInIM, maxChannelIdxInDB) + 1;
-    return channelIdx;
   }
 }
