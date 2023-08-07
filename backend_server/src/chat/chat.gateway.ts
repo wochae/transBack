@@ -13,11 +13,13 @@ import {
 import { ChatService } from './chat.service';
 import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
-import { Chat } from './class/chat.class';
+import { Chat, MessageInfo } from './class/chat.class';
 import { UsersService } from 'src/users/users.service';
-import { chatCreateRoomReqDto, chatCreateRoomResDto } from './dto/chat.dto';
+import { DMChannel, Mode } from './entities/chat.entity';
+import { InMemoryUsers } from 'src/users/users.provider';
+import { UserObject } from 'src/users/entities/users.entity';
+import { SendDMDto } from './dto/send-dm.dto';
 
-const connectedClients = new Set<Socket>();
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
@@ -29,8 +31,9 @@ export class ChatGateway
 {
   constructor(
     private readonly chatService: ChatService,
+    private readonly usersService: UsersService,
+    private readonly inMemoryUsers: InMemoryUsers,
     private chat: Chat,
-    private usersService: UsersService,
   ) {}
   private logger: Logger = new Logger('ChatGateway');
 
@@ -42,36 +45,113 @@ export class ChatGateway
     this.logger.log('[ 💬 Chat ] Initialized!');
   }
 
-  // TODO: MAIN_ENTER_0 구현을 여기에 해야하지 않을까 싶음.
-  handleConnection(client: Socket, ...args: any[]) {
-    // TODO: 인메모리에 유저에 대한 정보 저장하기
-    // TODO: 해당 socket 을 갖고 있는 유저 intra 또는 nicnkname 찾아서 출력?
-    connectedClients.add(client);
-    this.logger.log(
-      `[ 💬 Client ] { NickName } Connected _ 일단 소켓 ID 출력 ${client.id}`,
+  handleConnection(client: Socket) {
+    // TODO: 함수로 빼기
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
     );
+    // TODO: client.handshake.query.userId & intra 가 db 에 있는 userIdx & intra 와 일치한지 확인하는 함수 추가
+    const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
+      return user.userIdx === userId;
+    });
+    if (!user) {
+      this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
+      client.disconnect();
+      return;
+    }
+    // TODO: 본인이 속한 DM 채널 idx 찾아서 roomId 에 join 하기
+    const dmChannelList: Promise<DMChannel[]> =
+      this.chatService.findPrivateChannelByUserIdx(user.userIdx);
+    dmChannelList.then((channels) => {
+      channels.forEach((channel) => {
+        client.join(`chat_room_${channel.channelIdx}`);
+      });
+    });
+    // FIXME: 테스트용  코드
+    client.join('chat_room_10');
+    client.join('chat_room_11');
+    // TODO: 이미 존재하는 member 인지 확인 필요
+    // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
+    this.chat.setSocketList = this.chat.setSocketObject(client, user);
+    this.logger.log(`[ 💬 Client ] ${user.nickname} Connected`);
   }
 
-  handleDisconnect(client: Socket) {
-    connectedClients.delete(client);
-    this.logger.log(
-      `[ 💬 Client ] { NickName } Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
+  async handleDisconnect(client: Socket) {
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
     );
+    const user = this.inMemoryUsers.getUserByIdFromIM(userId);
+    if (user) {
+      // TODO: disconnect 도 BR??
+      // TODO: room 나가기, 소켓 리스트 지우기 등.
+      await this.usersService.setIsOnline(user, false);
+      await this.chat.removeSocketObject(
+        this.chat.setSocketObject(client, user),
+      );
+      // TODO: Public, Protected 도 채널 나가기
+      const dmChannelList: Promise<DMChannel[]> =
+        this.chatService.findPrivateChannelByUserIdx(user.userIdx);
+      dmChannelList.then((channels) => {
+        channels.forEach((channel) => {
+          client.leave(`chat_room_${channel.channelIdx}`);
+        });
+      });
+      this.logger.log(
+        `[ 💬 Client ] ${user.nickname} Disconnected _ 일단 소켓 ID 출력 ${client.id}`,
+      );
+    }
   }
 
   /***************************** SOCKET API  *****************************/
-  // FIXME: DTO 로 Json.parse 대체하기
-  // API: MAIN_ENTER_0
+  // FIXME: gateway 에서 in memory 처리하는 것. service 로 보내기?
+  // FIXME: 매개변수 DTO 로 Json.parse 대체하기
   @SubscribeMessage('main_enter')
-  enterMainPage(
+  async enterMainPage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() intra: string,
+    // TODO: intra 를 class 로 만들어서 DTO 처리?
+    @MessageBody() payload: any,
   ) {
+    const { intra } = JSON.parse(payload);
+
+    // API: MAIN_ENTER_0
+    // TODO: 정리가 필요할듯
+    const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
+    if (!user) {
+      this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
+      client.disconnect();
+    }
+    const userObject = {
+      imgUri: user.imgUri,
+      nickname: user.nickname,
+      userIdx: user.userIdx,
+    };
+    const friendList = await this.usersService.getFriendList(intra);
+    const blockList = await this.usersService.getBlockedList(intra);
+    const channelList = this.chat.getProtectedChannels.map(
+      ({ getOwner: owner, getChannelIdx: channelIdx, getMode: mode }) => ({
+        owner,
+        channelIdx,
+        mode,
+      }),
+    );
+    const main_enter = {
+      friendList,
+      channelList,
+      blockList,
+      userObject,
+    };
+    client.emit('main_enter', main_enter);
+
     // API: MAIN_ENTER_1
-    this.server.emit('BR_main_enter', {
-      nickname: 'jaekim',
-      isOnline: true,
-    });
+    await this.usersService.setIsOnline(user, true);
+    const BR_main_enter = {
+      targetNickname: user.nickname,
+      targetIdx: user.userIdx,
+      isOnline: user.isOnline,
+    };
+    this.server.emit('BR_main_enter', BR_main_enter);
     return;
   }
 
@@ -79,132 +159,209 @@ export class ChatGateway
   @SubscribeMessage('user_profile')
   async handleGetProfile(
     @ConnectedSocket() client: Socket,
-    @MessageBody() targetNickname: string,
+    @MessageBody() payload: any,
   ) {
-    // // const targetProfile = await this.usersService.getProfile(targetNickname);
-    // client.emit('target_profile', targetProfile);
-    // console.log(targetProfile);
+    const { targetNickname, targetIdx } = JSON.parse(payload);
+    const user_profile = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+
+    if (!user_profile || user_profile.nickname !== targetNickname) {
+      this.logger.log(`[ ❗️ Client ] ${targetNickname} Not Found`);
+      client.disconnect();
+    }
+    // TODO: game 기록도 인메모리에서 관리하기로 했었나?? 전적 데이터 추가 필요
+    client.emit('user_profile', user_profile);
   }
 
   // API: MAIN_CHAT_0
+  // FIXME: msgDate 같이 반환, DM 이 없는 경우 return 으로 false
   @SubscribeMessage('check_dm')
   async handleCheckDM(
     @ConnectedSocket() client: Socket,
-    @MessageBody() targetNickname: string,
+    @MessageBody() payload: any,
   ) {
-    // if (!this.chatService.checkDM(targetNickname)) {
-    //   client.emit('not_found_dm'); // 여기서 찾을 수 없다는 메시지를 받으면 그 둘의 관련된 channel 페이지로 이동시킨다.
-    // } else { const { Message[], member[], channelIdx } = await this.chatService.getDM(targetNickname);
-    // client.emit('found_dm', { Message[], member[], channelIdx });
-    // }
+    const { targetIdx } = JSON.parse(payload);
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
+    );
+    // TODO: 논의 사항. 빈배열 대신에 boolean 해도 되나..?
+    const check_dm: MessageInfo | boolean = await this.chatService.checkDM(
+      userId,
+      targetIdx,
+    );
+    client.emit('check_dm', check_dm);
   }
 
   // API: MAIN_CHAT_1
+  // FIXME: msgDate 같이 반환
   @SubscribeMessage('create_dm')
   async createDM(
     @ConnectedSocket() client: Socket,
-    @MessageBody() targetNickname: string,
+    @MessageBody() payload: string,
   ) {
-    // request data
-    // {
-    //   targetNickname,
-    //   content(message),
-    // }
-    // response data
-    // {
-    //   Message,
-    //   member[],
-    //   channelIdx
-    // }
-    // roomId 방식
-    // this.server.to().emit('', );
+    const { targetNickname, targetIdx, msg } = JSON.parse(payload);
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
+    );
+    const user: UserObject = await this.usersService.getUserInfoFromDB(
+      this.inMemoryUsers.getUserByIdFromIM(userId).nickname,
+    );
+    // 오프라인일 수도 있기 때문에 db 에서 가져옴
+    const targetUser: UserObject = await this.usersService.getUserInfoFromDB(
+      targetNickname,
+    );
+    // TODO: connect 할 때 검사하는데 필요할까?
+    if (!user || !targetUser) {
+      this.logger.log(`[ ❗️ Client ] Not Found`);
+      client.disconnect();
+      return;
+    }
+    // DM 존재 여부 파악한다. 근데 이미 이전 단계에서 검사하기 때문에 필요없을 듯...? 하지만 동시에 생성될 수도 있다..?
+    if (await this.chatService.checkDM(user.userIdx, targetUser.userIdx)) {
+      console.log('이미 존재하는 DM 채널입니다.');
+      return;
+    }
+    const message: SendDMDto = { msg: msg };
+    const newChannelAndMsg = await this.chatService.createDM(
+      client,
+      user,
+      targetUser,
+      message,
+    );
+
+    this.server
+      .to(`chat_room_${newChannelAndMsg.channelIdx}`)
+      .emit('create_dm', newChannelAndMsg);
+    return;
   }
 
   // API: MAIN_CHAT_2
-  @SubscribeMessage('chat_enter')
-  async enterProtectedAndPublicRoom(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: any,
-    // 반환형 선언하기
-  ) {
-    // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
-    const jsonData = JSON.parse(data);
-    this.logger.log(
-      `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
-    );
-    if (this.chatService.checkAlreadyInRoom(jsonData)) {
-      console.log('Already in Room');
-      // FIXME: 이미 들어와있기 때문에 데이터 전송을 해야한다. ✅ 무한스크롤 이벤트 발생으로 해결 가능
-      return 'Already in Room';
-    }
-    let channel: Channel = this.chatService.findProtectedChannelByRoomId(
-      jsonData.roomId,
-    );
-    if (channel === null) {
-      this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
-      channel = this.chatService.findPublicChannelByRoomId(jsonData.roomId);
-    } else {
-      this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
-    }
-    return this.chatService.enterChatRoom(client, jsonData, channel);
-  }
+  // @SubscribeMessage('chat_enter')
+  // async enterProtectedAndPublicRoom(
+  //   @ConnectedSocket() client: Socket,
+  //   @MessageBody() data: any,
+  //   // 반환형 선언하기
+  // ) {
+  //   // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
+  //   const jsonData = JSON.parse(data);
+  //   this.logger.log(
+  //     `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
+  //   );
+  //   if (this.chatService.checkAlreadyInRoom(jsonData)) {
+  //     console.log('Already in Room');
+  //     // FIXME: 이미 들어와있기 때문에 데이터 전송을 해야한다. ✅ 무한스크롤 이벤트 발생으로 해결 가능
+  //     return 'Already in Room';
+  //   }
+  //   let channel: Channel = this.chatService.findProtectedChannelByRoomId(
+  //     jsonData.roomId,
+  //   );
+  //   if (channel === null) {
+  //     this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
+  //     channel = this.chatService.findPublicChannelByRoomId(jsonData.roomId);
+  //   } else {
+  //     this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
+  //   }
+  //   // return this.chatService.enterChatRoom(client, jsonData, channel);
+  // }
 
   // API: MAIN_CHAT_4
   @SubscribeMessage('chat_send_msg')
-  sendChatMessage(
+  async sendChatMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: string,
+    @MessageBody() payload: any,
   ) {
-    // request data
-    // {
-    //   roomId,
-    //   message
+    const { channelIdx, senderIdx, msg } = JSON.parse(payload);
+    // FIXME: 테스트용 코드 ------------------------------------------------------
+    const testChannel: Channel | DMChannel =
+      await this.chatService.findChannelByRoomId(channelIdx);
+    if (testChannel instanceof Channel) {
+      testChannel.setMember = await this.usersService.getUserInfoFromDBById(
+        senderIdx,
+      );
+    }
+    // ------------------------------------------------------------------------
+    this.logger.log(
+      `[ 💬 Socket API CALL ] 'chat_send_msg' _ nickname: ${client.handshake.auth}`,
+    );
+    const channel: Channel | DMChannel =
+      await this.chatService.findChannelByRoomId(channelIdx);
+    if (channel instanceof Channel) {
+      this.chatService.saveMessageInIM(channelIdx, senderIdx, msg);
+      this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msg);
+    } else if (channel instanceof DMChannel) {
+      // TODO: DB 에 저장
+      // channel이 DMChannel 타입일 경우 처리
+      const message: SendDMDto = { msg: msg };
+      this.chatService.saveMessageInDB(channelIdx, senderIdx, message);
+      console.log('This is a DMChannel:', channel);
+    } else {
+      // 예상하지 못한 타입일 경우 처리
+      console.log('Unexpected type of channel');
+    }
+
+    // 메시지 저장 - 여기 부터는 service 로 옮기기
+    // if (channel.getMode == Mode.PRIVATE) {
+    //   // FIXME: client 소켓으로 sender 의 idx 를 찾아야한다.
+    //   const message = new Message(channel.getChannelIdx, 1, jsonData.message);
+    //   message.setMsgDate = new Date();
+    //   channel.setMessage = message;
+    //   this.chat.getPrivateChannels.push(channel);
+    //   // TODO: DB 에 저장해야함.
+    // } else {
+    //   const message = new Message(channel.getChannelIdx, 1, jsonData.message);
+    //   message.setMsgDate = new Date();
+    //   channel.setMessage = message;
+    //   this.chat.getProtectedChannels.push(channel);
     // }
+    // client.to(`Room${channel.getRoomId.toString()}`).emit('jsonData.message');
     // response data
     // {
-    //   message
+    //   message,
+    //   msg,
+    //   msgDate,
     // }
     // 방식
-    // client.to().emit('', );
+    // this.server.to().emit('', );
   }
 
   // API: MAIN_CHAT_5
-  @SubscribeMessage('chat_create_room')
-  async createPrivateAndPublicChatRoom(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() req: chatCreateRoomReqDto, // chatCreateRoomReqDto
-  ) {
-    // socket 을 통해 유저 식별값을 가지고 있다고 가정
-    let res = null;
-    if (req.password === '') {
-      res = await this.chatService.createPublicChatRoom(req);
-    } else if (req.password !== '') {
-      res = await this.chatService.createProtectedChatRoom(req);
-    } else {
-      throw new Error('비밀번호가 없습니다.');
-    }
-    client.emit('chat_room_created', res);
+  // @SubscribeMessage('chat_create_room')
+  // async createPrivateAndPublicChatRoom(
+  //   @ConnectedSocket() client: Socket,
+  //   @MessageBody() req: chatCreateRoomReqDto, // chatCreateRoomReqDto
+  // ) {
+  //   // socket 을 통해 유저 식별값을 가지고 있다고 가정
+  //   let res = null;
+  //   if (req.password === '') {
+  //     res = await this.chatService.createPublicChatRoom(req);
+  //   } else if (req.password !== '') {
+  //     res = await this.chatService.createProtectedChatRoom(req);
+  //   } else {
+  //     throw new Error('비밀번호가 없습니다.');
+  //   }
+  //   client.emit('chat_room_created', res);
 
-    const roomName = 'chat_' + res.channelIdx;
-    client.join(roomName);
-    client.to(roomName).emit('chat_room_created', res);
-    // response data
-    // {
-    //   channel :{
-    //     member[]?,
-    //     channelIdx,
-    //     password : true / false
-    //   }
-    // }
-    // braodcast 방식
-    const message = {
-      event: 'chat_create_room',
-      data: JSON.parse(res),
-    };
-    connectedClients.forEach((client) =>
-      client.emit(message.event, message.data.toString()),
-    );
-  }
+  //   const roomName = 'chat_' + res.channelIdx;
+  //   client.join(roomName);
+  //   client.to(roomName).emit('chat_room_created', res);
+  // response data
+  // {
+  //   channel :{
+  //     member[]?,
+  //     channelIdx,
+  //     password : true / false
+  //   }
+  // }
+  // braodcast 방식
+  // const message = {
+  //   event: 'chat_create_room',
+  //   data: JSON.parse(res),
+  // };
+  // connectedClients.forEach((client) =>
+  //   client.emit(message.event, message.data.toString()),
+  // );
+  // }
 
   // API: MAIN_CHAT_6
   @SubscribeMessage('chat_room_admin')
