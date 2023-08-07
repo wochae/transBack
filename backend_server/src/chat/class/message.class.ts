@@ -21,6 +21,9 @@ export class Message {
   get getSender(): number {
     return this.sender;
   }
+  get getMessage(): string {
+    return this.message;
+  }
   get getMsgDate(): Date {
     return this.msgDate;
   }
