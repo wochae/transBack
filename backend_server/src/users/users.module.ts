@@ -9,7 +9,7 @@ import { CertificateRepository } from './certificate.repository';
 import { UserObject } from './entities/users.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-@Global()
+// @Global()
 @Module({
   imports: [
     TypeOrmExModule.forCustomRepository([

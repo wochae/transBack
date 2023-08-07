@@ -90,6 +90,10 @@ export class UsersService {
     return this.userObjectRepository.setIsOnline(user, isOnline);
   }
 
+  async getUserObjectFromDB(idValue: number): Promise<UserObject> {
+    return this.userObjectRepository.findOne({ where: { userIdx: idValue } });
+  }
+
   // async getUserId(client: Socket): Promise<number> {
   //   return parseInt(client.handshake.query.userId as string, 10);
   // }
