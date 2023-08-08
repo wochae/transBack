@@ -10,7 +10,7 @@ interface SocketObject {
 export interface MessageInteface {
   sender: string;
   msg: string;
-  // msgDate: Date;
+  msgDate: Date;
 }
 
 export interface MessageInfo {

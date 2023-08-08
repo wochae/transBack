@@ -194,18 +194,23 @@ export class ChatService {
     const channelIdx = await this.setNewChannelIdx();
     // await this.createDmChannel(user, targetUser, channelIdx, msg);
     await this.dmChannelRepository.createChannel(user, targetUser, channelIdx);
-    await this.directMessagesRepository.sendDm(msg, user, channelIdx);
+    const firstDM = await this.directMessagesRepository.sendDm(
+      msg,
+      user,
+      channelIdx,
+    );
     // const firstDM = await this.directMessagesRepository.sendDm(
     //   msg,
     //   user,
     //   channelIdx,
     // );
-    const message: MessageInteface = {
+    const msgInfo: MessageInteface = {
       sender: user.nickname,
-      msg: msg.msg,
+      msg: firstDM.msg,
+      msgDate: firstDM.msgDate,
     };
     const dmInfo = {
-      message: message,
+      message: msgInfo,
       channelIdx: channelIdx,
     };
     // 상대방 소켓 찾아서 join 시키기
