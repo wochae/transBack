@@ -1,5 +1,5 @@
 import { GameOptionDto } from 'src/game/dto/gameOption.dto';
-import { UserObject } from 'src/users/entities/users.entity';
+import { UserObject } from 'src/entity/users.entity';
 
 export class GameQueue {
   dataList: UserObject[];

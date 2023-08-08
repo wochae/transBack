@@ -1,4 +1,4 @@
-import { UserObject } from 'src/users/entities/users.entity';
+import { UserObject } from 'src/entity/users.entity';
 import { Socket } from 'socket.io';
 
 export class GameOnlineMember {

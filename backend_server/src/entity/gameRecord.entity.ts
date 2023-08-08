@@ -1,4 +1,4 @@
-import { UserObject } from 'src/users/entities/users.entity';
+import { UserObject } from './users.entity';
 import {
   BaseEntity,
   Entity,
@@ -29,22 +29,22 @@ export class GameRecord extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 
-  @Column()
+  @Column({ type: 'int', unique: true })
   gameIdx: number;
 
-  @Column()
+  @Column({ type: 'int' })
   userIdx: number;
 
-  @Column()
+  @Column({ type: 'varchar' })
   matchUserNickname: string;
 
-  @Column()
+  @Column({ type: 'int' })
   matchUserIdx: number;
 
-  @Column('smallint')
+  @Column({ type: 'enum', enum: RecordType })
   type: RecordType;
 
-  @Column('smallint')
+  @Column({ type: 'enum', enum: RecordResult })
   result: RecordResult;
 
   @Column()
@@ -53,16 +53,16 @@ export class GameRecord extends BaseEntity {
   @Column()
   matchDate: Date;
 
-  @ManyToOne(() => UserObject, (user) => user.userIdx)
+  @ManyToOne(() => UserObject, (user) => user)
   @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
   user: UserObject;
 
-  @ManyToOne(() => UserObject, (matchUser) => matchUser.userIdx)
+  @ManyToOne(() => UserObject, (matchUser) => matchUser)
   @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
   matchUser: UserObject;
 
   @OneToOne(() => GameChannel, (channel) => channel.record)
-  @JoinColumn()
+  @JoinColumn([{ name: 'gameIdx', referencedColumnName: 'gameIdx' }])
   channel: GameChannel;
 
   @ManyToOne(() => UserObject, (historyUser) => historyUser.userRecordList)

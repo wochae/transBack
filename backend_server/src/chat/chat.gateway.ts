@@ -15,9 +15,9 @@ import { Socket, Server } from 'socket.io';
 import { Channel } from './class/channel.class';
 import { Chat, MessageInfo } from './class/chat.class';
 import { UsersService } from 'src/users/users.service';
-import { DMChannel, Mode } from './entities/chat.entity';
+import { DMChannel, Mode } from '../entity/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
-import { UserObject } from 'src/users/entities/users.entity';
+import { UserObject } from 'src/entity/users.entity';
 import { SendDMDto } from './dto/send-dm.dto';
 
 @WebSocketGateway({

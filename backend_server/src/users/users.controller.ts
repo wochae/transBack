@@ -3,13 +3,10 @@ import {
   ValidationPipe,
   Post,
   Body,
-  Req,
   BadRequestException,
-  Redirect,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUsersDto } from './dto/create-users.dto';
-import { UserObjectRepository } from './users.repository';
 
 @Controller()
 export class UsersController {

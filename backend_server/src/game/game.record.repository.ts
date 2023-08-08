@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { GameRecord } from './entity/gameRecord.entity';
+import { GameRecord } from 'src/entity/gameRecord.entity';
 import { CustomRepository } from 'src/typeorm-ex.decorator';
 
 @CustomRepository(GameRecord)
