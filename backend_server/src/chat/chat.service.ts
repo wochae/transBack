@@ -170,6 +170,7 @@ export class ChatService {
         return {
           sender: dm.sender,
           msg: dm.msg,
+          msgDate: dm.msgDate,
         };
       }),
     );

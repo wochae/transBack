@@ -196,7 +196,12 @@ export class ChatGateway
       userId,
       targetIdx,
     );
-    client.emit('check_dm', check_dm);
+    if (check_dm === false) {
+      client.emit('check_dm', []);
+      return check_dm;
+    } else {
+      client.emit('check_dm', check_dm);
+    }
   }
 
   // API: MAIN_CHAT_1
