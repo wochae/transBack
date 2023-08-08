@@ -205,7 +205,6 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_1
-  // FIXME: msgDate 같이 반환
   @SubscribeMessage('create_dm')
   async createDM(
     @ConnectedSocket() client: Socket,
