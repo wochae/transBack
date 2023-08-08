@@ -211,10 +211,7 @@ export class ChatGateway
     @MessageBody() payload: string,
   ) {
     const { targetNickname, targetIdx, msg } = JSON.parse(payload);
-    const userId: number = parseInt(
-      client.handshake.query.userId as string,
-      10,
-    );
+    const userId: number = parseInt(client.handshake.query.userId as string);
     const user: UserObject = await this.usersService.getUserInfoFromDB(
       this.inMemoryUsers.getUserByIdFromIM(userId).nickname,
     );
@@ -222,7 +219,6 @@ export class ChatGateway
     const targetUser: UserObject = await this.usersService.getUserInfoFromDB(
       targetNickname,
     );
-    // TODO: connect 할 때 검사하는데 필요할까?
     if (!user || !targetUser) {
       this.logger.log(`[ ❗️ Client ] Not Found`);
       client.disconnect();
@@ -240,11 +236,14 @@ export class ChatGateway
       targetUser,
       message,
     );
-
+    if (!newChannelAndMsg) {
+      console.log('DM 채널 생성에 실패했습니다.');
+      return '실패';
+    }
     this.server
       .to(`chat_room_${newChannelAndMsg.channelIdx}`)
       .emit('create_dm', newChannelAndMsg);
-    return;
+    return '성공';
   }
 
   // API: MAIN_CHAT_2
@@ -325,10 +324,7 @@ export class ChatGateway
     @MessageBody() payload: any, // chatCreateRoomReqDto
   ) {
     const { password = null } = JSON.parse(payload);
-    const userId: number = parseInt(
-      client.handshake.query.userId as string,
-      10,
-    );
+    const userId: number = parseInt(client.handshake.query.userId as string);
     const user = await this.inMemoryUsers.inMemoryUsers.find((user) => {
       return user.userIdx === userId;
     });

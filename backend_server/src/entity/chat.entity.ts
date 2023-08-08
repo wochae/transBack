@@ -34,7 +34,7 @@ export class DMChannel extends BaseEntity {
   @Column()
   userNickname2: string;
 
-  @Column({ unique: true })
+  @Column()
   channelIdx: number;
 
   @OneToMany(
@@ -56,10 +56,10 @@ export class DMChannel extends BaseEntity {
 
 @Entity('direct_message')
 export class DirectMessage extends BaseEntity {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'int' })
   idx: number;
 
-  @Column({ type: 'int', unsigned: true })
+  @Column()
   channelIdx: number;
 
   @Column({ type: 'varchar' })
