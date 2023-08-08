@@ -4,11 +4,11 @@ import { ChatGateway } from './chat.gateway';
 import { Chat } from './class/chat.class';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { TypeOrmExModule } from '../typeorm-ex.module';
-import { UsersModule } from 'src/users/users.module';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { UsersService } from 'src/users/users.service';
 import { Channel } from './class/channel.class';
-import { Mode } from './entities/chat.entity';
+import { Mode } from '../entity/chat.entity';
+import { SharedModule } from 'src/shared/shared.module';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함
@@ -17,7 +17,7 @@ import { Mode } from './entities/chat.entity';
       DMChannelRepository,
       DirectMessageRepository,
     ]),
-    UsersModule,
+    SharedModule,
   ],
   providers: [ChatGateway, ChatService, Chat, InMemoryUsers],
 })

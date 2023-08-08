@@ -1,22 +1,29 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Channel } from './class/channel.class';
 import { Chat, MessageInfo, MessageInteface } from './class/chat.class';
-import { DataSource, EntityManager, Transaction } from 'typeorm';
-import { UserObject } from 'src/users/entities/users.entity';
-import { DMChannel, DirectMessage, Mode } from './entities/chat.entity';
+import { DataSource, EntityManager, Repository, Transaction } from 'typeorm';
+import { UserObject } from 'src/entity/users.entity';
+import { DMChannel, DirectMessage, Mode } from '../entity/chat.entity';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { Socket } from 'socket.io';
 import { Message } from './class/message.class';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class ChatService {
   constructor(
     private chat: Chat,
     private dataSource: DataSource,
+    // @InjectRepository(DMChannel)
     private dmChannelRepository: DMChannelRepository,
+    // @InjectRepository(DirectMessage)
     private directMessagesRepository: DirectMessageRepository,
+    // @InjectRepository(DMChannel)
+    // private dmChannelRepository: Repository<DMChannel>,
+    // @InjectRepository(DirectMessage)
+    // private directMessagesRepository: Repository<DirectMessage>,
     // TODO: gateway에서도 InmemoryUsers 를 사용하는데, service 로 옮기자
     private inMemoryUsers: InMemoryUsers,
   ) {}

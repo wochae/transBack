@@ -4,9 +4,8 @@ import { CreateUsersDto } from './dto/create-users.dto';
 import { BlockTargetDto } from './dto/block-target.dto';
 import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
-import { UserObject } from './entities/users.entity';
+import { UserObject } from 'src/entity/users.entity';
 import { InsertFriendDto } from './dto/insert-friend.dto';
-import { Socket } from 'socket.io';
 
 @Injectable()
 export class UsersService {
@@ -92,6 +91,10 @@ export class UsersService {
   async setIsOnline(user: UserObject, isOnline: boolean) {
     // user.isOnline = isOnline;
     return this.userObjectRepository.setIsOnline(user, isOnline);
+  }
+
+  async getUserObjectFromDB(idValue: number): Promise<UserObject> {
+    return this.userObjectRepository.findOne({ where: { userIdx: idValue } });
   }
 
   // async getUserId(client: Socket): Promise<number> {

@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm'; // EntityRepository 가 deprecated 되어 직접 호출함
-import { UserObject } from './entities/users.entity';
+import { UserObject } from 'src/entity/users.entity';
 import { CreateUsersDto } from './dto/create-users.dto';
 import { CustomRepository } from 'src/typeorm-ex.decorator';
 

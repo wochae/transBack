@@ -7,6 +7,7 @@ import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
 import { CertificateRepository } from './certificate.repository';
 
+// @Global()
 @Module({
   imports: [
     TypeOrmExModule.forCustomRepository([
@@ -18,6 +19,6 @@ import { CertificateRepository } from './certificate.repository';
   ],
   controllers: [UsersController],
   providers: [UsersService],
-  exports: [UsersService],
+  exports: [UsersService, TypeOrmExModule],
 })
 export class UsersModule {}

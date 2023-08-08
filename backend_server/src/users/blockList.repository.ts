@@ -1,8 +1,8 @@
 import { Repository } from 'typeorm'; // EntityRepository 가 deprecated 되어 직접 호출함
 import { CustomRepository } from 'src/typeorm-ex.decorator';
-import { UserObject } from './entities/users.entity';
+import { UserObject } from 'src/entity/users.entity';
 import { UserObjectRepository } from './users.repository';
-import { BlockList } from './entities/blockList.entity';
+import { BlockList } from '../entity/blockList.entity';
 import { BlockTargetDto } from './dto/block-target.dto';
 
 //

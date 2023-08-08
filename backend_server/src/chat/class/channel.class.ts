@@ -1,5 +1,5 @@
-import { UserObject } from 'src/users/entities/users.entity';
-import { Mode } from '../entities/chat.entity';
+import { UserObject } from 'src/entity/users.entity';
+import { Mode } from '../../entity/chat.entity';
 import { Message } from './message.class';
 
 // FIXME: any type 을 적절하게 수정해야함

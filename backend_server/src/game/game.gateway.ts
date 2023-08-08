@@ -1,16 +1,22 @@
 import {
   SubscribeMessage,
   WebSocketGateway,
+  ConnectedSocket,
   OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketServer,
+  MessageBody,
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { GameService } from './game.service';
 
-import { ErrorMsgDto } from './dto/errorMessage.dto';
-import { Logger } from '@nestjs/common';
+import { ReturnMsgDto } from './dto/errorMessage.dto';
+import { Logger, UseFilters } from '@nestjs/common';
+import { WsExceptionFilter } from 'src/ws.exception.filter';
+import { UsersService } from 'src/users/users.service';
+import { GameOnlineMember } from './class/game.online.member/game.online.member';
+import { GameOptionDto } from './dto/gameOption.dto';
 
 @WebSocketGateway({
   namespace: 'game',
@@ -18,22 +24,43 @@ import { Logger } from '@nestjs/common';
     origin: ['http://localhost:3001'],
   },
 })
+@UseFilters(new WsExceptionFilter())
 export class GameGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private readonly gameService: GameService) {}
+  constructor(
+    private readonly gameService: GameService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @WebSocketServer()
   server: Server;
 
   private logger: Logger = new Logger('GameGateway');
 
-  handleDisconnect(client: any) {
-    throw new Error('Method not implemented.');
+  handleDisconnect(client: Socket) {
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
+    );
+    this.logger.log(userId + ' is disconnected');
   }
 
-  handleConnection(client: any, ...args: any[]) {
-    throw new Error('Method not implemented.');
+  async handleConnection(client: Socket) {
+    const userId: number = parseInt(
+      client.handshake.query.userId as string,
+      10,
+    );
+    this.logger.log(userId + ' is connected');
+    const user = await this.usersService.getUserObjectFromDB(userId);
+    const OnUser = new GameOnlineMember(user, client);
+    this.gameService.pushOnlineUser(OnUser).then((data) => {
+      if (data === 999) {
+        client.disconnect(true);
+        return;
+      }
+      this.logger.log('현재 접속 자 : ' + data);
+    });
   }
 
   afterInit(server: any) {
@@ -41,67 +68,82 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_option')
-  sendGameOption(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  sendGameOption(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() options: GameOptionDto,
+  ): ReturnMsgDto {
+    this.logger.log(options);
+    client.emit('game_option', options);
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_queue_regist')
-  putInQueue(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  putInQueue(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_queue_success')
-  sendQueueSuccess(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  sendQueueSuccess(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_queue_quit')
-  cancleQueue(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  cancleQueue(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_ready_first')
-  readyFirstStep(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  readyFirstStep(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_ready_second')
-  readySecondStep(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  readySecondStep(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_ready_second_answer')
-  getLatency(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  getLatency(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_ready_final')
-  sendFinalInfo(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  sendFinalInfo(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_ready_start')
-  startGame(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  startGame(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_predict_ball')
-  sendBallPrediction(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  sendBallPrediction(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_move_paddle')
-  sendPaddleToTarget(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  sendPaddleToTarget(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_pause_score')
-  pauseAndNextGame(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  pauseAndNextGame(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_get_score')
-  endMatch(): ErrorMsgDto {
-    return { code: 'this return is error!', msg: 'Hello world!' };
+  endMatch(): ReturnMsgDto {
+    return new ReturnMsgDto(200, 'OK!');
+  }
+
+  @SubscribeMessage('game_switch_to_chat')
+  exitGame(@ConnectedSocket() client: Socket): ReturnMsgDto {
+    // DB 설정 변경 필요
+    const userIdx = parseInt(client.handshake.query.userId as string);
+    this.gameService
+      .popOnlineUser(userIdx)
+      .then((data) => this.logger.log(data));
+    return new ReturnMsgDto(200, 'OK!');
   }
 }
