@@ -1,4 +1,4 @@
-import { Mode } from 'src/chat/entities/chat.entity';
+import { Mode } from 'src/entity/chat.entity';
 import { Message } from '../message.class';
 
 // FIXME: any type 을 적절하게 수정해야함

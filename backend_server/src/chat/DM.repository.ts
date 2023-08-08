@@ -1,8 +1,8 @@
 import { Repository } from 'typeorm'; // EntityRepository 가 deprecated 되어 직접 호출함
 import { CustomRepository } from 'src/typeorm-ex.decorator';
-import { DMChannel, DirectMessage } from './entities/chat.entity';
+import { DMChannel, DirectMessage } from '../entity/chat.entity';
 import { SendDMDto } from './dto/send-dm.dto';
-import { UserObject } from 'src/users/entities/users.entity';
+import { UserObject } from 'src/entity/users.entity';
 
 @CustomRepository(DMChannel)
 export class DMChannelRepository extends Repository<DMChannel> {

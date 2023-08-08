@@ -1,4 +1,3 @@
-import { UserObject } from 'src/users/entities/users.entity';
 import {
   BaseEntity,
   Entity,
@@ -8,29 +7,42 @@ import {
   JoinColumn,
   ManyToOne,
 } from 'typeorm';
-import { GameRecord, RecordResult, RecordType } from './gameRecord.entity';
+import { GameRecord } from './gameRecord.entity';
+import { UserObject } from './users.entity';
 
-@Entity('gameChannel')
+export enum RecordType {
+  NORMAL = 'NORMAL',
+  SPECIAL = 'SPECIAL',
+}
+
+export enum RecordResult {
+  PLAYING = 'PLAYING',
+  WIN = 'WIN',
+  LOSE = 'LOSE',
+  SHUTDOWN = 'SHUTDOWN',
+}
+
+@Entity('game_channel')
 export class GameChannel extends BaseEntity {
-  @PrimaryColumn()
+  @PrimaryColumn({ type: 'int', unique: true })
   gameIdx: number;
 
-  @Column()
+  @Column({ type: 'enum', enum: RecordType })
   type: RecordType;
 
-  @Column()
+  @Column({ type: 'int' })
   userIdx1: number;
 
-  @Column()
+  @Column({ type: 'int' })
   userIdx2: number;
 
-  @Column()
+  @Column({ type: 'smallint' })
   score1: number;
 
-  @Column()
+  @Column({ type: 'smallint' })
   score2: number;
 
-  @Column()
+  @Column({ type: 'enum', enum: RecordResult })
   status: RecordResult;
 
   @ManyToOne(() => UserObject, (user1) => user1.userGameChannelList)

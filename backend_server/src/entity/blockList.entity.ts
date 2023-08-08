@@ -14,21 +14,19 @@ export class BlockList extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 
-  @Column()
+  @Column({ type: 'int', onUpdate: 'CASCADE' })
   userIdx: number;
 
-  @Column()
+  @Column({ type: 'int', onUpdate: 'CASCADE' })
   blockedUserIdx: number;
 
-  @Column()
+  @Column({ type: 'varchar', onUpdate: 'CASCADE' })
   blockedNickname: string;
 
   @CreateDateColumn() // 해당 컬럼은 자동으로 입력됨.
   blockedTime: Date;
 
-  @ManyToOne(() => BlockList, (idx) => idx.userIdx)
-  userObjectList: UserObject[];
-  //   @ManyToOne(() => UserObject, (userIdx) => userIdx)
-  //   @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
-  //   user: UserObject;
+  @ManyToOne(() => UserObject, (userIdx) => userIdx.blockedList)
+  @JoinColumn({ name: 'userIdx', referencedColumnName: 'userIdx' })
+  blockOwner: UserObject;
 }
