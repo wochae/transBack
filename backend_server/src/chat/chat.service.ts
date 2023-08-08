@@ -125,25 +125,24 @@ export class ChatService {
     msg: SendDMDto,
   ): Promise<boolean> {
     const queryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
     let ret = true;
-    const list = await this.dmChannelRepository.createChannel(
-      client,
-      target,
-      channelIdx,
-    );
-    const firstDM = await this.directMessagesRepository.sendDm(
-      msg,
-      client,
-      channelIdx,
-    );
-    await this.directMessagesRepository.save(firstDM);
 
     try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      const list = await this.dmChannelRepository.createChannel(
+        client,
+        target,
+        channelIdx,
+      );
+      const firstDM = await this.directMessagesRepository.sendDm(
+        msg,
+        client,
+        channelIdx,
+      );
       await queryRunner.manager.save(list[0]);
       await queryRunner.manager.save(list[1]);
+      await this.directMessagesRepository.save(firstDM);
 
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -199,35 +198,27 @@ export class ChatService {
     msg: SendDMDto,
   ) {
     const channelIdx = await this.setNewChannelIdx();
-    // await this.createDmChannel(user, targetUser, channelIdx, msg);
-    await this.dmChannelRepository.createChannel(user, targetUser, channelIdx);
-    const firstDM = await this.directMessagesRepository.sendDm(
-      msg,
-      user,
-      channelIdx,
-    );
-    // const firstDM = await this.directMessagesRepository.sendDm(
-    //   msg,
-    //   user,
-    //   channelIdx,
-    // );
+    // TODO: 예외처리 필요
+    await this.createDmChannel(user, targetUser, channelIdx, msg);
+
     const msgInfo: MessageInteface = {
       sender: user.nickname,
-      msg: firstDM.msg,
-      msgDate: firstDM.msgDate,
+      msg: msg.msg,
+      msgDate: new Date(),
     };
     const dmInfo = {
       message: msgInfo,
       channelIdx: channelIdx,
     };
     // 상대방 소켓 찾아서 join 시키기
-    const targetSocket = this.chat.getSocketObject(targetUser.userIdx);
-    if (!targetSocket) {
+    const targetSocket = await this.chat.getSocketObject(targetUser.userIdx);
+    if (targetSocket) {
+      await targetSocket.socket.join(`chat_room_${channelIdx}`);
+    } else {
       console.log('상대방이 오프라인입니다.');
-      return;
     }
-    targetSocket.socket.join(`chat_room_${channelIdx}`);
     client.join(`chat_room_${channelIdx}`);
+    console.log('dmInfo', dmInfo);
     return dmInfo;
   }
 
