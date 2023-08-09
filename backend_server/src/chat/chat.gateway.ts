@@ -285,15 +285,26 @@ export class ChatGateway
     client.emit('chat_enter', channel);
 
     // API: MAIN_CHAT_2
-    // const member = {
-    //   nickname: channel.member.nickname,
-    //   imgUri: channel.member.imgUri,
-    //   permission: channel.member.permission,
-    // };
-    // this.server
-    //   .to(`chat_room_${channel.channelIdx}`)
-    //   .emit('chat_enter_noti', member);
-    // return;
+    console.log(user);
+    // channel[] 를 돌면서 member 의 nickname 과 user 의 user nickname 이 같으면 출력
+
+    const member = channel.member.find(
+      (member) => member.nickname === user.nickname,
+    );
+    if (member) {
+      const memberInfo = {
+        nickname: member.nickname,
+        imgUri: member.imgUri,
+        permission: member.permission,
+      };
+      this.server
+        .to(`chat_room_${channel.channelIdx}`)
+        .emit('chat_enter_noti', memberInfo);
+    } else {
+      // FIXME: 예외처리 필요
+      console.log('Member not found');
+    }
+    return;
   }
 
   // API: MAIN_CHAT_4

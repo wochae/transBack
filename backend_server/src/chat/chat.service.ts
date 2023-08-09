@@ -338,7 +338,7 @@ export class ChatService {
 
   async enterProtectedRoom(user: UserObject, channel: Channel) {
     channel.setMember = user;
-    console.log('channel', channel);
+    // console.log('channel', channel);
     const channelInfo = {
       // channel 안에 member에 접근해서 nickname, imgUri, permission을 가져온다.
       member: channel.getMember.map((member) => {
@@ -350,7 +350,7 @@ export class ChatService {
       }),
       channelIdx: channel.getChannelIdx,
     };
-    console.log('channelInfo', channelInfo);
+    // console.log('channelInfo', channelInfo);
     return channelInfo;
   }
 }
