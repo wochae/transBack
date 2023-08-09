@@ -82,13 +82,14 @@ export class GameGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() options: GameOptionDto,
   ): Promise<ReturnMsgDto> {
-    await this.logger.log(`options is here : ${options.userIdx}`);
+    // await this.logger.log(`options is here : ${options.userIdx}`);
     const condition = this.gameService.sizeWaitPlayer();
     const after = this.gameService.setWaitPlayer(
       options.userIdx,
       new GameOptions(options.gameType, options.speed, options.mapNumber),
     );
-    if (after === condition + 1) {
+    // this.gameService.checkStatus('game option start');
+    if (after !== condition) {
       client.emit('game_option', options);
       return new ReturnMsgDto(200, 'OK!');
     } else return new ReturnMsgDto(501, 'setting error');
@@ -99,14 +100,16 @@ export class GameGateway
     @MessageBody() regiData: GameRegiDto,
   ): Promise<ReturnMsgDto> {
     const { userIdx, queueDate } = regiData;
-    this.logger.log('여기까지 데이터 들어옴 : ', userIdx, queueDate);
+    // this.gameService.checkStatus('game queue regist #1');
+    // this.logger.log('여기까지 데이터 들어옴 : ', userIdx, queueDate);
     const roomNumber = await this.gameService.putInQueue(userIdx);
+    // this.gameService.checkStatus('game queue regist #2');
     if (roomNumber == -1) return new ReturnMsgDto(400, 'Bad Request');
     else if (roomNumber === null) {
-      this.logger.log('대기상태');
+      //   this.logger.log('대기상태');
       return new ReturnMsgDto(200, 'Plz, Wait queue');
     } else if (roomNumber >= 0) {
-      this.logger.log(`룸 작성 성공`);
+      //   this.logger.log(`룸 작성 성공`);
       await this.gameService.setRoomToDB(roomNumber).then(() => {
         this.gameService.getReadyFirst(roomNumber, this.server);
         this.gameService.getReadySecond(roomNumber, this.server);

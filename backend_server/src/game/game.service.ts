@@ -40,18 +40,62 @@ export class GameService {
     this.cnt = 0;
   }
 
+  public async checkStatus(msg: string) {
+    console.log(msg);
+    console.log(`PlayRoom List : ${this.playRoomList.length}`);
+    for (let i = 0; i < this.playRoomList.length; i++) {
+      console.log(`Room [${i}]`);
+      await console.log(
+        `play room List : ${this.playRoomList[i].user1.userObject.nickname}`,
+      );
+      await console.log(
+        `play room List : ${this.playRoomList[i].user2.userObject.nickname}`,
+      );
+    }
+    console.log(`Normal Queue List : ${this.normalQueue.size()}`);
+    for (let i = 0; i < this.normalQueue.size(); i++) {
+      await console.log(
+        `normal Queue ${this.normalQueue.queueData[i][0].userObject.nickname}`,
+      );
+    }
+    console.log(`Rank Queue List : ${this.rankQueue.size()}`);
+    for (let i = 0; i < this.rankQueue.size(); i++) {
+      await console.log(
+        `rank Queue ${this.rankQueue.queueData[i][0].userObject.nickname}`,
+      );
+    }
+    console.log(`Waiting List : ${this.waitingList.size()}`);
+    for (let i = 0; i < this.waitingList.size(); i++) {
+      await console.log(
+        `normal Queue ${this.waitingList.waitPlayers[i][0].userObject.nickname}`,
+      );
+    }
+    try {
+      console.log(`Player List : ${this.onlinePlayerList.length}`);
+      for (let i = 0; i < this.onlinePlayerList.length; i++) {
+        console.log(`online List ${this.onlinePlayerList[i].user.nickname}`);
+      }
+    } catch (Exception) {
+      console.log(Exception);
+    }
+    console.log(`${msg} is end`);
+  }
+
   private findPlayerFromList(userIdx: number): number {
-    if (this.onlinePlayerList.length == 0) return 0;
-    let index = 0;
-    for (index = 0; index < this.onlinePlayerList.length; index++) {
+    for (let index = 0; index < this.onlinePlayerList.length; index++) {
       if (this.onlinePlayerList[index].user.userIdx == userIdx) return index;
     }
+    return -1;
   }
 
   //TODO: check dubble login
 
-  private makeGamePlayer(userIdx: number): GamePlayer {
-    const user = this.onlinePlayerList[this.findPlayerFromList(userIdx)];
+  private makeGamePlayer(userIdx: number): GamePlayer | null {
+    const index = this.findPlayerFromList(userIdx);
+    if (index == -1) {
+      //TODO: error handling
+    }
+    const user = this.onlinePlayerList[index];
     // console.log(`makeGamePlayer : ${user.user.nickname}`);
     const returnPlayer = new GamePlayer(userIdx, user.user, user.userSocket);
     // console.log(`makeGamePlayer 2: ${returnPlayer.userObject.nickname}`);
@@ -81,56 +125,60 @@ export class GameService {
     // console.log(GameType.RANK);
     //TODO: 문제 영역 userObject
     // switch (playerTuple[1].getType()) {
-    switch (value) {
-      case GameType.FRIEND:
-        console.log('Friend is here');
-        break;
-      case GameType.NORMAL:
-        console.log('Normal is here');
-        this.normalQueue.Enqueue(playerTuple);
-        if (this.normalQueue.size() >= 2) {
-          const playerList: WaitPlayerTuple[] | null =
-            this.normalQueue.DequeueList();
-          const roomId = this.makeRoomId();
-          const gameRoom = new GameRoom(roomId);
-          gameRoom.setUser(playerList[0][0], playerList[0][1]);
-          gameRoom.setUser(playerList[1][0], playerList[1][1]);
-          returnValue = this.playRoomList.length;
-          this.playRoomList.push(gameRoom);
-          return returnValue;
-        }
-        break;
-      case GameType.RANK:
-        console.log('Rank is here');
-        this.rankQueue.Enqueue(playerTuple);
-        if (this.rankQueue.size() >= 2) {
-          //   console.log('Rank is here2');
-          const playerList: WaitPlayerTuple[] | null =
-            this.rankQueue.DequeueList();
-          //   console.log(`player queue ${playerList.length}`);
-          const roomId = this.makeRoomId();
-          //   console.log(`room ID : ${roomId}`);
+    try {
+      switch (value) {
+        case GameType.FRIEND:
+          console.log('Friend is here');
+          break;
+        case GameType.NORMAL:
+          console.log('Normal is here');
+          this.normalQueue.Enqueue(playerTuple);
+          if (this.normalQueue.size() >= 2) {
+            const playerList: WaitPlayerTuple[] | null =
+              this.normalQueue.DequeueList();
+            const roomId = this.makeRoomId();
+            const gameRoom = new GameRoom(roomId);
+            gameRoom.setUser(playerList[0][0], playerList[0][1]);
+            gameRoom.setUser(playerList[1][0], playerList[1][1]);
+            returnValue = this.playRoomList.length;
+            this.playRoomList.push(gameRoom);
+            return returnValue;
+          }
+          break;
+        case GameType.RANK:
+          console.log('Rank is here');
+          this.rankQueue.Enqueue(playerTuple);
+          if (this.rankQueue.size() >= 2) {
+            //   console.log('Rank is here2');
+            const playerList: WaitPlayerTuple[] | null =
+              this.rankQueue.DequeueList();
+            //   console.log(`player queue ${playerList.length}`);
+            const roomId = this.makeRoomId();
+            //   console.log(`room ID : ${roomId}`);
 
-          const gameRoom = new GameRoom(roomId);
-          // console.log(`room ID : ${roomId}`);
-          await gameRoom.setUser(playerList[0][0], playerList[0][1]);
-          // console.log(
-          //   `player 1 Ready : ${playerList[0][0].userObject.nickname}`,
-          // );
-          await gameRoom.setUser(playerList[1][0], playerList[1][1]);
-          // console.log(
-          //   `player 2 Ready : ${playerList[1][0].userObject.nickname}`,
-          // );
+            const gameRoom = new GameRoom(roomId);
+            // console.log(`room ID : ${roomId}`);
+            await gameRoom.setUser(playerList[0][0], playerList[0][1]);
+            // console.log(
+            //   `player 1 Ready : ${playerList[0][0].userObject.nickname}`,
+            // );
+            await gameRoom.setUser(playerList[1][0], playerList[1][1]);
+            // console.log(
+            //   `player 2 Ready : ${playerList[1][0].userObject.nickname}`,
+            // );
 
-          returnValue = this.playRoomList.length;
-          this.playRoomList.push(gameRoom);
-          console.log(returnValue);
+            returnValue = this.playRoomList.length;
+            this.playRoomList.push(gameRoom);
+            console.log(returnValue);
 
-          return returnValue;
-        }
-        break;
-      default:
-        return -1;
+            return returnValue;
+          }
+          break;
+        default:
+          return -1;
+      }
+    } catch (Exception) {
+      console.log(Exception);
     }
     return null;
   }
@@ -231,7 +279,7 @@ export class GameService {
   public async pushOnlineUser(player: GameOnlineMember): Promise<number> {
     const index = this.findPlayerFromList(player.user.userIdx);
 
-    if (index == -1) return -1;
+    if (index != -1) return -1;
 
     if (player.user.isOnline == false) player.user.isOnline = true;
     await this.userObjectRepository.save(player.user);

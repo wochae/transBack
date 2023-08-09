@@ -4,7 +4,7 @@ import { GameOptions } from '../game.options/game.options';
 export type WaitPlayerTuple = [GamePlayer, GameOptions];
 
 export class GameWaitQueue {
-  private waitPlayers: WaitPlayerTuple[];
+  public waitPlayers: WaitPlayerTuple[];
 
   constructor() {
     this.waitPlayers = [];

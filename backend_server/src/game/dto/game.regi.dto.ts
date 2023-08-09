@@ -5,5 +5,5 @@ export class GameRegiDto {
   userIdx: number;
 
   @IsDate()
-  queueDate: Date;
+  queueDate: number;
 }
