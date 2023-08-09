@@ -17,6 +17,7 @@ import { WsExceptionFilter } from 'src/ws.exception.filter';
 import { UsersService } from 'src/users/users.service';
 import { GameOnlineMember } from './class/game.online.member/game.online.member';
 import { GameOptionDto } from './dto/gameOption.dto';
+import { GameOptions } from './class/game.options/game.options';
 
 @WebSocketGateway({
   namespace: 'game',
@@ -75,11 +76,18 @@ export class GameGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() options: GameOptionDto,
   ): ReturnMsgDto {
-    this.logger.log(options);
+    // this.logger.log(options);
     // 플레이어 세팅
     // 대기 공간에 집어넣기
-    client.emit('game_option', options);
-    return new ReturnMsgDto(200, 'OK!');
+    const condition = this.gameService.sizeWaitPlayer();
+    const after = this.gameService.setWaitPlayer(
+      options.userIdx,
+      new GameOptions(options.gameType, options.speed, options.mapNumber),
+    );
+    if (after === condition + 1) {
+      client.emit('game_option', options);
+      return new ReturnMsgDto(200, 'OK!');
+    } else return new ReturnMsgDto(501, 'setting error');
   }
 
   @SubscribeMessage('game_queue_regist')
