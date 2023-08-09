@@ -39,6 +39,7 @@ export class ChatModule {
     testChannel.setMember = await this.usersService.getUserInfoFromDB('jaekim');
     testChannel.setChannelIdx = 10;
     testChannel.setMode = Mode.PUBLIC;
+    testChannel.setPassword = '';
     this.chat.setProtectedChannels = testChannel;
 
     const testChannel1 = new Channel();

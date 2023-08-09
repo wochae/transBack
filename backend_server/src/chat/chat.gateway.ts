@@ -264,14 +264,16 @@ export class ChatGateway
       `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${userNickname}`,
     );
     // In Memory에서 방 찾기 -> protected & public 찾기 -> 비밀번호 체크 -> 입장 -> member 추가하기
-    let channel: Channel =
-      this.chatService.findProtectedChannelByRoomId(channelIdx);
-    if (channel === null) {
-      this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
-      channel = this.chatService.findPublicChannelByRoomId(channelIdx);
-    } else {
-      this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
-    }
+    // const channel: Channel | DMChannel =
+    //   await this.chatService.findChannelByRoomId(channelIdx);
+    // // console.log('channel', channel);
+    // if (channel instanceof Channel) {
+    //   if (channel.getPassword === '') {
+    //     this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
+    //   } else {
+    //     this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
+    //   }
+    // }
     // return this.chatService.enterChatRoom(client, jsonData, channel);
   }
 
@@ -325,7 +327,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any, // chatCreateRoomReqDto
   ) {
-    const { password = null } = JSON.parse(payload);
+    const { password = '' } = JSON.parse(payload);
     // const { password = null } = payload;
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user = await this.inMemoryUsers.inMemoryUsers.find((user) => {

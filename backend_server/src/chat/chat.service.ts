@@ -230,9 +230,9 @@ export class ChatService {
     channel.setRoomId = channelIdx;
     channel.setMember = user;
     channel.setOwner = user;
-    if (password == null) {
+    if (password === '') {
       channel.setMode = Mode.PUBLIC;
-    } else if (password != null) {
+    } else if (password !== '') {
       channel.setMode = Mode.PROTECTED;
     }
     channel.setPassword = password;
