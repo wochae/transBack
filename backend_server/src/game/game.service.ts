@@ -15,6 +15,8 @@ import { Server } from 'socket.io';
 import { GameServerTimeDto } from './dto/game.server.time.dto';
 import { GameFinalReadyDto } from './dto/game.final.ready.dto';
 import { GameStartDto } from './dto/game.start.dto';
+import { GamePaddleMoveDto } from './dto/game.paddle.move.dto';
+import { GamePaddlePassDto } from './dto/game.paddle.pass.dto';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -306,5 +308,26 @@ export class GameService {
     await this.popOnlineUser(userIdx);
   }
 
-  // TODO: 연결 종료 시 online 리스트에서 빼야함.
+  public async movePaddle(
+    paddleMove: GamePaddleMoveDto,
+    time: number,
+  ): Promise<number> {
+    const { userIdx, clientDate, paddleInput } = paddleMove;
+    const latency = time - clientDate;
+    const targetRoom = this.getRoomByUserIdx(userIdx);
+    const targetUser =
+      targetRoom.user1.userIdx === userIdx
+        ? targetRoom.user2
+        : targetRoom.user1;
+    await targetUser.socket.emit(
+      'game_move_paddle',
+      new GamePaddlePassDto(latency, paddleInput),
+    );
+    // play Room 찾기
+    // 상대방 찾기
+    // 레이턴 계산하기
+    // 상대 전달하기
+
+    return latency;
+  }
 }
