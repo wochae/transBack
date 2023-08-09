@@ -263,18 +263,37 @@ export class ChatGateway
     this.logger.log(
       `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${userNickname}`,
     );
-    // In Memory에서 방 찾기 -> protected & public 찾기 -> 비밀번호 체크 -> 입장 -> member 추가하기
-    // const channel: Channel | DMChannel =
-    //   await this.chatService.findChannelByRoomId(channelIdx);
-    // // console.log('channel', channel);
-    // if (channel instanceof Channel) {
-    //   if (channel.getPassword === '') {
-    //     this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
-    //   } else {
-    //     this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
-    //   }
-    // }
-    // return this.chatService.enterChatRoom(client, jsonData, channel);
+    let channel: any = await this.chatService.findChannelByRoomId(channelIdx);
+    const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
+      userIdx,
+    );
+    if (channel instanceof Channel) {
+      if (channel.getPassword === '') {
+        this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
+        channel = await this.chatService.enterPublicRoom(user, channel);
+      } else {
+        this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
+        if (channel.getPassword !== password) {
+          this.logger.log(`[ 💬 ] 비밀번호가 틀렸습니다.`);
+          // FIXME: 에러 코드로 보내기
+          return false;
+        }
+        channel = await this.chatService.enterProtectedRoom(user, channel);
+      }
+    }
+    client.join(`chat_room_${channel.channelIdx}`);
+    client.emit('chat_enter', channel);
+
+    // API: MAIN_CHAT_2
+    // const member = {
+    //   nickname: channel.member.nickname,
+    //   imgUri: channel.member.imgUri,
+    //   permission: channel.member.permission,
+    // };
+    // this.server
+    //   .to(`chat_room_${channel.channelIdx}`)
+    //   .emit('chat_enter_noti', member);
+    // return;
   }
 
   // API: MAIN_CHAT_4

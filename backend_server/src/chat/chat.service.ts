@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Channel } from './class/channel.class';
 import { Chat, MessageInfo, MessageInteface } from './class/chat.class';
 import { DataSource, EntityManager, Repository, Transaction } from 'typeorm';
-import { UserObject } from 'src/entity/users.entity';
+import { Permission, UserObject } from 'src/entity/users.entity';
 import { DMChannel, DirectMessage, Mode } from '../entity/chat.entity';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
@@ -117,6 +117,8 @@ export class ChatService {
     }
     return privateChannelList;
   }
+
+  /******************* Check and Create Channel function *******************/
 
   async createDmChannel(
     client: UserObject,
@@ -254,6 +256,8 @@ export class ChatService {
     return channelIdx;
   }
 
+  /******************* Save Message Funcions *******************/
+
   async saveMessageInIM(channelIdx: number, senderIdx: number, msg: string) {
     const msgInfo = new Message(channelIdx, senderIdx, msg);
     msgInfo.setMsgDate = new Date();
@@ -299,5 +303,54 @@ export class ChatService {
       await queryRunner.release();
     }
     return dm;
+  }
+
+  /******************* Save Message Funcions *******************/
+  // In Memory 에 저장하고 반환값에 맞춰서 반환하기
+  // {
+  //   member[] {
+  //     member {
+  //       nickname : string,
+  //       imgUri : string,
+  //       permission : enum
+  //     },
+  //     ...
+  //   },
+  //   channelIdx : number
+  // }
+  async enterPublicRoom(user: UserObject, channel: Channel) {
+    channel.setMember = user;
+    console.log('channel', channel);
+    const channelInfo = {
+      // channel 안에 member에 접근해서 nickname, imgUri, permission을 가져온다.
+      member: channel.getMember.map((member) => {
+        return {
+          nickname: member.nickname,
+          imgUri: member.imgUri,
+          permission: Permission.MEMBER,
+        };
+      }),
+      channelIdx: channel.getChannelIdx,
+    };
+    console.log('channelInfo', channelInfo);
+    return channelInfo;
+  }
+
+  async enterProtectedRoom(user: UserObject, channel: Channel) {
+    channel.setMember = user;
+    console.log('channel', channel);
+    const channelInfo = {
+      // channel 안에 member에 접근해서 nickname, imgUri, permission을 가져온다.
+      member: channel.getMember.map((member) => {
+        return {
+          nickname: member.nickname,
+          imgUri: member.imgUri,
+          permission: Permission.MEMBER,
+        };
+      }),
+      channelIdx: channel.getChannelIdx,
+    };
+    console.log('channelInfo', channelInfo);
+    return channelInfo;
   }
 }

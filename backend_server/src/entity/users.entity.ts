@@ -14,6 +14,12 @@ import { DMChannel } from 'src/entity/chat.entity';
 import { GameRecord } from './gameRecord.entity';
 import { GameChannel } from 'src/entity/gameChannel.entity';
 
+export enum Permission {
+  MEMBER = 'member',
+  ADMIN = 'admin',
+  OWNER = 'owner',
+}
+
 @Entity('users')
 export class UserObject extends BaseEntity {
   @PrimaryGeneratedColumn({ type: 'int' })
