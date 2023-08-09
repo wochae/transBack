@@ -238,7 +238,7 @@ export class ChatService {
     channel.setPassword = password;
     this.chat.setProtectedChannels = channel;
     const channelInfo = {
-      owner: channel.getOwner,
+      owner: channel.getOwner.nickname,
       channelIdx: channel.getChannelIdx,
       mode: channel.getMode,
     };
@@ -268,19 +268,36 @@ export class ChatService {
     }
     const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
     const message = {
-      sender: sender.nickname,
+      senderIdx: sender.userIdx,
       msg: msgInfo.getMessage,
       msgDate: msgInfo.getMsgDate,
     };
     return message;
-    // sender, msg, msgDate
   }
 
   async saveMessageInDB(channelIdx: number, senderIdx: number, msg: SendDMDto) {
     const message: SendDMDto = {
       msg: msg.msg,
     };
+    const queryRunner = this.dataSource.createQueryRunner();
     const user = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
-    await this.directMessagesRepository.sendDm(message, user, channelIdx);
+    let dm;
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      dm = await this.directMessagesRepository.sendDm(
+        message,
+        user,
+        channelIdx,
+      );
+      await queryRunner.manager.save(dm);
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      return;
+    } finally {
+      await queryRunner.release();
+    }
+    return dm;
   }
 }

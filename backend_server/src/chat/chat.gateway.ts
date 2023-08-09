@@ -120,6 +120,7 @@ export class ChatGateway
     // TODO: intra 를 class 로 만들어서 DTO 처리?
     @MessageBody() payload: any,
   ) {
+    // const { intra } = payload;
     const { intra } = JSON.parse(payload);
 
     // API: MAIN_ENTER_0
@@ -169,6 +170,7 @@ export class ChatGateway
     @MessageBody() payload: any,
   ) {
     const { targetNickname, targetIdx } = JSON.parse(payload);
+    // const { targetNickname, targetIdx } = payload;
     const user_profile = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
 
     if (!user_profile || user_profile.nickname !== targetNickname) {
@@ -186,6 +188,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
+    // const { targetIdx } = payload;
     const { targetIdx } = JSON.parse(payload);
     const userId: number = parseInt(
       client.handshake.query.userId as string,
@@ -210,6 +213,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: string,
   ) {
+    // const { targetNickname, targetIdx, msg } = payload;
     const { targetNickname, targetIdx, msg } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user: UserObject = await this.usersService.getUserInfoFromDB(
@@ -281,6 +285,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
+    // const { channelIdx, senderIdx, msg } = payload;
     const { channelIdx, senderIdx, msg } = JSON.parse(payload);
     // FIXME: 테스트용 코드 ------------------------------------------------------
     const testChannel: Channel | DMChannel =
@@ -296,21 +301,22 @@ export class ChatGateway
     );
     const channel: Channel | DMChannel =
       await this.chatService.findChannelByRoomId(channelIdx);
+
     if (channel instanceof Channel) {
       const msgInfo = await this.chatService.saveMessageInIM(
         channelIdx,
         senderIdx,
         msg,
       );
-      // sender, msg, msgDate
-      console.log(msgInfo);
       this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else if (channel instanceof DMChannel) {
-      // TODO: DB 에 저장
-      // channel이 DMChannel 타입일 경우 처리
       const message: SendDMDto = { msg: msg };
-      this.chatService.saveMessageInDB(channelIdx, senderIdx, message);
-      // this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msg);
+      const msgInfo = await this.chatService.saveMessageInDB(
+        channelIdx,
+        senderIdx,
+        message,
+      );
+      this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else {
       // 예상하지 못한 타입일 경우 처리
       console.log('Unexpected type of channel');
@@ -324,6 +330,7 @@ export class ChatGateway
     @MessageBody() payload: any, // chatCreateRoomReqDto
   ) {
     const { password = null } = JSON.parse(payload);
+    // const { password = null } = payload;
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user = await this.inMemoryUsers.inMemoryUsers.find((user) => {
       return user.userIdx === userId;
