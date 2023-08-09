@@ -139,7 +139,7 @@ export class ChatGateway
     const blockList = await this.usersService.getBlockedList(intra);
     const channelList = this.chat.getProtectedChannels.map(
       ({ getOwner: owner, getChannelIdx: channelIdx, getMode: mode }) => ({
-        owner,
+        owner: owner.nickname,
         channelIdx,
         mode,
       }),
@@ -251,33 +251,29 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_2
-  // @SubscribeMessage('chat_enter')
-  // async enterProtectedAndPublicRoom(
-  //   @ConnectedSocket() client: Socket,
-  //   @MessageBody() data: any,
-  //   // 반환형 선언하기
-  // ) {
-  //   // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
-  //   const jsonData = JSON.parse(data);
-  //   this.logger.log(
-  //     `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
-  //   );
-  //   if (this.chatService.checkAlreadyInRoom(jsonData)) {
-  //     console.log('Already in Room');
-  //     // FIXME: 이미 들어와있기 때문에 데이터 전송을 해야한다. ✅ 무한스크롤 이벤트 발생으로 해결 가능
-  //     return 'Already in Room';
-  //   }
-  //   let channel: Channel = this.chatService.findProtectedChannelByRoomId(
-  //     jsonData.roomId,
-  //   );
-  //   if (channel === null) {
-  //     this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
-  //     channel = this.chatService.findPublicChannelByRoomId(jsonData.roomId);
-  //   } else {
-  //     this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
-  //   }
-  //   // return this.chatService.enterChatRoom(client, jsonData, channel);
-  // }
+  @SubscribeMessage('chat_enter')
+  async enterProtectedAndPublicRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any,
+    // 반환형 선언하기
+  ) {
+    // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
+    const { userNickname, userIdx, channelIdx, password } = JSON.parse(payload);
+    // const jsonData = payload;
+    this.logger.log(
+      `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${userNickname}`,
+    );
+    // In Memory에서 방 찾기 -> protected & public 찾기 -> 비밀번호 체크 -> 입장 -> member 추가하기
+    let channel: Channel =
+      this.chatService.findProtectedChannelByRoomId(channelIdx);
+    if (channel === null) {
+      this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
+      channel = this.chatService.findPublicChannelByRoomId(channelIdx);
+    } else {
+      this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
+    }
+    // return this.chatService.enterChatRoom(client, jsonData, channel);
+  }
 
   // API: MAIN_CHAT_4
   @SubscribeMessage('chat_send_msg')
