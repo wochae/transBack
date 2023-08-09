@@ -192,7 +192,7 @@ export class GameService {
     if (targetRoom.user1.getLatency() > targetRoom.user2.getLatency())
       latency = targetRoom.user1.getLatency();
     else latency = targetRoom.user2.getLatency();
-    latency += 5000;
+    // latency += 5000;
     const animationStartDate = new Date(Date.now());
     animationStartDate.setMilliseconds(
       animationStartDate.getMilliseconds() + latency,

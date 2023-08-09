@@ -77,10 +77,10 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_option')
-  sendGameOption(
+  async sendGameOption(
     @ConnectedSocket() client: Socket,
     @MessageBody() options: GameOptionDto,
-  ): ReturnMsgDto {
+  ): Promise<ReturnMsgDto> {
     // this.logger.log(options);
     // 플레이어 세팅
     // 대기 공간에 집어넣기
@@ -146,7 +146,9 @@ export class GameGateway
   //   }
 
   @SubscribeMessage('game_ready_second_answer')
-  getLatency(@MessageBody() latencyData: GameLatencyGetDTO): ReturnMsgDto {
+  async getLatency(
+    @MessageBody() latencyData: GameLatencyGetDTO,
+  ): Promise<ReturnMsgDto> {
     const { userIdx, serverDateTime, clientDateTime } = latencyData;
     const room = this.gameService.getRoomByUserIdx(userIdx);
     if (room === null) return new ReturnMsgDto(400, 'Bad Request');
@@ -175,7 +177,7 @@ export class GameGateway
   //   }
 
   @SubscribeMessage('game_predict_ball')
-  sendBallPrediction(): ReturnMsgDto {
+  async sendBallPrediction(): Promise<ReturnMsgDto> {
     // 공 부딪힌 시점 #1
     // 공 부딪힌 시점 #2
     //	// 공 예측 알고리즘으로 들어가기
@@ -183,14 +185,14 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_move_paddle')
-  sendPaddleToTarget(): ReturnMsgDto {
+  async sendPaddleToTarget(): Promise<ReturnMsgDto> {
     // 누군지 파악하기
     // 해당 룸 상대방 소켓으로 전달하기
     return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('game_pause_score')
-  pauseAndNextGame(): ReturnMsgDto {
+  async pauseAndNextGame(): Promise<ReturnMsgDto> {
     // 점수를 탄 내용 전달 받음 #1
     // 점수를 탄 내용 전달 받음 #2
     //	// 두개의 정보 판단 후
