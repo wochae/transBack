@@ -138,8 +138,9 @@ export class GameService {
       if (room.roomId === roomId) {
         if (room.user1.userIdx === userIdx) room.user1.setLatency(latency);
         else room.user2.setLatency(latency);
-        if (room.user1.getLatency() != 0 && room.user2.getLatency() != 0)
+        if (room.user1.getLatency() != 0 && room.user2.getLatency() != 0) {
           return true;
+        }
       }
     }
     return false;
@@ -171,7 +172,7 @@ export class GameService {
     const userNicknameSecond = target.user2.userObject.nickname;
     const userIdxSecond = target.user2.userIdx;
     const secondLatency = target.user2.getLatency();
-    return server
+    server
       .to(target.roomId)
       .emit(
         'game_ready_final',
@@ -181,6 +182,31 @@ export class GameService {
         userNicknameSecond,
         userIdxSecond,
         secondLatency,
+      );
+
+    return this.startPong(target, server);
+  }
+
+  public startPong(targetRoom: GameRoom, server: Server): boolean {
+    let latency = 0;
+    if (targetRoom.user1.getLatency() > targetRoom.user2.getLatency())
+      latency = targetRoom.user1.getLatency();
+    else latency = targetRoom.user2.getLatency();
+    latency += 5000;
+    const animationStartDate = new Date(Date.now());
+    animationStartDate.setMilliseconds(
+      animationStartDate.getMilliseconds() + latency,
+    );
+    const ball = targetRoom.ballList[0];
+    const ballExpectedEventDate = new Date();
+    return server
+      .to(targetRoom.roomId)
+      .emit(
+        'game_start',
+        animationStartDate,
+        ball.nextX,
+        ball.nextY,
+        ballExpectedEventDate,
       );
   }
 
