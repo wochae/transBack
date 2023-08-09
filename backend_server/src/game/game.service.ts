@@ -70,15 +70,19 @@ export class GameService {
         `normal Queue ${this.waitingList.waitPlayers[i][0].userObject.nickname}`,
       );
     }
-    try {
-      console.log(`Player List : ${this.onlinePlayerList.length}`);
-      for (let i = 0; i < this.onlinePlayerList.length; i++) {
-        console.log(`online List ${this.onlinePlayerList[i].user.nickname}`);
-      }
-    } catch (Exception) {
-      console.log(Exception);
+    console.log(`Player List : ${this.onlinePlayerList.length}`);
+    for (let i = 0; i < this.onlinePlayerList.length; i++) {
+      console.log(`online List ${this.onlinePlayerList[i].user.nickname}`);
     }
     console.log(`${msg} is end`);
+  }
+
+  private deleteUserFromQueue(userIdx: number, queue: GameQueue) {
+    for (let i = 0; i < queue.size(); i++) {
+      if (queue.queueData[i][0].userIdx === userIdx) {
+        queue.queueData.splice(i);
+      }
+    }
   }
 
   private findPlayerFromList(userIdx: number): number {
@@ -115,70 +119,66 @@ export class GameService {
 
   public async putInQueue(userIdx: number): Promise<Promise<number | null>> {
     const playerTuple: WaitPlayerTuple = this.waitingList.popPlayer(userIdx);
-    console.log(playerTuple[0].userIdx);
-    console.log(playerTuple[0].userObject.nickname);
-    console.log(playerTuple[1].getType());
+    // console.log(playerTuple[0].userIdx);
+    // console.log(playerTuple[0].userObject.nickname);
+    // console.log(playerTuple[1].getType());
     const value = playerTuple[1].getType();
     let returnValue;
     returnValue = 0;
     // console.log(playerTuple[1].getType() == GameType.RANK ? true : false);
     // console.log(GameType.RANK);
-    //TODO: 문제 영역 userObject
     // switch (playerTuple[1].getType()) {
-    try {
-      switch (value) {
-        case GameType.FRIEND:
-          console.log('Friend is here');
-          break;
-        case GameType.NORMAL:
-          console.log('Normal is here');
-          this.normalQueue.Enqueue(playerTuple);
-          if (this.normalQueue.size() >= 2) {
-            const playerList: WaitPlayerTuple[] | null =
-              this.normalQueue.DequeueList();
-            const roomId = this.makeRoomId();
-            const gameRoom = new GameRoom(roomId);
-            gameRoom.setUser(playerList[0][0], playerList[0][1]);
-            gameRoom.setUser(playerList[1][0], playerList[1][1]);
-            returnValue = this.playRoomList.length;
-            this.playRoomList.push(gameRoom);
-            return returnValue;
-          }
-          break;
-        case GameType.RANK:
-          console.log('Rank is here');
-          this.rankQueue.Enqueue(playerTuple);
-          if (this.rankQueue.size() >= 2) {
-            //   console.log('Rank is here2');
-            const playerList: WaitPlayerTuple[] | null =
-              this.rankQueue.DequeueList();
-            //   console.log(`player queue ${playerList.length}`);
-            const roomId = this.makeRoomId();
-            //   console.log(`room ID : ${roomId}`);
 
-            const gameRoom = new GameRoom(roomId);
-            // console.log(`room ID : ${roomId}`);
-            await gameRoom.setUser(playerList[0][0], playerList[0][1]);
-            // console.log(
-            //   `player 1 Ready : ${playerList[0][0].userObject.nickname}`,
-            // );
-            await gameRoom.setUser(playerList[1][0], playerList[1][1]);
-            // console.log(
-            //   `player 2 Ready : ${playerList[1][0].userObject.nickname}`,
-            // );
+    switch (value) {
+      case GameType.FRIEND:
+        console.log('Friend is here');
+        break;
+      case GameType.NORMAL:
+        console.log('Normal is here');
+        this.normalQueue.Enqueue(playerTuple);
+        if (this.normalQueue.size() >= 2) {
+          const playerList: WaitPlayerTuple[] | null =
+            this.normalQueue.DequeueList();
+          const roomId = this.makeRoomId();
+          const gameRoom = new GameRoom(roomId);
+          gameRoom.setUser(playerList[0][0], playerList[0][1]);
+          gameRoom.setUser(playerList[1][0], playerList[1][1]);
+          returnValue = this.playRoomList.length;
+          this.playRoomList.push(gameRoom);
+          return returnValue;
+        }
+        break;
+      case GameType.RANK:
+        console.log('Rank is here');
+        this.rankQueue.Enqueue(playerTuple);
+        if (this.rankQueue.size() >= 2) {
+          //   console.log('Rank is here2');
+          const playerList: WaitPlayerTuple[] | null =
+            this.rankQueue.DequeueList();
+          //   console.log(`player queue ${playerList.length}`);
+          const roomId = this.makeRoomId();
+          //   console.log(`room ID : ${roomId}`);
 
-            returnValue = this.playRoomList.length;
-            this.playRoomList.push(gameRoom);
-            console.log(returnValue);
+          const gameRoom = new GameRoom(roomId);
+          // console.log(`room ID : ${roomId}`);
+          await gameRoom.setUser(playerList[0][0], playerList[0][1]);
+          // console.log(
+          //   `player 1 Ready : ${playerList[0][0].userObject.nickname}`,
+          // );
+          await gameRoom.setUser(playerList[1][0], playerList[1][1]);
+          // console.log(
+          //   `player 2 Ready : ${playerList[1][0].userObject.nickname}`,
+          // );
 
-            return returnValue;
-          }
-          break;
-        default:
-          return -1;
-      }
-    } catch (Exception) {
-      console.log(Exception);
+          returnValue = this.playRoomList.length;
+          this.playRoomList.push(gameRoom);
+          console.log(returnValue);
+
+          return returnValue;
+        }
+        break;
+      default:
+        return -1;
     }
     return null;
   }
@@ -298,6 +298,12 @@ export class GameService {
     this.onlinePlayerList.splice(index);
 
     return this.onlinePlayerList.length;
+  }
+
+  public async deleteUserFromAllList(userIdx: number) {
+    this.deleteUserFromQueue(userIdx, this.normalQueue);
+    this.deleteUserFromQueue(userIdx, this.rankQueue);
+    await this.popOnlineUser(userIdx);
   }
 
   // TODO: 연결 종료 시 online 리스트에서 빼야함.

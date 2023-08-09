@@ -20,6 +20,7 @@ import { GameOptionDto } from './dto/game.option.dto';
 import { GameOptions } from './class/game.options/game.options';
 import { GameRegiDto } from './dto/game.regi.dto';
 import { GameLatencyGetDto } from './dto/game.latency.get.dto';
+import { GameCancleDto } from './dto/game.cancle.dto';
 
 @WebSocketGateway({
   namespace: 'game',
@@ -46,6 +47,7 @@ export class GameGateway
       client.handshake.query.userId as string,
       10,
     );
+    this.gameService.popOnlineUser(userId);
     // 게임 중에 있는지 파악하기
     // 게임 판정 승 로직 추가
     // 종료 시키기
@@ -100,10 +102,10 @@ export class GameGateway
     @MessageBody() regiData: GameRegiDto,
   ): Promise<ReturnMsgDto> {
     const { userIdx, queueDate } = regiData;
-    // this.gameService.checkStatus('game queue regist #1');
+    this.gameService.checkStatus('game queue regist #1\n');
     // this.logger.log('여기까지 데이터 들어옴 : ', userIdx, queueDate);
     const roomNumber = await this.gameService.putInQueue(userIdx);
-    // this.gameService.checkStatus('game queue regist #2');
+    this.gameService.checkStatus('\ngame queue regist #2');
     if (roomNumber == -1) return new ReturnMsgDto(400, 'Bad Request');
     else if (roomNumber === null) {
       //   this.logger.log('대기상태');
@@ -132,7 +134,16 @@ export class GameGateway
   //   }
 
   @SubscribeMessage('game_queue_quit')
-  cancleQueue(): ReturnMsgDto {
+  cancleQueue(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() cancleUserIdx: GameCancleDto,
+  ): ReturnMsgDto {
+    const { userIdx } = cancleUserIdx;
+    this.gameService.deleteUserFromAllList(userIdx).then(() => {
+      client.disconnect(true);
+    });
+    this.gameService.checkStatus('connection cleaered?');
+
     // userIdx로 파악
     // 큐 안에 해당 대상 파악하기
     // 큐 안에 대상 삭제하기, 데이터 지우기
