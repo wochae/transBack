@@ -1,12 +1,12 @@
 import { IsInt, IsDate } from 'class-validator';
 
-export class GameLatencyGetDTO {
+export class GameLatencyGetDto {
   @IsInt()
   userIdx: number;
 
   @IsDate()
-  serverDateTime: Date;
+  serverDateTime: number;
 
   @IsDate()
-  clientDateTime: Date;
+  clientDateTime: number;
 }

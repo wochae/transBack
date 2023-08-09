@@ -11,9 +11,10 @@ export class GamePlayer {
 
   constructor(userIdx: number, userObject: UserObject, socket: Socket) {
     this.userIdx = userIdx;
-    this.paddlePosY = 0;
+    this.userObject = userObject;
     this.socket = socket;
-    this.latency = 0;
+    this.paddlePosY = 0;
+    this.latency = -1;
     this.score = 0;
   }
 

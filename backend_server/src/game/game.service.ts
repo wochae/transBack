@@ -11,7 +11,10 @@ import { GameOptions } from './class/game.options/game.options';
 import { GameType, GameSpeed, MapNumber } from './enum/game.type.enum';
 import { RecordType, RecordResult } from 'src/entity/gameChannel.entity';
 import { GameSmallOptionDto } from './dto/game.options.small.dto';
-import { Socket, Server } from 'socket.io';
+import { Server } from 'socket.io';
+import { GameServerTimeDto } from './dto/game.server.time.dto';
+import { GameFinalReadyDto } from './dto/game.final.ready.dto';
+import { GameStartDto } from './dto/game.start.dto';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -38,68 +41,98 @@ export class GameService {
   }
 
   private findPlayerFromList(userIdx: number): number {
+    if (this.onlinePlayerList.length == 0) return 0;
     let index = 0;
     for (index = 0; index < this.onlinePlayerList.length; index++) {
       if (this.onlinePlayerList[index].user.userIdx == userIdx) return index;
     }
-
-    return 999;
   }
+
+  //TODO: check dubble login
 
   private makeGamePlayer(userIdx: number): GamePlayer {
     const user = this.onlinePlayerList[this.findPlayerFromList(userIdx)];
-    const player: GamePlayer = new GamePlayer(
-      userIdx,
-      user.user,
-      user.userSocket,
-    );
-    return player;
+    // console.log(`makeGamePlayer : ${user.user.nickname}`);
+    const returnPlayer = new GamePlayer(userIdx, user.user, user.userSocket);
+    // console.log(`makeGamePlayer 2: ${returnPlayer.userObject.nickname}`);
+    return returnPlayer;
   }
 
   public makeRoomId(): string {
-    const target = 'game_room'.concat(this.cnt.toString());
+    const target = 'game_room_'.concat(this.cnt.toString());
     this.cnt++;
     return target;
   }
 
   public sizeWaitPlayer(): number {
+    // console.log(`sizeWaitPlayer: ${this.waitingList.size()}`);
     return this.waitingList.size();
   }
 
-  public putInQueue(userIdx: number): number {
+  public async putInQueue(userIdx: number): Promise<Promise<number | null>> {
     const playerTuple: WaitPlayerTuple = this.waitingList.popPlayer(userIdx);
-    switch (playerTuple[1].getType()) {
+    console.log(playerTuple[0].userIdx);
+    console.log(playerTuple[0].userObject.nickname);
+    console.log(playerTuple[1].getType());
+    const value = playerTuple[1].getType();
+    let returnValue;
+    returnValue = 0;
+    // console.log(playerTuple[1].getType() == GameType.RANK ? true : false);
+    // console.log(GameType.RANK);
+    //TODO: 문제 영역 userObject
+    // switch (playerTuple[1].getType()) {
+    switch (value) {
       case GameType.FRIEND:
-        return 999;
+        console.log('Friend is here');
+        break;
       case GameType.NORMAL:
+        console.log('Normal is here');
         this.normalQueue.Enqueue(playerTuple);
         if (this.normalQueue.size() >= 2) {
           const playerList: WaitPlayerTuple[] | null =
             this.normalQueue.DequeueList();
-          if (playerList === null) return 0;
           const roomId = this.makeRoomId();
           const gameRoom = new GameRoom(roomId);
           gameRoom.setUser(playerList[0][0], playerList[0][1]);
-          gameRoom.setUser(playerList[1][0], playerList[2][1]);
-          return this.playRoomList.push(gameRoom);
+          gameRoom.setUser(playerList[1][0], playerList[1][1]);
+          returnValue = this.playRoomList.length;
+          this.playRoomList.push(gameRoom);
+          return returnValue;
         }
-        return 999;
+        break;
       case GameType.RANK:
+        console.log('Rank is here');
         this.rankQueue.Enqueue(playerTuple);
         if (this.rankQueue.size() >= 2) {
+          //   console.log('Rank is here2');
           const playerList: WaitPlayerTuple[] | null =
             this.rankQueue.DequeueList();
-          if (playerList === null) return 0;
+          //   console.log(`player queue ${playerList.length}`);
           const roomId = this.makeRoomId();
+          //   console.log(`room ID : ${roomId}`);
+
           const gameRoom = new GameRoom(roomId);
-          gameRoom.setUser(playerList[0][0], playerList[0][1]);
-          gameRoom.setUser(playerList[1][0], playerList[2][1]);
-          return this.playRoomList.push(gameRoom);
+          // console.log(`room ID : ${roomId}`);
+          await gameRoom.setUser(playerList[0][0], playerList[0][1]);
+          // console.log(
+          //   `player 1 Ready : ${playerList[0][0].userObject.nickname}`,
+          // );
+          await gameRoom.setUser(playerList[1][0], playerList[1][1]);
+          // console.log(
+          //   `player 2 Ready : ${playerList[1][0].userObject.nickname}`,
+          // );
+
+          returnValue = this.playRoomList.length;
+          this.playRoomList.push(gameRoom);
+          console.log(returnValue);
+
+          return returnValue;
         }
-        return 999;
+        break;
       default:
-        return 0;
+        return -1;
     }
+    return null;
   }
 
   public async setRoomToDB(roomNumber: number) {
@@ -138,7 +171,7 @@ export class GameService {
       if (room.roomId === roomId) {
         if (room.user1.userIdx === userIdx) room.user1.setLatency(latency);
         else room.user2.setLatency(latency);
-        if (room.user1.getLatency() != 0 && room.user2.getLatency() != 0) {
+        if (room.user1.getLatency() != -1 && room.user2.getLatency() != -1) {
           return true;
         }
       }
@@ -160,29 +193,14 @@ export class GameService {
 
   public getReadySecond(roomNumber: number, server: Server): boolean {
     const target = this.getRoomByRoomNumber(roomNumber);
-    const serverDateTime = Date.now();
+    const serverDateTime = new GameServerTimeDto(target.roomId, Date.now());
     return server.to(target.roomId).emit('game_ready_first', serverDateTime);
   }
 
   public getReadyFinal(userIdx: number, server: Server): boolean {
     const target = this.getRoomByUserIdx(userIdx);
-    const userNicknameFirst = target.user1.userObject.nickname;
-    const userIdxFirst = target.user1.userIdx;
-    const firstLatency = target.user1.getLatency();
-    const userNicknameSecond = target.user2.userObject.nickname;
-    const userIdxSecond = target.user2.userIdx;
-    const secondLatency = target.user2.getLatency();
-    server
-      .to(target.roomId)
-      .emit(
-        'game_ready_final',
-        userNicknameFirst,
-        userIdxFirst,
-        firstLatency,
-        userNicknameSecond,
-        userIdxSecond,
-        secondLatency,
-      );
+    const finalReady = new GameFinalReadyDto(target);
+    server.to(target.roomId).emit('game_ready_final', finalReady);
 
     return this.startPong(target, server);
   }
@@ -193,43 +211,39 @@ export class GameService {
       latency = targetRoom.user1.getLatency();
     else latency = targetRoom.user2.getLatency();
     // latency += 5000;
-    const animationStartDate = new Date(Date.now());
-    animationStartDate.setMilliseconds(
-      animationStartDate.getMilliseconds() + latency,
-    );
     const ball = targetRoom.ballList[0];
     const ballExpectedEventDate = new Date();
-    return server
-      .to(targetRoom.roomId)
-      .emit(
-        'game_start',
-        animationStartDate,
-        ball.nextX,
-        ball.nextY,
-        ballExpectedEventDate,
-      );
+    const startBall = new GameStartDto(
+      Date.now() + latency,
+      ballExpectedEventDate.getTime(),
+      ball,
+    );
+    return server.to(targetRoom.roomId).emit('game_start', startBall);
   }
 
   public setWaitPlayer(userIdx: number, options: GameOptions): number {
-    const player: GamePlayer = this.makeGamePlayer(userIdx);
+    // console.log('here?');
+    const player = this.makeGamePlayer(userIdx);
+    // console.log(`setWaitPlayer Test ${player.userObject.nickname}`);
     return this.waitingList.pushPlayer(player, options);
   }
 
   public async pushOnlineUser(player: GameOnlineMember): Promise<number> {
     const index = this.findPlayerFromList(player.user.userIdx);
 
-    if (index !== 999) return 999;
+    if (index == -1) return -1;
 
     if (player.user.isOnline == false) player.user.isOnline = true;
     await this.userObjectRepository.save(player.user);
     this.onlinePlayerList.push(player);
+    // console.log(this.onlinePlayerList[index].user.nickname);
     return this.onlinePlayerList.length;
   }
 
   public async popOnlineUser(userIdx: number): Promise<number> {
     const index = this.findPlayerFromList(userIdx);
 
-    if (index == 999) return this.onlinePlayerList.length;
+    if (index == -1) return this.onlinePlayerList.length;
 
     this.onlinePlayerList[index].user.isOnline = false;
     await this.userObjectRepository.save(this.onlinePlayerList[index].user);

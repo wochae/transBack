@@ -23,7 +23,9 @@ export class GameWaitQueue {
     for (let i = 0; i < this.waitPlayers.length; i++) {
       if (this.waitPlayers[i][0].userIdx === userIdx) {
         const ret: WaitPlayerTuple = this.waitPlayers[i];
+        // console.log(ret[0].userIdx, ret[0].userObject.nickname);
         this.waitPlayers.splice(i);
+        // console.log(ret[0].userIdx, ret[0].userObject.nickname);
         return ret;
       }
     }
