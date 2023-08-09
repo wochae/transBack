@@ -3,12 +3,12 @@ import { GamePlayer } from '../game.player/game.player';
 import { GameOptions } from '../game.options/game.options';
 
 export class GameRoom {
-  private roomId: string;
-  private ballList: GameBall[];
-  private user1: GamePlayer | null;
-  private user2: GamePlayer | null;
-  private option: GameOptions | null;
-  private count: number;
+  public roomId: string;
+  public ballList: GameBall[];
+  public user1: GamePlayer | null;
+  public user2: GamePlayer | null;
+  public option: GameOptions | null;
+  public count: number;
 
   constructor(roomId: string) {
     this.roomId = roomId;
@@ -25,9 +25,5 @@ export class GameRoom {
     this.option = option;
     this.count++;
     return this.count == 2 ? true : false;
-  }
-
-  public getCount(): number {
-    return this.count;
   }
 }

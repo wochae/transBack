@@ -11,13 +11,16 @@ import {
 import { Socket, Server } from 'socket.io';
 import { GameService } from './game.service';
 
-import { ReturnMsgDto } from './dto/errorMessage.dto';
+import { ReturnMsgDto } from './dto/error.message.dto';
 import { Logger, UseFilters } from '@nestjs/common';
 import { WsExceptionFilter } from 'src/ws.exception.filter';
 import { UsersService } from 'src/users/users.service';
 import { GameOnlineMember } from './class/game.online.member/game.online.member';
-import { GameOptionDto } from './dto/gameOption.dto';
+import { GameOptionDto } from './dto/game.option.dto';
 import { GameOptions } from './class/game.options/game.options';
+import { GameRegiDto } from './dto/game.regi.dto';
+import { GameSmallOptionDto } from './dto/game.options.small.dto';
+import { GameLatencyGetDTO } from './dto/game.latency.get.dto';
 
 @WebSocketGateway({
   namespace: 'game',
@@ -55,6 +58,8 @@ export class GameGateway
       client.handshake.query.userId as string,
       10,
     );
+    const date = Date.now();
+    this.logger.log(`시작 일시 : ${date}`);
     this.logger.log(userId + ' is connected');
     const user = await this.usersService.getUserObjectFromDB(userId);
     const OnUser = new GameOnlineMember(user, client);
@@ -91,7 +96,22 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_queue_regist')
-  putInQueue(): ReturnMsgDto {
+  async putInQueue(
+    @MessageBody() regiData: GameRegiDto,
+  ): Promise<ReturnMsgDto> {
+    const { userIdx, queueDate } = regiData;
+    const roomNumber = this.gameService.putInQueue(userIdx);
+    if (roomNumber === 0) return new ReturnMsgDto(400, 'Bad Request');
+    else if (roomNumber !== 999) {
+      await this.gameService.setRoomToDB(roomNumber).then(() => {
+        this.gameService.getReadyFirst(roomNumber, this.server);
+        this.gameService.getReadySecond(roomNumber, this.server);
+        return new ReturnMsgDto(200, 'OK!');
+      });
+    } else {
+      return new ReturnMsgDto(200, 'Plz, Wait queue');
+    }
+    // this.logger.log(`user: ${userIdx} - regi date : ${queueDate}`);
     // 세팅 상태를 파악하고
     // 넣어야 할 큐에 집어 넣기
     // 2명 채워지면 game_queue_success
@@ -99,7 +119,6 @@ export class GameGateway
     //  // 게임 준비 1차 전달
     //	//	// 게임 준비 2차 전달
     // 아니면 대기 상태로 빠짐
-    return new ReturnMsgDto(200, 'OK!');
   }
 
   //   @SubscribeMessage('game_queue_success')
@@ -127,7 +146,15 @@ export class GameGateway
   //   }
 
   @SubscribeMessage('game_ready_second_answer')
-  getLatency(): ReturnMsgDto {
+  getLatency(@MessageBody() latencyData: GameLatencyGetDTO): ReturnMsgDto {
+    const { userIdx, serverDateTime, clientDateTime } = latencyData;
+    const room = this.gameService.getRoomByUserIdx(userIdx);
+    if (room === null) return new ReturnMsgDto(400, 'Bad Request');
+    const latency = clientDateTime.getTime() - serverDateTime.getTime();
+    if (this.gameService.setLatency(userIdx, room.roomId, latency)) {
+      this.gameService.getReadyFinal(userIdx, this.server);
+    }
+
     // 내용 전달 받기
     // 레이턴시 작성 #1
     //	// 일단 저장후 대기

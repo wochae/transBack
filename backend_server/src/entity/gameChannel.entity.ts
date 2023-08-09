@@ -3,7 +3,7 @@ import {
   Entity,
   Column,
   OneToOne,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
   JoinColumn,
   ManyToOne,
 } from 'typeorm';
@@ -16,6 +16,7 @@ export enum RecordType {
 }
 
 export enum RecordResult {
+  DEFAULT = 'DEFAULT',
   PLAYING = 'PLAYING',
   WIN = 'WIN',
   LOSE = 'LOSE',
@@ -24,7 +25,7 @@ export enum RecordResult {
 
 @Entity('game_channel')
 export class GameChannel extends BaseEntity {
-  @PrimaryColumn({ type: 'int', unique: true })
+  @PrimaryGeneratedColumn()
   gameIdx: number;
 
   @Column({ type: 'enum', enum: RecordType })
