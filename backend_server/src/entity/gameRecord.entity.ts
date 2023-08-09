@@ -10,26 +10,14 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { GameChannel } from './gameChannel.entity';
-import { type } from 'os';
-
-export enum RecordType {
-  NORMAL = 'NORMAL',
-  SPECIAL = 'SPECIAL',
-}
-
-export enum RecordResult {
-  PLAYING = 'PLAYING',
-  WIN = 'WIN',
-  LOSE = 'LOSE',
-  SHUTDOWN = 'SHUTDOWN',
-}
+import { RecordType, RecordResult } from 'src/game/enum/game.type.enum';
 
 @Entity('game_record')
 export class GameRecord extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 
-  @Column({ type: 'int', unique: true })
+  @Column({ type: 'int' })
   gameIdx: number;
 
   @Column({ type: 'int' })

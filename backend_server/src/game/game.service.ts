@@ -8,8 +8,13 @@ import { GameOnlineMember } from './class/game.online.member/game.online.member'
 import { UserObjectRepository } from 'src/users/users.repository';
 import { GamePlayer } from './class/game.player/game.player';
 import { GameOptions } from './class/game.options/game.options';
-import { GameType, GameSpeed, MapNumber } from './enum/game.type.enum';
-import { RecordType, RecordResult } from 'src/entity/gameChannel.entity';
+import {
+  GameType,
+  GameSpeed,
+  MapNumber,
+  RecordType,
+  RecordResult,
+} from './enum/game.type.enum';
 import { GameSmallOptionDto } from './dto/game.options.small.dto';
 import { Server } from 'socket.io';
 import { GameServerTimeDto } from './dto/game.server.time.dto';
@@ -189,19 +194,47 @@ export class GameService {
     const target = this.playRoomList[roomNumber];
     let type;
     if (target.option.getType() == GameType.RANK) {
-      type = RecordType.SPECIAL;
+      type = RecordType.RANK;
     } else type = RecordType.NORMAL;
 
     const room = this.gameChannelRepository.create({
       type: type,
+      gameIdx: Date.now(),
       userIdx1: target.user1.userIdx,
       userIdx2: target.user2.userIdx,
       score1: 0,
       score2: 0,
       status: RecordResult.DEFAULT,
     });
+    target.setChannelObject(room);
+    const record1 = this.gameRecordRepository.create({
+      gameIdx: room.gameIdx,
+      userIdx: target.user1.userIdx,
+      matchUserNickname: target.user2.userObject.nickname,
+      matchUserIdx: target.user2.userIdx,
+      type: type,
+      result: RecordResult.DEFAULT,
+      score: '',
+      matchDate: Date(),
+    });
+    const record2 = this.gameRecordRepository.create({
+      gameIdx: room.gameIdx,
+      userIdx: target.user2.userIdx,
+      matchUserNickname: target.user1.userObject.nickname,
+      matchUserIdx: target.user1.userIdx,
+      type: type,
+      result: RecordResult.DEFAULT,
+      score: '',
+      matchDate: record1.matchDate,
+    });
+
+    target.setChannelObject(room);
+    target.setRecordObject(record1);
+    target.setRecordObject(record2);
 
     await this.gameChannelRepository.save(room);
+    await this.gameRecordRepository.save(record1);
+    await this.gameRecordRepository.save(record2);
   }
 
   public getRoomByRoomNumber(roomNumber: number): GameRoom {

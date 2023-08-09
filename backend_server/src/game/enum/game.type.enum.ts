@@ -15,3 +15,16 @@ export enum MapNumber {
   B,
   C,
 }
+
+export enum RecordType {
+  NORMAL = 0,
+  RANK,
+}
+
+export enum RecordResult {
+  DEFAULT = 0,
+  PLAYING,
+  WIN,
+  LOSE,
+  SHUTDOWN,
+}
