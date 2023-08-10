@@ -409,4 +409,15 @@ export class ChatService {
     });
     return channels;
   }
+
+  getPublicAndProtectedChannel() {
+    const channels = this.chat.getProtectedChannels.map((channel) => {
+      return {
+        owner: channel.getOwner.nickname,
+        channelIdx: channel.getChannelIdx,
+        mode: channel.getMode,
+      };
+    });
+    return channels;
+  }
 }

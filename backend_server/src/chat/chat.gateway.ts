@@ -574,4 +574,16 @@ export class ChatGateway
     // }
     // client 방식
   }
+
+  // API: MAIN_CHAT_16
+  @SubscribeMessage('chat_get_roomList')
+  getPublicAndProtectedChannel(@ConnectedSocket() client: Socket) {
+    const channels = this.chatService.getPublicAndProtectedChannel();
+    client.emit('chat_get_roomList', channels);
+    return;
+  }
+
+  // API: MAIN_CHAT_17
+  @SubscribeMessage('chat_block')
+  getPrivateChannel(@ConnectedSocket() client: Socket) {}
 }
