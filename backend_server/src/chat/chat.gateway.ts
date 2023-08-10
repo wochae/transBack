@@ -46,14 +46,13 @@ export class ChatGateway
   }
 
   handleConnection(client: Socket) {
-    // TODO: 함수로 빼기
     const userId: number = parseInt(client.handshake.query.userId as string);
     // TODO: client.handshake.query.userId & intra 가 db 에 있는 userIdx & intra 와 일치한지 확인하는 함수 추가
     const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
       return user.userIdx === userId;
     });
     if (!user) {
-      this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
+      console.log(`[ ❗️ Client ] ${client.id} Not Found`);
       client.disconnect();
       return;
     }
@@ -367,7 +366,7 @@ export class ChatGateway
 
   // API: MAIN_CHAT_6
   @SubscribeMessage('chat_room_admin')
-  async setChatAdmin(
+  async setAdmin(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: string,
   ) {
