@@ -17,7 +17,7 @@ import { Chat, MessageInfo } from './class/chat.class';
 import { UsersService } from 'src/users/users.service';
 import { DMChannel, Mode } from '../entity/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
-import { UserObject } from 'src/entity/users.entity';
+import { Permission, UserObject } from 'src/entity/users.entity';
 import { SendDMDto } from './dto/send-dm.dto';
 
 @WebSocketGateway({
@@ -65,8 +65,8 @@ export class ChatGateway
       });
     });
     // FIXME: 테스트용  코드
-    client.join('chat_room_10');
-    client.join('chat_room_11');
+    // client.join('chat_room_10');
+    // client.join('chat_room_11');
     // TODO: 이미 존재하는 member 인지 확인 필요
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
@@ -297,6 +297,7 @@ export class ChatGateway
       // FIXME: 예외처리 필요
       console.log('Member not found');
     }
+    console.log(channel);
     return;
   }
 
@@ -368,7 +369,7 @@ export class ChatGateway
   @SubscribeMessage('chat_room_admin')
   async setAdmin(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: string,
+    @MessageBody() payload: any,
   ) {
     const { channelIdx, userIdx, grant } = JSON.parse(payload);
     const ownerId: number = parseInt(client.handshake.query.userId as string);
@@ -387,22 +388,22 @@ export class ChatGateway
     }
 
     // 대상 유효성 검사
-    const user = channel.getMember.find((member) => {
+    const target = channel.getMember.find((member) => {
       return member.userIdx === userIdx;
     });
-    if (user === undefined) {
+    if (target === undefined) {
       return '대상이 채널에 없습니다.';
     }
     // 대상 권한 검사
     const checkGrant = channel.getAdmin.some(
-      (admin) => admin.userIdx === user.userIdx,
+      (admin) => admin.userIdx === target.userIdx,
     );
     if (grant === checkGrant) {
       return '이미 권한이 부여되어있습니다.';
     }
 
     // 대상 권한 부여 및 emit
-    const adminInfo = this.chatService.setAdmin(channel, user, grant);
+    const adminInfo = this.chatService.setAdmin(channel, target, grant);
     this.server
       .to(`chat_room_${channelIdx}`)
       .emit('chat_room_admin', adminInfo);
@@ -413,7 +414,7 @@ export class ChatGateway
   @SubscribeMessage('BR_chat_room_password')
   changePassword(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: string,
+    @MessageBody() payload: any,
   ) {
     const { channelIdx, userIdx, changePassword } = JSON.parse(payload);
     const ownerId: number = parseInt(client.handshake.query.userId as string);
@@ -440,19 +441,51 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_8
+  // TODO: kick 인데 exit 이 적절한가?
   @SubscribeMessage('chat_room_exit')
-  exitRoom(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-    // request data
-    // {
-    //   chat_user_id
-    // }
-    // response data
-    // owner 가 나갈 경우 전달하고 나감.
-    // {
-    //  left_members[],
-    //  owner
-    // }
-    // roomId 방식
+  exitRoom(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+    const { channelIdx, userIdx } = JSON.parse(payload);
+    const requestId: number = parseInt(client.handshake.query.userId as string);
+    const channel = this.chat.getProtectedChannel(channelIdx);
+
+    // console.log(channel);
+    // owner 유효성 검사
+    const requester: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === requestId;
+    });
+    if (requester === undefined) {
+      return '요청자가 대화방에 없습니다.';
+    }
+    const clientIsOwner: boolean =
+      channel.getOwner.userIdx === requester.userIdx;
+    const clientIsAdmin: boolean = channel.getAdmin.some(
+      (admin) => admin.userIdx === requester.userIdx,
+    );
+    if (!clientIsOwner && !clientIsAdmin) {
+      return '요청자가 적절한 권한자가 아닙니다.';
+    }
+    // 대상 유효성 검사
+    const target = channel.getMember.find((member) => {
+      return member.userIdx === userIdx;
+    });
+    if (target === undefined) {
+      return '대상이 채널에 없습니다.';
+    }
+    // 대상 권한 검사
+    const targetIsOwner: boolean = channel.getOwner.userIdx === target.userIdx;
+    const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
+      return admin.userIdx === target.userIdx;
+    });
+    if (targetIsOwner || targetIsAdmin) {
+      return '대상을 퇴장할 수 없습니다.';
+    }
+    // 대상 퇴장 및 emit
+    const channelInfo = this.chatService.exitRoom(channel, target);
+    this.server
+      .to(`chat_room_${channelIdx}`)
+      .emit('chat_room_exit', channelInfo);
+    // console.log(channel);
+    return;
   }
 
   // API: MAIN_CHAT_9

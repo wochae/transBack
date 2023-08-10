@@ -349,4 +349,23 @@ export class ChatService {
     };
     return channelInfo;
   }
+
+  exitRoom(channel: Channel, user: UserObject) {
+    channel.removeMember(user);
+    const userSocket = this.chat.getSocketObject(user.userIdx);
+    // FIXME: return 으로 해도 될듯
+    userSocket.socket.emit('chat_room_exit', '퇴장 당했습니다');
+    userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
+
+    const channelInfo = {
+      leftMember: channel.getMember.map((member) => {
+        return {
+          userNickname: member.nickname,
+          userIdx: member.userIdx,
+        };
+      }),
+      owner: channel.getOwner.nickname,
+    };
+    return channelInfo;
+  }
 }
