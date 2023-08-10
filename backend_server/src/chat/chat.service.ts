@@ -350,6 +350,8 @@ export class ChatService {
     return channelInfo;
   }
 
+  /******************* Funcions about Exit Room *******************/
+
   exitRoom(channel: Channel, user: UserObject) {
     channel.removeMember(user);
     const userSocket = this.chat.getSocketObject(user.userIdx);
@@ -381,12 +383,30 @@ export class ChatService {
     const userSocket = this.chat.getSocketObject(user.userIdx);
     userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
     userSocket.socket.emit('chat_goto_lobby', '방을 나왔습니다.');
-    console.log('---------------', channel.getOwner);
     const channelInfo = {
       owner: channel.getOwner?.nickname,
       channelIdx: channel.getChannelIdx,
       mode: channel.getMode,
     };
     return channelInfo;
+  }
+
+  checkEmptyChannel(channel: Channel) {
+    if (channel.getMember.length === 0) {
+      return true;
+    }
+    return false;
+  }
+
+  removeEmptyChannel(channel: Channel) {
+    this.chat.removeChannel(channel.getChannelIdx);
+    const channels = this.chat.getProtectedChannels.map((channel) => {
+      return {
+        owner: channel.getOwner.nickname,
+        channelIdx: channel.getChannelIdx,
+        mode: channel.getMode,
+      };
+    });
+    return channels;
   }
 }

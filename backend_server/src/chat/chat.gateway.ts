@@ -504,25 +504,15 @@ export class ChatGateway
     this.server
       .to(`chat_room_${channelIdx}`)
       .emit('chat_room_exit', channelInfo);
-    console.log('After request: ', channel);
 
     // API: MAIN_CHAT_10
-    return;
-  }
-
-  // API: MAIN_CHAT_10
-  @SubscribeMessage('chat_rooom_delete')
-  deleteRoom(@ConnectedSocket() client: Socket) {
-    // request data
-    // response data
-    //   {
-    //     channel[] :{
-    //      member[]?,
-    //      channelIdx,
-    //      password : true / false
-    //    }
-    //  }
-    // broadcast 방식
+    const isEmpty = this.chatService.checkEmptyChannel(channel);
+    if (isEmpty) {
+      const channels = this.chatService.removeEmptyChannel(channel);
+      this.server.emit('BR_chat_room_delete', channels);
+      return '채널이 삭제되었습니다. 로비로 이동합니다.';
+    }
+    return '로비로 이동합니다.';
   }
 
   // API: MAIN_CHAT_12
