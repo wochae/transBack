@@ -420,4 +420,18 @@ export class ChatService {
     });
     return channels;
   }
+
+  async getPrivateChannel(user: UserObject) {
+    const channels: DMChannel[] =
+      await this.dmChannelRepository.findDMChannelsByUserIdx(user.userIdx);
+
+    const channelsInfo = channels.map((channel) => {
+      return {
+        targetNickname: channel.userNickname2,
+        channelIdx: channel.channelIdx,
+        mode: Mode.PRIVATE,
+      };
+    });
+    return channelsInfo;
+  }
 }

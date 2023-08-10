@@ -584,6 +584,16 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_17
-  @SubscribeMessage('chat_block')
-  getPrivateChannel(@ConnectedSocket() client: Socket) {}
+  @SubscribeMessage('chat_get_DMList')
+  async getPrivateChannel(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: string,
+  ) {
+    const { userNickname, userIdx } = JSON.parse(payload);
+    const userId = parseInt(client.handshake.query.userId as string);
+    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const channels = await this.chatService.getPrivateChannel(user);
+    client.emit('chat_get_DMList', channels);
+    return;
+  }
 }
