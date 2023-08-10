@@ -42,6 +42,6 @@ export class GameChannel extends BaseEntity {
   @JoinColumn([{ name: 'userIdx2', referencedColumnName: 'userIdx' }])
   user2: UserObject;
 
-  @OneToOne(() => GameRecord, (record) => record.channel)
+  @OneToOne(() => GameRecord, (record) => record.gameIdx)
   record: GameRecord;
 }

@@ -26,5 +26,13 @@ export enum RecordResult {
   PLAYING,
   WIN,
   LOSE,
+  DONE,
   SHUTDOWN,
+}
+
+export enum GameStatus {
+  ONGOING = 0,
+  JUDGEMENT,
+  TERMINATION,
+  DRAW,
 }
