@@ -388,97 +388,115 @@ export class GameService {
     return -1;
   }
 
+  private async winnerScoreHandling(
+    user1: GamePlayer,
+    user2: GamePlayer,
+    room: GameRoom,
+    server: Server,
+  ) {
+    await this.gameChannelRepository.save(
+      room.saveChannelObject(user1.score, user2.score, RecordResult.DONE),
+    );
+    const records = room.saveRecordObject(
+      user1.score,
+      user2.score,
+      RecordResult.WIN,
+      RecordResult.LOSE,
+    );
+
+    await this.gameRecordRepository.save(records[0]).then(async () => {
+      await this.gameRecordRepository.save(records[1]);
+    });
+
+    const finishData = new GameScoreFinshDto(
+      user1,
+      user2,
+      GameStatus.TERMINATION,
+    );
+    const targetIdx = this.getRoomIdxWithRoom(room);
+
+    await server.to(room.roomId).emit('game_get_score', finishData);
+    user1.socket.leave(room.roomId);
+    user2.socket.leave(room.roomId);
+    this.playRoomList.splice(targetIdx);
+    this.popOnlineUser(user1.userIdx);
+    this.popOnlineUser(user2.userIdx);
+    user1.socket.disconnect(true);
+    user2.socket.disconnect(true);
+  }
+
+  private async scoreHandling(
+    user1: GamePlayer,
+    user2: GamePlayer,
+    room: GameRoom,
+    server: Server,
+  ) {
+    await this.gameChannelRepository.save(
+      room.saveChannelObject(user1.score, user2.score, RecordResult.PLAYING),
+    );
+    const records = room.saveRecordObject(
+      user1.score,
+      user2.score,
+      RecordResult.PLAYING,
+      RecordResult.PLAYING,
+    );
+    await this.gameRecordRepository.save(records[0]).then(async () => {
+      await this.gameRecordRepository.save(records[1]);
+    });
+
+    const finishData = new GameScoreFinshDto(user1, user2, GameStatus.ONGOING);
+    await server.to(room.roomId).emit('game_get_score', finishData);
+    room.predictBallCourse(0, 0);
+    await this.startPong(room, server);
+  }
+
   public async handleScore(scoreData: GameScoreDto, server: Server) {
     const userIdx = scoreData.userIdx;
     const targetRoom = this.getRoomByUserIdx(userIdx);
-    // const dat =
     if (targetRoom.setScoreData(scoreData)) {
       const datas = targetRoom.getScoreDataList();
       if (this.checkScoreData(datas)) {
         if (targetRoom.user1.userIdx === datas[0].userIdx) {
           targetRoom.user1.score = datas[0].score;
           if (datas[0].score === 5) {
-            const user1 = targetRoom.user1;
-            const user2 = targetRoom.user2;
-            await this.gameChannelRepository.save(
-              targetRoom.saveChannelObject(
-                user1.score,
-                user2.score,
-                RecordResult.DONE,
-              ),
+            await this.winnerScoreHandling(
+              targetRoom.user1,
+              targetRoom.user2,
+              targetRoom,
+              server,
             );
-            const records = targetRoom.saveRecordObject(
-              user1.score,
-              user2.score,
-              RecordResult.WIN,
-              RecordResult.LOSE,
-            );
-            await this.gameRecordRepository.save(records[0]).then(async () => {
-              await this.gameRecordRepository.save(records[1]);
-            });
-
-            const finishData = new GameScoreFinshDto(
-              user1,
-              user2,
-              GameStatus.TERMINATION,
-            );
-            const targetIdx = this.getRoomIdxWithRoom(targetRoom);
-
-            await server
-              .to(targetRoom.roomId)
-              .emit('game_get_score', finishData);
-            user1.socket.leave(targetRoom.roomId);
-            user2.socket.leave(targetRoom.roomId);
-            this.playRoomList.splice(targetIdx);
-            this.popOnlineUser(user1.userIdx);
-            this.popOnlineUser(user2.userIdx);
-            user1.socket.disconnect(true);
-            user2.socket.disconnect(true);
-
             // DB 저장
             // API 13
             // 게임 종료 및 방 정리
           } else {
-            const user1 = targetRoom.user1;
-            const user2 = targetRoom.user2;
-            await this.gameChannelRepository.save(
-              targetRoom.saveChannelObject(
-                user1.score,
-                user2.score,
-                RecordResult.PLAYING,
-              ),
+            await this.scoreHandling(
+              targetRoom.user1,
+              targetRoom.user2,
+              targetRoom,
+              server,
             );
-            const records = targetRoom.saveRecordObject(
-              user1.score,
-              user2.score,
-              RecordResult.PLAYING,
-              RecordResult.PLAYING,
-            );
-            await this.gameRecordRepository.save(records[0]).then(async () => {
-              await this.gameRecordRepository.save(records[1]);
-            });
-
-            const finishData = new GameScoreFinshDto(
-              user1,
-              user2,
-              GameStatus.ONGOING,
-            );
-            await server
-              .to(targetRoom.roomId)
-              .emit('game_get_score', finishData);
-            targetRoom.predictBallCourse(0, 0);
-            await this.startPong(targetRoom, server);
-
             // DB 저장
             // 재시작 준비
           }
         } else {
           targetRoom.user2.score = datas[0].score;
           if (datas[0].score === 5) {
+            await this.winnerScoreHandling(
+              targetRoom.user2,
+              targetRoom.user1,
+              targetRoom,
+              server,
+            );
             // API 13
             // DB 저장
             // 게임 종료 및 방 정리
           } else {
+            await this.scoreHandling(
+              targetRoom.user2,
+              targetRoom.user1,
+              targetRoom,
+              server,
+            );
             // DB 저장
             // 재시작 준비
           }
