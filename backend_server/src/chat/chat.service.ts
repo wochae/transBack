@@ -335,4 +335,18 @@ export class ChatService {
     };
     return adminInfo;
   }
+
+  changePassword(channel: Channel, password: string) {
+    channel.setPassword = password;
+    if (password === '') {
+      channel.setMode = Mode.PUBLIC;
+    } else {
+      channel.setMode = Mode.PROTECTED;
+    }
+    const channelInfo = {
+      channelIdx: channel.getChannelIdx,
+      mode: channel.getMode,
+    };
+    return channelInfo;
+  }
 }
