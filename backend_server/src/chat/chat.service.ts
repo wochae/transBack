@@ -354,7 +354,7 @@ export class ChatService {
     channel.removeMember(user);
     const userSocket = this.chat.getSocketObject(user.userIdx);
     // FIXME: return 으로 해도 될듯
-    userSocket.socket.emit('chat_room_exit', '퇴장 당했습니다');
+    userSocket.socket.emit('chat_room_exit', '퇴장 당했습니다.');
     userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
 
     const channelInfo = {
@@ -365,6 +365,27 @@ export class ChatService {
         };
       }),
       owner: channel.getOwner.nickname,
+    };
+    return channelInfo;
+  }
+
+  goToLobby(channel: Channel, user: UserObject) {
+    const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
+
+    if (!isOwner) {
+      channel.removeMember(user);
+    } else {
+      channel.removeMember(user);
+      channel.setOwner = channel.getMember[0];
+    }
+    const userSocket = this.chat.getSocketObject(user.userIdx);
+    userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
+    userSocket.socket.emit('chat_goto_lobby', '방을 나왔습니다.');
+    console.log('---------------', channel.getOwner);
+    const channelInfo = {
+      owner: channel.getOwner?.nickname,
+      channelIdx: channel.getChannelIdx,
+      mode: channel.getMode,
     };
     return channelInfo;
   }

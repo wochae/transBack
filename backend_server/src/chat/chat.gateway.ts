@@ -490,17 +490,24 @@ export class ChatGateway
 
   // API: MAIN_CHAT_9
   @SubscribeMessage('chat_goto_lobby')
-  goToLooby(@ConnectedSocket() client: Socket) {
-    // request data
-    // response data
-    // {
-    //   channel :{
-    //     member[]?,
-    //     channelIdx,
-    //     password : true / false
-    //   }
-    // }
-    // client 방식
+  goToLobby(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+    const { channelIdx, userIdx } = JSON.parse(payload);
+    const channel = this.chat.getProtectedChannel(channelIdx);
+    console.log('channel: ', channel);
+    const user: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === userIdx;
+    });
+    if (user === undefined) {
+      return '요청자가 대화방에 없습니다.';
+    }
+    const channelInfo = this.chatService.goToLobby(channel, user);
+    this.server
+      .to(`chat_room_${channelIdx}`)
+      .emit('chat_room_exit', channelInfo);
+    console.log('After request: ', channel);
+
+    // API: MAIN_CHAT_10
+    return;
   }
 
   // API: MAIN_CHAT_10
