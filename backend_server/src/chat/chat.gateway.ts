@@ -476,6 +476,7 @@ export class ChatGateway
     const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
       return admin.userIdx === target.userIdx;
     });
+    // FIXME: 하지만 owner 일 경우에는 퇴장 가능...
     if (targetIsOwner || targetIsAdmin) {
       return '대상을 퇴장할 수 없습니다.';
     }
@@ -547,18 +548,48 @@ export class ChatGateway
 
   // API: MAIN_CHAT_14
   @SubscribeMessage('chat_ban')
-  banMember(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-    // request data
-    //  {
-    //     roomId,
-    //     target_nickname
-    //  }
-    // response data
-    // {
-    //   targetNickname,
-    //   left_member[]
-    // }
-    // RoomId 방식
+  banMember(@ConnectedSocket() client: Socket, @MessageBody() payload: string) {
+    const { channelIdx, targetNickname, targetIdx } = JSON.parse(payload);
+    const requestId: number = parseInt(client.handshake.query.userId as string);
+    const channel = this.chat.getProtectedChannel(channelIdx);
+
+    // console.log(channel);
+    // owner 유효성 검사
+    const requester: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === requestId;
+    });
+    if (requester === undefined) {
+      return '요청자가 대화방에 없습니다.';
+    }
+    const clientIsOwner: boolean =
+      channel.getOwner.userIdx === requester.userIdx;
+    const clientIsAdmin: boolean = channel.getAdmin.some(
+      (admin) => admin.userIdx === requester.userIdx,
+    );
+    if (!clientIsOwner && !clientIsAdmin) {
+      return '요청자가 적절한 권한자가 아닙니다.';
+    }
+    // 대상 유효성 검사
+    const target = channel.getMember.find((member) => {
+      return member.userIdx === targetIdx;
+    });
+    if (target === undefined) {
+      return '대상이 채널에 없습니다.';
+    }
+    // 대상 권한 검사
+    // 대상 권한 검사
+    const targetIsOwner: boolean = channel.getOwner.userIdx === target.userIdx;
+    const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
+      return admin.userIdx === target.userIdx;
+    });
+    if (targetIsOwner || targetIsAdmin) {
+      return '대상을 퇴장할 수 없습니다.';
+    }
+
+    // 대상 ban 처리 및 emit
+    const banInfo = this.chatService.setBan(channel, target);
+    this.server.to(`chat_room_${channelIdx}`).emit('chat_room_admin', banInfo);
+    return '권한 부여 완료';
   }
 
   // API: MAIN_CHAT_15
@@ -605,10 +636,6 @@ export class ChatGateway
   ) {
     // const { targetIdx } = payload;
     const { channelIdx } = JSON.parse(payload);
-    const userId: number = parseInt(
-      client.handshake.query.userId as string,
-      10,
-    );
     const dm: MessageInfo = await this.chatService.getPrivateChannel(
       channelIdx,
     );

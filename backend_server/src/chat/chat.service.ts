@@ -336,6 +336,28 @@ export class ChatService {
     return adminInfo;
   }
 
+  setBan(channel: Channel, user: UserObject) {
+    const ban = channel.getBan.some(
+      (member) => member.userIdx === user.userIdx,
+    );
+    if (!ban) {
+      channel.setBan = user;
+    } else {
+      channel.removeBan(user);
+    }
+    const banInfo = {
+      targetNickname: user.nickname,
+      targetIdx: user.userIdx,
+      leftMember: channel.getBan.map((member) => {
+        return {
+          userNickname: member.nickname,
+          userIdx: member.userIdx,
+        };
+      }),
+    };
+    return banInfo;
+  }
+
   changePassword(channel: Channel, password: string) {
     channel.setPassword = password;
     if (password === '') {

@@ -8,11 +8,12 @@ export class Channel {
   /******************************* 멤버 변수 *******************************/
   private channelIdx: number;
   private roomId: number;
-  private member: UserObject[] = []; //   private member: member[];
+  private member: UserObject[] = [];
   private messages: Message[] = [];
   private mode: Mode;
-  private owner: UserObject; //   private owner: member;
-  private admin: UserObject[] = []; //   private admin: member[];
+  private owner: UserObject;
+  private admin: UserObject[] = [];
+  private ban: UserObject[] = [];
   private password: string;
 
   /******************************* 메서드 *******************************/
@@ -44,7 +45,7 @@ export class Channel {
     return this.roomId;
   }
   get getMember(): UserObject[] {
-    return this.member; //   member: member[];
+    return this.member;
   }
   get getMessages(): Message[] {
     return this.messages;
@@ -53,10 +54,13 @@ export class Channel {
     return this.mode;
   }
   get getOwner(): UserObject {
-    return this.owner; //   owner: member;
+    return this.owner;
   }
   get getAdmin(): UserObject[] {
-    return this.admin; //   admin: member[];
+    return this.admin;
+  }
+  get getBan(): UserObject[] {
+    return this.ban;
   }
   get getPassword(): string {
     return this.password;
@@ -71,7 +75,7 @@ export class Channel {
     this.roomId = roomId;
   }
   set setMember(member: UserObject) {
-    this.member.push(member); // member: member[];
+    this.member.push(member);
   }
   set setMessage(message: Message) {
     this.messages.push(message);
@@ -80,10 +84,13 @@ export class Channel {
     this.mode = mode;
   }
   set setOwner(owner: UserObject) {
-    this.owner = owner; // owner: member;
+    this.owner = owner;
   }
   set setAdmin(admin: UserObject) {
-    this.admin.push(admin); // admin: member[];
+    this.admin.push(admin);
+  }
+  set setBan(ban: UserObject) {
+    this.ban.push(ban);
   }
   set setPassword(password: string) {
     this.password = password;
@@ -95,5 +102,8 @@ export class Channel {
   }
   removeMember(member: UserObject) {
     this.member.splice(this.member.indexOf(member), 1);
+  }
+  removeBan(ban: UserObject) {
+    this.ban.splice(this.ban.indexOf(ban), 1);
   }
 }
