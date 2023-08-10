@@ -421,7 +421,7 @@ export class ChatService {
     return channels;
   }
 
-  async getPrivateChannel(user: UserObject) {
+  async getPrivateChannels(user: UserObject) {
     const channels: DMChannel[] =
       await this.dmChannelRepository.findDMChannelsByUserIdx(user.userIdx);
 
@@ -433,5 +433,31 @@ export class ChatService {
       };
     });
     return channelsInfo;
+  }
+
+  // DM 채널 클릭 시
+  async getPrivateChannel(channelIdx: number) {
+    const channel: DMChannel =
+      await this.dmChannelRepository.findDMChannelByChannelIdx(channelIdx);
+    const dmMessageList = await Promise.all(
+      (
+        await this.directMessagesRepository.findMessageList(channelIdx)
+      ).map(async (dm) => {
+        return {
+          sender: dm.sender,
+          msg: dm.msg,
+          msgDate: dm.msgDate,
+        };
+      }),
+    );
+    const messageInfo: MessageInfo = {
+      message: dmMessageList,
+      userIdx1: channel.userIdx1,
+      userIdx2: channel.userIdx2,
+      userNickname1: channel.userNickname1,
+      userNickname2: channel.userNickname2,
+      channelIdx: channel.channelIdx,
+    };
+    return messageInfo;
   }
 }
