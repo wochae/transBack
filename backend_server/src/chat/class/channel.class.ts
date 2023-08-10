@@ -52,10 +52,10 @@ export class Channel {
   get getMode(): string {
     return this.mode;
   }
-  get getOwner(): any {
+  get getOwner(): UserObject {
     return this.owner; //   owner: member;
   }
-  get getAdmin(): any {
+  get getAdmin(): UserObject[] {
     return this.admin; //   admin: member[];
   }
   get getPassword(): string {
@@ -63,6 +63,7 @@ export class Channel {
   }
 
   // setter
+  // TODO: 함수 내부에서 에러 처리 해줘야함.
   set setChannelIdx(channelIdx: number) {
     this.channelIdx = channelIdx++;
   }
@@ -78,13 +79,21 @@ export class Channel {
   set setMode(mode: Mode) {
     this.mode = mode;
   }
-  set setOwner(owner: any) {
+  set setOwner(owner: UserObject) {
     this.owner = owner; // owner: member;
   }
-  set setAdmin(admin: any) {
+  set setAdmin(admin: UserObject) {
     this.admin.push(admin); // admin: member[];
   }
   set setPassword(password: string) {
     this.password = password;
+  }
+
+  // remove
+  removeAdmin(admin: UserObject) {
+    this.admin.splice(this.admin.indexOf(admin), 1);
+  }
+  removeMember(member: UserObject) {
+    this.member.splice(this.member.indexOf(member), 1);
   }
 }

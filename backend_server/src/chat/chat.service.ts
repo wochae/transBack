@@ -353,4 +353,17 @@ export class ChatService {
     // console.log('channelInfo', channelInfo);
     return channelInfo;
   }
+
+  setAdmin(channel: Channel, user: UserObject, grant: boolean) {
+    if (grant) {
+      channel.setAdmin = user;
+    } else {
+      channel.removeAdmin(user);
+    }
+    const adminInfo = {
+      userIdx: user.userIdx,
+      grant: grant,
+    };
+    return adminInfo;
+  }
 }
