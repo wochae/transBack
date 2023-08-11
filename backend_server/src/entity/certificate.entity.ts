@@ -10,16 +10,19 @@ import { UserObject } from './users.entity';
 
 @Entity('certificate')
 export class CertificateObject extends BaseEntity {
-  @PrimaryColumn({ type: 'varchar', unique: true })
-  token: string;
-
-  @Column({ type: 'int' })
+  @PrimaryColumn({ type: 'int' })
   userIdx: number;
+
+  @Column({ type: 'varchar', unique: true })
+  token: string;
 
   @Column({ type: 'boolean', default: false })
   check2Auth: boolean;
 
-  @OneToOne(() => UserObject, (userObject) => userObject)
+  @Column({ type: 'varchar', unique: true })
+  email: string;
+
+  @OneToOne(() => UserObject, (userObject) => userObject) // 이거 cascade 로 테스트 해봐야하는 것
   @JoinColumn({ name: 'userIdx', referencedColumnName: 'userIdx' })
   userObject: UserObject;
 }
