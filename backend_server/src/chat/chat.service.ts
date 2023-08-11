@@ -375,13 +375,27 @@ export class ChatService {
 
   /******************* Funcions about Exit Room *******************/
 
-  exitRoom(channel: Channel, user: UserObject) {
+  goToLobby(channel: Channel, user: UserObject) {
     channel.removeMember(user);
-    const userSocket = this.chat.getSocketObject(user.userIdx);
-    // FIXME: return 으로 해도 될듯
-    userSocket.socket.emit('chat_room_exit', '퇴장 당했습니다.');
-    userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
 
+    const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
+    if (isOwner) {
+      channel.setOwner = channel.getMember[0];
+    }
+
+    const userSocket = this.chat.getSocketObject(user.userIdx);
+    userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
+    userSocket.socket.emit('chat_goto_lobby', '방을 나왔습니다.');
+
+    const channelInfo = {
+      owner: channel.getOwner?.nickname,
+      channelIdx: channel.getChannelIdx,
+      mode: channel.getMode,
+    };
+    return channelInfo;
+  }
+
+  exitAnnounce(channel: Channel) {
     const channelInfo = {
       leftMember: channel.getMember.map((member) => {
         return {
@@ -390,26 +404,6 @@ export class ChatService {
         };
       }),
       owner: channel.getOwner.nickname,
-    };
-    return channelInfo;
-  }
-
-  goToLobby(channel: Channel, user: UserObject) {
-    const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
-
-    if (!isOwner) {
-      channel.removeMember(user);
-    } else {
-      channel.removeMember(user);
-      channel.setOwner = channel.getMember[0];
-    }
-    const userSocket = this.chat.getSocketObject(user.userIdx);
-    userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
-    userSocket.socket.emit('chat_goto_lobby', '방을 나왔습니다.');
-    const channelInfo = {
-      owner: channel.getOwner?.nickname,
-      channelIdx: channel.getChannelIdx,
-      mode: channel.getMode,
     };
     return channelInfo;
   }
@@ -473,13 +467,15 @@ export class ChatService {
         };
       }),
     );
-    const messageInfo: MessageInfo = {
+    // const targetUser = this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
+    const messageInfo = {
       message: dmMessageList,
       userIdx1: channel.userIdx1,
       userIdx2: channel.userIdx2,
       userNickname1: channel.userNickname1,
       userNickname2: channel.userNickname2,
       channelIdx: channel.channelIdx,
+      // imgUrl: targetUser.imgUri,
     };
     return messageInfo;
   }

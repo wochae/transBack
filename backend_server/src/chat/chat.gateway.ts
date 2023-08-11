@@ -491,7 +491,6 @@ export class ChatGateway
   goToLobby(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
     const { channelIdx, userIdx } = JSON.parse(payload);
     const channel = this.chat.getProtectedChannel(channelIdx);
-    console.log('channel: ', channel);
     const user: UserObject = channel.getMember.find((member) => {
       return member.userIdx === userIdx;
     });
@@ -499,9 +498,7 @@ export class ChatGateway
       return '요청자가 대화방에 없습니다.';
     }
     const channelInfo = this.chatService.goToLobby(channel, user);
-    this.server
-      .to(`chat_room_${channelIdx}`)
-      .emit('chat_room_exit', channelInfo);
+    client.emit('chat_room_exit', channelInfo);
 
     // API: MAIN_CHAT_10
     const isEmpty = this.chatService.checkEmptyChannel(channel);
@@ -510,6 +507,10 @@ export class ChatGateway
       this.server.emit('BR_chat_room_delete', channels);
       return '채널이 삭제되었습니다. 로비로 이동합니다.';
     }
+
+    // API: MAIN_CHAT_8
+    const announce = this.chatService.exitAnnounce(channel);
+    this.server.to(`chat_room_${channelIdx}`).emit('chat_room_exit', announce);
     return '로비로 이동합니다.';
   }
 
