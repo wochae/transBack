@@ -467,7 +467,7 @@ export class ChatService {
         };
       }),
     );
-    // const targetUser = this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
+    const targetUser = this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
     const messageInfo = {
       message: dmMessageList,
       userIdx1: channel.userIdx1,
@@ -475,7 +475,7 @@ export class ChatService {
       userNickname1: channel.userNickname1,
       userNickname2: channel.userNickname2,
       channelIdx: channel.channelIdx,
-      // imgUrl: targetUser.imgUri,
+      imgUrl: targetUser.imgUri,
     };
     return messageInfo;
   }
