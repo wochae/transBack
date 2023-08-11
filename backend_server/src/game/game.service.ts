@@ -132,14 +132,13 @@ export class GameService {
     // console.log(playerTuple[0].userIdx);
     // console.log(playerTuple[0].userObject.nickname);
     // console.log(playerTuple[1].getType());
-    const value = playerTuple[1].getType();
+    // const value = playerTuple[1].getType();
     let returnValue;
     returnValue = 0;
-    // console.log(playerTuple[1].getType() == GameType.RANK ? true : false);
-    // console.log(GameType.RANK);
-    // switch (playerTuple[1].getType()) {
-
-    switch (value) {
+    console.log(playerTuple[1].getType() == GameType.RANK ? true : false);
+    console.log(GameType.RANK);
+    switch (playerTuple[1].getType()) {
+      // switch (value) {
       case GameType.FRIEND:
         console.log('Friend is here');
         break;
@@ -162,7 +161,7 @@ export class GameService {
         console.log('Rank is here');
         this.rankQueue.Enqueue(playerTuple);
         if (this.rankQueue.size() >= 2) {
-          //   console.log('Rank is here2');
+          console.log('Rank is here2');
           const playerList: WaitPlayerTuple[] | null =
             this.rankQueue.DequeueList();
           //   console.log(`player queue ${playerList.length}`);
@@ -202,7 +201,6 @@ export class GameService {
 
     const room = this.gameChannelRepository.create({
       type: type,
-      gameIdx: Date.now(),
       userIdx1: target.user1.userIdx,
       userIdx2: target.user2.userIdx,
       score1: 0,
@@ -210,18 +208,26 @@ export class GameService {
       status: RecordResult.DEFAULT,
     });
     target.setChannelObject(room);
-    const record1 = this.gameRecordRepository.create({
-      gameIdx: room.gameIdx,
+    await this.gameChannelRepository.save(room);
+    const saved = this.gameChannelRepository.findOne({
+      where: {
+        userIdx1: room.userIdx1,
+        userIdx2: room.userIdx2,
+        status: RecordResult.DEFAULT,
+      },
+    });
+    const record1 = await this.gameRecordRepository.create({
+      gameIdx: (await saved).gameIdx,
       userIdx: target.user1.userIdx,
       matchUserNickname: target.user2.userObject.nickname,
       matchUserIdx: target.user2.userIdx,
       type: type,
       result: RecordResult.DEFAULT,
       score: '',
-      matchDate: Date(),
+      matchDate: new Date(),
     });
-    const record2 = this.gameRecordRepository.create({
-      gameIdx: room.gameIdx,
+    const record2 = await this.gameRecordRepository.create({
+      gameIdx: (await saved).gameIdx,
       userIdx: target.user2.userIdx,
       matchUserNickname: target.user1.userObject.nickname,
       matchUserIdx: target.user1.userIdx,
@@ -235,9 +241,9 @@ export class GameService {
     target.setRecordObject(record1);
     target.setRecordObject(record2);
 
-    await this.gameChannelRepository.save(room);
     await this.gameRecordRepository.save(record1);
     await this.gameRecordRepository.save(record2);
+    console.log('DB 저장 성공');
   }
 
   public getRoomByRoomNumber(roomNumber: number): GameRoom {

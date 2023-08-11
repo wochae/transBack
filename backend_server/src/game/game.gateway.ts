@@ -104,21 +104,24 @@ export class GameGateway
     @MessageBody() regiData: GameRegiDto,
   ): Promise<ReturnMsgDto> {
     const { userIdx, queueDate } = regiData;
-    this.gameService.checkStatus('game queue regist #1\n');
+    // this.gameService.checkStatus('game queue regist #1\n');
     // this.logger.log('여기까지 데이터 들어옴 : ', userIdx, queueDate);
     const roomNumber = await this.gameService.putInQueue(userIdx);
-    this.gameService.checkStatus('\ngame queue regist #2');
+    // this.gameService.checkStatus('\ngame queue regist #2');
     if (roomNumber == -1) return new ReturnMsgDto(400, 'Bad Request');
     else if (roomNumber === null) {
       //   this.logger.log('대기상태');
       return new ReturnMsgDto(200, 'Plz, Wait queue');
     } else if (roomNumber >= 0) {
-      //   this.logger.log(`룸 작성 성공`);
-      await this.gameService.setRoomToDB(roomNumber).then(() => {
-        this.gameService.getReadyFirst(roomNumber, this.server);
-        this.gameService.getReadySecond(roomNumber, this.server);
-        return new ReturnMsgDto(200, 'OK!');
-      });
+      this.logger.log(`룸 작성 성공`);
+      this.gameService.getReadyFirst(roomNumber, this.server);
+      this.gameService.getReadySecond(roomNumber, this.server);
+      //   try {
+      //     await this.gameService.setRoomToDB(roomNumber);
+      //   } catch (exception) {
+      //     console.log(exception);
+      //   }
+      return new ReturnMsgDto(200, 'OK!');
     }
     // this.logger.log(`user: ${userIdx} - regi date : ${queueDate}`);
     // 세팅 상태를 파악하고
