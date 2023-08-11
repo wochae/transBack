@@ -1,7 +1,7 @@
 export enum GameType {
   FRIEND = 0,
-  NORMAL = 1,
-  RANK = 2,
+  NORMAL,
+  RANK,
 }
 
 export enum GameSpeed {
