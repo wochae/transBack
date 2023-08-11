@@ -65,4 +65,6 @@ export class UsersController {
         return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
       }
     }
+
+    
 }

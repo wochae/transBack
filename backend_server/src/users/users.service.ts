@@ -16,7 +16,7 @@ import { UserObject } from '../entity/users.entity';
 import { CertificateObject } from '../entity/certificate.entity';
 import { FriendList } from '../entity/friendList.entity';
 import { DataSource } from 'typeorm';
-import { IntraInfoDto, UsersEditprofileDto } from './dto/user.dto';
+import { IntraInfoDto, UserEditImgDto, UsersEditprofileDto } from './dto/user.dto';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 
 
@@ -53,6 +53,18 @@ export class UsersService {
     } else { return new BadRequestException('변경을 실패 했습니다.'); } // 닉네임이 같다면
   }
 
+  async uploadUserImg(userEditImgDto : UserEditImgDto) {
+    const { userIdx, userNickName, imgUri } = userEditImgDto;
+    const user = await this.userObjectRepository.findOneBy({ userIdx });
+    if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
+    if (user.nickname === userNickName) { // 요청한 닉네임이 현재 닉네임과 같다면
+      user.imgUri = imgUri;
+      const changedUser = await this.userObjectRepository.save(user);
+      return changedUser;
+    } else {
+      return new BadRequestException('변경을 실패 했습니다.');
+    }
+  }
   async getTokenInfo(accessToken: string) {
     return await this.certificateRepository.findOneBy({ token: accessToken });
   }

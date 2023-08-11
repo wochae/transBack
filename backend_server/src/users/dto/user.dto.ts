@@ -15,6 +15,11 @@ export class UsersEditprofileDto {
   changedNickname: string;
 }
 
+export class UserEditImgDto {
+  userIdx: number;
+  userNickName : string;
+  imgUri: string;
+}
 export class IntraInfoDto {
   constructor(userIdx: number, intra: string, imgUri: string, accessToken: string, email: string,
   ) {
