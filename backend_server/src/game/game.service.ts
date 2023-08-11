@@ -25,6 +25,8 @@ import { GamePaddleMoveDto } from './dto/game.paddle.move.dto';
 import { GamePaddlePassDto } from './dto/game.paddle.pass.dto';
 import { GameScoreDto } from './dto/game.score.dto';
 import { GameScoreFinshDto } from './dto/game.score.finish.dto';
+import { GameBall } from './class/game.ball/game.ball';
+import { GameBallEventDto } from './dto/game.ball.event.dto';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -507,4 +509,6 @@ export class GameService {
       }
     }
   }
+
+  public async nextBallEvent(ballEvent: GameBallEventDto, server: Server) {}
 }

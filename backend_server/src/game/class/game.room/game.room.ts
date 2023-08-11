@@ -27,6 +27,7 @@ export class GameRoom {
     this.scoreData = [];
     this.ballList = [];
     this.ballList.push(new GameBall());
+    this.predictBallCourse(0, 0);
   }
 
   public async setUser(
@@ -89,10 +90,31 @@ export class GameRoom {
   }
 
   public predictBallCourse(degreeX: number, degreeY: number) {
-    if (degreeX == 0 && degreeY == 0) {
-      //TODO: 최초 경로 예측(있는자료로)
+    const p1x = this.ballList[0].initX;
+    const p1y = this.ballList[0].initY;
+    const earlyP2x = this.ballList[0].degreeX;
+    const earlyP2y = this.ballList[0].degreeY;
+    const p2x = p1x + earlyP2x;
+    const p2y = p1y + earlyP2y;
+    let p3x, p3y;
+
+    const a = (p2y - p1y) / (p2x - p1x);
+    const b = p2y - a * p2x;
+
+    if (p2x > 0 && p2y > 0) {
+      p3y = 300;
+      p3x = (p3y - b) / a;
+    } else if (p2x < 0 && p2y > 0) {
+      p3y = 300;
+      p3x = (p3y - b) / a;
+    } else if (p2x > 0 && p2y < 0) {
+      p3y = -300;
+      p3x = (p3y - b) / a;
+    } else {
+      p3y = -300;
+      p3x = (p3y - b) / a;
     }
-    //TODO: 볼경로 예측
-    //TODO: 볼 벽 부딪히면 다음 볼 경로 계산
+    this.ballList[0].nextX = p3x;
+    this.ballList[0].nextY = p3y;
   }
 }

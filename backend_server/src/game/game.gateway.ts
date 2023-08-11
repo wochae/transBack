@@ -23,6 +23,7 @@ import { GameLatencyGetDto } from './dto/game.latency.get.dto';
 import { GameCancleDto } from './dto/game.cancle.dto';
 import { GamePaddleMoveDto } from './dto/game.paddle.move.dto';
 import { GameScoreDto } from './dto/game.score.dto';
+import { GameBallEventDto } from './dto/game.ball.event.dto';
 
 @WebSocketGateway({
   namespace: 'game',
@@ -201,7 +202,10 @@ export class GameGateway
   //   }
 
   @SubscribeMessage('game_predict_ball')
-  async sendBallPrediction(): Promise<ReturnMsgDto> {
+  async sendBallPrediction(
+    @MessageBody() ballEvent: GameBallEventDto,
+  ): Promise<ReturnMsgDto> {
+    await this.gameService.nextBallEvent(ballEvent, this.server);
     // 공 부딪힌 시점 #1
     // 공 부딪힌 시점 #2
     //	// 공 예측 알고리즘으로 들어가기
