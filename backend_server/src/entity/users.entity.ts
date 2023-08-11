@@ -3,9 +3,9 @@ import {
   Entity,
   Column,
   OneToOne,
-  PrimaryGeneratedColumn,
   OneToMany,
   JoinColumn,
+  PrimaryColumn,
 } from 'typeorm';
 import { FriendList } from './friendList.entity';
 import { BlockList } from './blockList.entity';
@@ -16,7 +16,7 @@ import { GameChannel } from 'src/entity/gameChannel.entity';
 
 @Entity('users')
 export class UserObject extends BaseEntity {
-  @PrimaryGeneratedColumn({ type: 'int' })
+  @PrimaryColumn({ type: 'int' })
   userIdx: number;
 
   @Column({ type: 'varchar', unique: true })

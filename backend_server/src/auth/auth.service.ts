@@ -4,13 +4,14 @@ import * as dotenv from 'dotenv';
 import { JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import { Request } from 'express';
 import { Socket } from 'socket.io';
+import { jwtSecret } from 'src/login/login.service';
 
 dotenv.config({
   path:
     process.env.NODE_ENV === 'dev' ? '/dev.backend.env' : '/prod.backend.env',
 });
 
-const jwtSecret = process.env.JWT_SECRET;
+
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,7 @@ export class AuthService {
     const jwtString = token.split('Bearer ')[1];
     const payload = this.verify(jwtString);
     (request as any).jwtPayload = payload;
+    console.log("auth.service: validateRequest: true");
     return true;
   }
 

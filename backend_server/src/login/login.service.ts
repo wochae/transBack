@@ -8,17 +8,21 @@ import { CreateUsersDto } from 'src/users/dto/create-users.dto';
 
 import { UserObject } from 'src/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
+import * as config from 'config';
 
-dotenv.config({
-  path:
-    process.env.NODE_ENV === 'dev' ? '/dev.backend.env' : '/prod.backend.env',
-});
+const authConfig = config.get('auth');
 
-export const redirectUri = process.env.REDIRECT_URI;
-export const apiUid = process.env.CLIENT_ID;
-const jwtSecret = process.env.JWT_SECRET;
+
+export const apiUid = authConfig.clientid;
+export const apiSecret = authConfig.clientsecret;
+export const redirectUri = authConfig.redirecturi;
+export const frontcallback = authConfig.frontcallbackuri;
+export const callbackuri = authConfig.callbackuri;
+export const jwtSecret = "SecretKey"
+
+
 export const intraApiTokenUri = 'https://api.intra.42.fr/oauth/token';
-const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
+export const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 
 @Injectable()
 export class LoginService {
@@ -33,10 +37,10 @@ export class LoginService {
     this.logger.log(`getAccessToken : code= ${code}`);
     const body = {
       grant_type: 'authorization_code',
-      client_id: process.env.CLIENT_ID,
-      client_secret: process.env.CLIENT_SECRET,
+      client_id: apiUid,
+      client_secret: apiSecret,
       code: code,
-      redirect_uri: process.env.FRONT_CALLBACK_URI,
+      redirect_uri: frontcallback,
     };
     console.log( "body : ",body);
     try {
@@ -55,18 +59,6 @@ export class LoginService {
 
   async getIntraInfo(code: string): Promise<IntraInfoDto> {
 
-    // 여기에 헤더 bearder 가 존재하는지 확인하는 코드가 필요함
-    // /* https://api.intra.42.fr/oauth/token?grant_type=authorization_code&client_id=${client_id}&client_secret=${client_secret}&code=${code}&redirect_uri=${redirect_uri} */
-    // const params = new URLSearchParams();
-    // params.set('grant_type', 'authorization_code');
-    // params.set('client_id', process.env.CLIENT_ID);
-    // params.set('client_secret', process.env.CLIENT_SECRET);
-    // params.set('code', code);
-    // params.set('redirect_uri', process.env.FRONT_CALLBACK_URI);
-    
-    // const tokens = await lastValueFrom(
-    //   this.httpService.post(intraApiTokenUri, params)
-    // );
     console.log("getIntraInfo: code : ",code)
     const tokens = await this.getAccessToken(code);
     console.log("tokens",tokens);
@@ -124,18 +116,7 @@ export class LoginService {
     accessToken: string;
     email: string; 
     */
-  //  const dto = new CreateUsersDto(id, username, username, image );
-    // const intrainfoDto = new IntraInfoDto( userIdx, intra, imgUri, accessToken, email );
-    
-    const intraInfoDto: IntraInfoDto = {
-      userIdx: intraInfo.userIdx,
-      intra: intraInfo.intra,
-      imgUri: intraInfo.imgUri,
-      accessToken: intraInfo.accessToken,
-      email: intraInfo.email,
-    };
-    const { userIdx, intra, imgUri, accessToken, email } = intraInfoDto;
-    this.logger.log(`getUserInfo : ${userIdx}, ${intra}, ${imgUri}, ${accessToken}, ${email}`);
+    const { userIdx, intra, imgUri, accessToken, email } = intraInfo;
     let user: UserObject | CreateUsersDto = await this.usersService.findOneUser(userIdx);
     if (user === null || user === undefined) {
       /*
@@ -143,34 +124,11 @@ export class LoginService {
         check2Auth: boolean;
         email: string;
         userIdx: number; 
-      
        */
-      const savedtoken = await this.usersService.saveToken({
-        token: accessToken,
-        check2Auth: false,
-        email: email,
-        userIdx: userIdx,
-      });
-      const newUser: CreateUsersDto = {
-        userIdx : userIdx,
-        intra: intra,
-        nickname : intra,
-        imgUri: imgUri,
-        certificate: savedtoken,
-        email: email,
-      };
-      this.logger.log(`saveToken called : ${savedtoken}`);
-      // newUser.certificate = savedtoken;
-      user = await this.usersService.createUser(newUser);
-      this.logger.log('createUser called');
       
+      this.logger.log('createUser called with : ', user);
       
-    }
-
-    return {
-      id: userIdx,
-      email: email
-      // accessToken: accessToken,
-    };
+    } else {return { id: userIdx, email: email };}
+    
   }
 }

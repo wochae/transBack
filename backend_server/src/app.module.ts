@@ -13,13 +13,16 @@ import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot(typeORMConfig),
-    SharedModule,
-    ChatModule,
-    UsersModule,
-    GameModule,
     AuthModule,
+    UsersModule,
+    SharedModule,
     LoginModule,
+    
+    TypeOrmModule.forRoot(typeORMConfig),
+    GameModule,
+    ChatModule,
+    
+    
   ],
   controllers: [AppController],
   providers: [AppService, InMemoryUsers],

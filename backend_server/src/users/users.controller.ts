@@ -16,12 +16,12 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { UsersService } from './users.service';
-import { CreateUsersDto } from './dto/create-users.dto';
 import { AuthService,} from 'src/auth/auth.service';
 import { plainToClass } from 'class-transformer';
 import { UserObject } from '../entity/users.entity';
+import { AuthGuard } from 'src/auth/auth.guard';
 
-
+@UseGuards(AuthGuard)
 @Controller("users")
 export class UsersController {
   constructor(
@@ -30,11 +30,11 @@ export class UsersController {
     private logger: Logger = new Logger('UserController');
 
     @Get("profile")
-    async getUserProfile(@Headers('authorization') authHeader: any, @Req() req, @Res() res: Response) {
+    async getUserProfile(@Req() req, @Res() res: Response) {
       try {
-        authHeader = authHeader.startsWith('Bearer') ? authHeader.split(' ')[1] : req.headers.authorization;
-        const user = await this.usersService.getTokenInfo(authHeader);
-        const userProfile = await this.usersService.findOneUser(user.userIdx);
+        
+        const user = await this.usersService.findOneUser(req.headers.token);
+        const userProfile = plainToClass(UserObject, user);
         return res.status(HttpStatus.OK).json(userProfile);
       } catch (err) {
         this.logger.error(err);

@@ -1,3 +1,5 @@
+import { RecordResult, RecordType } from "src/game/enum/game.type.enum";
+
 export class UserDto {
   userIdx: number;
   displayName: string;
@@ -21,4 +23,40 @@ export class IntraInfoDto {
   imgUri: string;
   accessToken: string;
   email: string;
+}
+
+
+/* response body
+{
+	imgUrl : string,
+	rate : string,
+	rank : string,
+	email : string,
+	gameRecord[] {
+		record {
+			matchUserNickname : string,
+			matchUserIdx : number,
+			type : enum,
+			result : enum
+			score : string, // OO : OO 로 저장됨
+			matchDate : Date 
+		},
+		...
+	}
+}
+*/
+export class profileResDto {
+  imgUrl: string;
+  rate: string;
+  rank: string;
+  email: string;
+  gameRecord: GameRecordDto[];
+}
+export class GameRecordDto {
+  matchUserNickname : string;
+  matchUserIdx : number;
+  type : RecordType;
+  result : RecordResult;
+  score : string; // OO : OO 로 저장됨
+  matchDate : Date;
 }

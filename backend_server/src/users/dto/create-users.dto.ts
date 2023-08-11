@@ -8,12 +8,11 @@ import {
 import { CertificateObject } from 'src/entity/certificate.entity';
 
 export class CreateUsersDto {
-  constructor(userIdx: number, intra: string, nickname: string, imgUri: string, certificate: CertificateObject, email: string) {
+  constructor(userIdx: number, intra: string, nickname: string, imgUri: string, email: string) {
     this.userIdx = userIdx;
     this.intra = intra;
     this.nickname = nickname;
     this.imgUri = imgUri;
-    this.certificate = certificate;
     this.email = email;
   }
   @IsNotEmpty()
@@ -26,6 +25,5 @@ export class CreateUsersDto {
   intra: string;
   nickname: string;
   imgUri: string;
-  certificate: CertificateObject;
   email: string;
 }
