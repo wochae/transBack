@@ -375,23 +375,22 @@ export class ChatService {
 
   /******************* Funcions about Exit Room *******************/
 
-  goToLobby(channel: Channel, user: UserObject) {
+  goToLobby(client: Socket, channel: Channel, user: UserObject) {
     channel.removeMember(user);
-
     const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
     if (isOwner) {
       channel.setOwner = channel.getMember[0];
     }
-
-    const userSocket = this.chat.getSocketObject(user.userIdx);
-    userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
-    userSocket.socket.emit('chat_goto_lobby', '방을 나왔습니다.');
+    // const userSocket = this.chat.getSocketObject(user.userIdx);
+    // userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
+    // userSocket.socket.emit('chat_goto_lobby', '방을 나왔습니다.');
 
     const channelInfo = {
       owner: channel.getOwner?.nickname,
       channelIdx: channel.getChannelIdx,
       mode: channel.getMode,
     };
+    client.leave(`chat_room_${channel.getChannelIdx}`);
     return channelInfo;
   }
 

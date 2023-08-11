@@ -440,7 +440,6 @@ export class ChatGateway
     // broadcast 방식
     this.server.emit('BR_chat_room_password', channelInfo);
   }
-  
 
   // API: MAIN_CHAT_9
   @SubscribeMessage('chat_goto_lobby')
@@ -453,7 +452,7 @@ export class ChatGateway
     if (user === undefined) {
       return '요청자가 대화방에 없습니다.';
     }
-    const channelInfo = this.chatService.goToLobby(channel, user);
+    const channelInfo = this.chatService.goToLobby(client, channel, user);
     client.emit('chat_room_exit', channelInfo);
 
     // API: MAIN_CHAT_10
