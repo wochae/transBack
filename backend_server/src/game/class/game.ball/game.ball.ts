@@ -1,9 +1,4 @@
-export enum Vector {
-  UPRIGHT = 'upRight',
-  UPLEFT = 'upLeft',
-  DOWNRIGHT = 'downRight',
-  DWONLEFT = 'downLeft',
-}
+import { Vector } from 'src/game/enum/game.vector.enum';
 
 export class GameBall {
   initX: number;

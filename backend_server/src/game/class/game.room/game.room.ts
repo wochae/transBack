@@ -16,14 +16,18 @@ export class GameRoom {
     this.user2 = null;
     this.option = null;
     this.count = 0;
+    this.ballList = [];
     this.ballList.push(new GameBall());
   }
 
-  public setUser(userData: GamePlayer, option: GameOptions): boolean {
+  public async setUser(
+    userData: GamePlayer,
+    option: GameOptions,
+  ): Promise<boolean> {
     if (this.count == 0) this.user1 = userData;
     else this.user2 = userData;
     this.option = option;
     this.count++;
-    return this.count == 2 ? true : false;
+    return this.count === 2 ? true : false;
   }
 }

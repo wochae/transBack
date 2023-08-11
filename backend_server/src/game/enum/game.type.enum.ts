@@ -1,17 +1,17 @@
 export enum GameType {
-  FRIEND = 'friend',
-  NORMAL = 'normal match',
-  RANK = 'rank match',
+  FRIEND = 0,
+  NORMAL = 1,
+  RANK = 2,
 }
 
 export enum GameSpeed {
-  NORMAL = 'normal',
-  FAST = 'fast',
-  FATSTER = 'faster',
+  NORMAL = 0,
+  FAST,
+  FATSTER,
 }
 
 export enum MapNumber {
-  A = 'map 0',
-  B = 'map 1',
-  C = 'map 2',
+  A = 0,
+  B,
+  C,
 }
