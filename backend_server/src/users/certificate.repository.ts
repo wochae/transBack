@@ -7,20 +7,22 @@ import { CreateCertificateDto } from './dto/create-certification.dto';
 @CustomRepository(CertificateObject)
 export class CertificateRepository extends Repository<CertificateObject> {
   async insertCertificate(
-    tokenDto: CreateCertificateDto,
-    user: UserObject,
-    oauth2nd: boolean,
-  ): Promise<boolean> {
-    const { token } = tokenDto;
-
+    userIdx: number,
+    token: string,
+    email: string,
+    check2Auth: boolean,
+    
+  ){
     const certificate = this.create({
+      userIdx: userIdx,
       token: token,
-      userIdx: user.userIdx,
-      check2Auth: oauth2nd,
+      email: email,
+      check2Auth: check2Auth,
     });
+    console.log( 'cert Repo certificate : ', certificate)
 
-    await this.save(certificate);
-
-    return true;
+    const auth = await this.save(certificate);
+    console.log( 'cert Repo auth : ', auth)
+    return auth;
   }
 }

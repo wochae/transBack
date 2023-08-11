@@ -6,6 +6,7 @@ import { UserObjectRepository } from './users.repository';
 import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
 import { CertificateRepository } from './certificate.repository';
+import { UsersGateway } from './users.gateway';
 
 // @Global()
 @Module({
@@ -18,7 +19,7 @@ import { CertificateRepository } from './certificate.repository';
     ]),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, UsersGateway],
   exports: [UsersService, TypeOrmExModule],
 })
 export class UsersModule {}

@@ -11,7 +11,15 @@ export class FriendListRepository extends Repository<FriendList> {
     insertFriendDto: InsertFriendDto,
     user: UserObject,
     userList: UserObjectRepository,
-  ): Promise<string> {
+  ): Promise<FriendList[]> {
+
+    /*
+      export class FriendDto {
+        frindNickname : string;
+        friendIdx : number;
+        isOnline : boolean;
+      } 
+    */
     const { targetNickname } = insertFriendDto;
     const friend = await userList.findOne({
       where: { nickname: targetNickname },
@@ -28,7 +36,7 @@ export class FriendListRepository extends Repository<FriendList> {
 
     await this.save(target);
 
-    return friend.nickname;
+    return this.findBy({userIdx : user.userIdx});
   }
 
   async getFriendList(
