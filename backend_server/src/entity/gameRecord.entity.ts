@@ -17,7 +17,7 @@ export class GameRecord extends BaseEntity {
   @PrimaryGeneratedColumn()
   idx: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', unique: false })
   gameIdx: number;
 
   @Column({ type: 'int' })
@@ -41,12 +41,8 @@ export class GameRecord extends BaseEntity {
   @Column()
   matchDate: Date;
 
-  @ManyToOne(() => UserObject, (user) => user)
-  @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
-  user: UserObject;
-
   @ManyToOne(() => UserObject, (matchUser) => matchUser)
-  @JoinColumn([{ name: 'userIdx', referencedColumnName: 'userIdx' }])
+  @JoinColumn([{ name: 'matchUserIdx', referencedColumnName: 'userIdx' }])
   matchUser: UserObject;
 
   @OneToOne(() => GameChannel, (channel) => channel.record)

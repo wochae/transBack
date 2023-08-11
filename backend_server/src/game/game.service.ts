@@ -209,15 +209,10 @@ export class GameService {
     });
     target.setChannelObject(room);
     await this.gameChannelRepository.save(room);
-    const saved = this.gameChannelRepository.findOne({
-      where: {
-        userIdx1: room.userIdx1,
-        userIdx2: room.userIdx2,
-        status: RecordResult.DEFAULT,
-      },
-    });
+    const gameIdx = room.gameIdx;
+    console.log(gameIdx);
     const record1 = await this.gameRecordRepository.create({
-      gameIdx: (await saved).gameIdx,
+      gameIdx: gameIdx,
       userIdx: target.user1.userIdx,
       matchUserNickname: target.user2.userObject.nickname,
       matchUserIdx: target.user2.userIdx,
@@ -227,7 +222,7 @@ export class GameService {
       matchDate: new Date(),
     });
     const record2 = await this.gameRecordRepository.create({
-      gameIdx: (await saved).gameIdx,
+      gameIdx: gameIdx,
       userIdx: target.user2.userIdx,
       matchUserNickname: target.user1.userObject.nickname,
       matchUserIdx: target.user1.userIdx,

@@ -53,7 +53,6 @@ export class GameBall {
   public getPrediction(latency: number): any {
     const expectedTime = Date.now();
     const startTime = Date.now();
-    //TODO: Latency 계산 구조
     return {
       animationStartDate: startTime,
       ballNextPosX: this.nextX,

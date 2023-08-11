@@ -116,11 +116,11 @@ export class GameGateway
       this.logger.log(`룸 작성 성공`);
       this.gameService.getReadyFirst(roomNumber, this.server);
       this.gameService.getReadySecond(roomNumber, this.server);
-      //   try {
-      //     await this.gameService.setRoomToDB(roomNumber);
-      //   } catch (exception) {
-      //     console.log(exception);
-      //   }
+      try {
+        await this.gameService.setRoomToDB(roomNumber);
+      } catch (exception) {
+        console.log(exception);
+      }
       return new ReturnMsgDto(200, 'OK!');
     }
     // this.logger.log(`user: ${userIdx} - regi date : ${queueDate}`);
