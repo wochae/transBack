@@ -357,7 +357,7 @@ export class ChatService {
     if (!ban) {
       channel.setBan = user;
     } else {
-      channel.removeBan(user);
+      return 'Already Banned.';
     }
     const banInfo = {
       targetNickname: user.nickname,

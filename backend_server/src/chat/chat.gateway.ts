@@ -547,12 +547,10 @@ export class ChatGateway
     if (requester === undefined) {
       return '요청자가 대화방에 없습니다.';
     }
-    const clientIsOwner: boolean =
-      channel.getOwner.userIdx === requester.userIdx;
     const clientIsAdmin: boolean = channel.getAdmin.some(
       (admin) => admin.userIdx === requester.userIdx,
     );
-    if (!clientIsOwner && !clientIsAdmin) {
+    if (!clientIsAdmin) {
       return '요청자가 적절한 권한자가 아닙니다.';
     }
     // 대상 유효성 검사
@@ -563,12 +561,10 @@ export class ChatGateway
       return '대상이 채널에 없습니다.';
     }
     // 대상 권한 검사
-    // 대상 권한 검사
-    const targetIsOwner: boolean = channel.getOwner.userIdx === target.userIdx;
     const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
       return admin.userIdx === target.userIdx;
     });
-    if (targetIsOwner || targetIsAdmin) {
+    if (targetIsAdmin) {
       return '대상을 퇴장할 수 없습니다.';
     }
 

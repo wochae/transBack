@@ -103,7 +103,4 @@ export class Channel {
   removeMember(member: UserObject) {
     this.member.splice(this.member.indexOf(member), 1);
   }
-  removeBan(ban: UserObject) {
-    this.ban.splice(this.ban.indexOf(ban), 1);
-  }
 }
