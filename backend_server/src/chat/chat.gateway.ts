@@ -440,51 +440,7 @@ export class ChatGateway
     // broadcast 방식
     this.server.emit('BR_chat_room_password', channelInfo);
   }
-
-  // API: MAIN_CHAT_8
-  // TODO: kick 인데 exit 이 적절한가?
-  @SubscribeMessage('chat_room_exit')
-  exitRoom(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
-    const { channelIdx, userIdx } = JSON.parse(payload);
-    const requestId: number = parseInt(client.handshake.query.userId as string);
-    const channel = this.chat.getProtectedChannel(channelIdx);
-
-    // console.log(channel);
-    // owner 유효성 검사
-    const requester: UserObject = channel.getMember.find((member) => {
-      return member.userIdx === requestId;
-    });
-    if (requester === undefined) {
-      return '요청자가 대화방에 없습니다.';
-    }
-    const clientIsAdmin: boolean = channel.getAdmin.some(
-      (admin) => admin.userIdx === requester.userIdx,
-    );
-    if (clientIsAdmin) {
-      return '요청자가 적절한 권한자가 아닙니다.';
-    }
-    // 대상 유효성 검사
-    const target = channel.getMember.find((member) => {
-      return member.userIdx === userIdx;
-    });
-    if (target === undefined) {
-      return '대상이 채널에 없습니다.';
-    }
-    // 대상 권한 검사
-    const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
-      return admin.userIdx === target.userIdx;
-    });
-    if (targetIsAdmin) {
-      return '대상을 퇴장할 수 없습니다.';
-    }
-    // 대상이 나간걸 감지 후 emit
-    const channelInfo = this.chatService.exitRoom(channel, target);
-    this.server
-      .to(`chat_room_${channelIdx}`)
-      .emit('chat_room_exit', channelInfo);
-    // console.log(channel);
-    return;
-  }
+  
 
   // API: MAIN_CHAT_9
   @SubscribeMessage('chat_goto_lobby')
