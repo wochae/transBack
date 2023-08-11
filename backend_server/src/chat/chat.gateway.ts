@@ -263,6 +263,14 @@ export class ChatGateway
     const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
       userIdx,
     );
+    // 이미 참여한 채널인지 확인한다.
+    if (
+      this.chat
+        .getProtectedChannel(channelIdx)
+        .getMember.some((member) => member.userIdx === userIdx)
+    ) {
+      return '이미 참여한 채널입니다.';
+    }
     if (channel instanceof Channel) {
       if (channel.getPassword === '') {
         this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
