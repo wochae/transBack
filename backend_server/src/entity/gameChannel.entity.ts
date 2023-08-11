@@ -9,19 +9,7 @@ import {
 } from 'typeorm';
 import { GameRecord } from './gameRecord.entity';
 import { UserObject } from './users.entity';
-
-export enum RecordType {
-  NORMAL = 'NORMAL',
-  SPECIAL = 'SPECIAL',
-}
-
-export enum RecordResult {
-  DEFAULT = 'DEFAULT',
-  PLAYING = 'PLAYING',
-  WIN = 'WIN',
-  LOSE = 'LOSE',
-  SHUTDOWN = 'SHUTDOWN',
-}
+import { RecordType, RecordResult } from 'src/game/enum/game.type.enum';
 
 @Entity('game_channel')
 export class GameChannel extends BaseEntity {
@@ -54,6 +42,6 @@ export class GameChannel extends BaseEntity {
   @JoinColumn([{ name: 'userIdx2', referencedColumnName: 'userIdx' }])
   user2: UserObject;
 
-  @OneToOne(() => GameRecord, (record) => record.channel)
+  @OneToOne(() => GameRecord, (record) => record.gameIdx)
   record: GameRecord;
 }

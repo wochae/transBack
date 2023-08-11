@@ -22,6 +22,7 @@ import { GameRegiDto } from './dto/game.regi.dto';
 import { GameLatencyGetDto } from './dto/game.latency.get.dto';
 import { GameCancleDto } from './dto/game.cancle.dto';
 import { GamePaddleMoveDto } from './dto/game.paddle.move.dto';
+import { GameScoreDto } from './dto/game.score.dto';
 
 @WebSocketGateway({
   namespace: 'game',
@@ -218,7 +219,10 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_pause_score')
-  async pauseAndNextGame(): Promise<ReturnMsgDto> {
+  async pauseAndNextGame(
+    @MessageBody() scoreData: GameScoreDto,
+  ): Promise<ReturnMsgDto> {
+    this.gameService.handleScore(scoreData, this.server);
     // 점수를 탄 내용 전달 받음 #1
     // 점수를 탄 내용 전달 받음 #2
     //	// 두개의 정보 판단 후

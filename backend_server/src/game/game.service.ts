@@ -8,8 +8,14 @@ import { GameOnlineMember } from './class/game.online.member/game.online.member'
 import { UserObjectRepository } from 'src/users/users.repository';
 import { GamePlayer } from './class/game.player/game.player';
 import { GameOptions } from './class/game.options/game.options';
-import { GameType, GameSpeed, MapNumber } from './enum/game.type.enum';
-import { RecordType, RecordResult } from 'src/entity/gameChannel.entity';
+import {
+  GameType,
+  GameSpeed,
+  MapNumber,
+  RecordType,
+  RecordResult,
+  GameStatus,
+} from './enum/game.type.enum';
 import { GameSmallOptionDto } from './dto/game.options.small.dto';
 import { Server } from 'socket.io';
 import { GameServerTimeDto } from './dto/game.server.time.dto';
@@ -17,6 +23,8 @@ import { GameFinalReadyDto } from './dto/game.final.ready.dto';
 import { GameStartDto } from './dto/game.start.dto';
 import { GamePaddleMoveDto } from './dto/game.paddle.move.dto';
 import { GamePaddlePassDto } from './dto/game.paddle.pass.dto';
+import { GameScoreDto } from './dto/game.score.dto';
+import { GameScoreFinshDto } from './dto/game.score.finish.dto';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -189,19 +197,47 @@ export class GameService {
     const target = this.playRoomList[roomNumber];
     let type;
     if (target.option.getType() == GameType.RANK) {
-      type = RecordType.SPECIAL;
+      type = RecordType.RANK;
     } else type = RecordType.NORMAL;
 
     const room = this.gameChannelRepository.create({
       type: type,
+      gameIdx: Date.now(),
       userIdx1: target.user1.userIdx,
       userIdx2: target.user2.userIdx,
       score1: 0,
       score2: 0,
       status: RecordResult.DEFAULT,
     });
+    target.setChannelObject(room);
+    const record1 = this.gameRecordRepository.create({
+      gameIdx: room.gameIdx,
+      userIdx: target.user1.userIdx,
+      matchUserNickname: target.user2.userObject.nickname,
+      matchUserIdx: target.user2.userIdx,
+      type: type,
+      result: RecordResult.DEFAULT,
+      score: '',
+      matchDate: Date(),
+    });
+    const record2 = this.gameRecordRepository.create({
+      gameIdx: room.gameIdx,
+      userIdx: target.user2.userIdx,
+      matchUserNickname: target.user1.userObject.nickname,
+      matchUserIdx: target.user1.userIdx,
+      type: type,
+      result: RecordResult.DEFAULT,
+      score: '',
+      matchDate: record1.matchDate,
+    });
+
+    target.setChannelObject(room);
+    target.setRecordObject(record1);
+    target.setRecordObject(record2);
 
     await this.gameChannelRepository.save(room);
+    await this.gameRecordRepository.save(record1);
+    await this.gameRecordRepository.save(record2);
   }
 
   public getRoomByRoomNumber(roomNumber: number): GameRoom {
@@ -329,5 +365,145 @@ export class GameService {
     // 상대 전달하기
 
     return latency;
+  }
+
+  private checkScoreData(datas: GameScoreDto[]): boolean {
+    if (datas[0].userIdx !== datas[1].userIdx) return false;
+    if (datas[0].score !== datas[1].score) return false;
+    return true;
+  }
+
+  private getRoomIdxWithRoom(targetRoom: GameRoom): number {
+    let index = 0;
+
+    for (const room of this.playRoomList) {
+      if (
+        room.user1.userIdx == targetRoom.user1.userIdx &&
+        room.user2.userIdx == targetRoom.user2.userIdx
+      )
+        return index;
+      index++;
+    }
+
+    return -1;
+  }
+
+  private async winnerScoreHandling(
+    user1: GamePlayer,
+    user2: GamePlayer,
+    room: GameRoom,
+    server: Server,
+  ) {
+    await this.gameChannelRepository.save(
+      room.saveChannelObject(user1.score, user2.score, RecordResult.DONE),
+    );
+    const records = room.saveRecordObject(
+      user1.score,
+      user2.score,
+      RecordResult.WIN,
+      RecordResult.LOSE,
+    );
+
+    await this.gameRecordRepository.save(records[0]).then(async () => {
+      await this.gameRecordRepository.save(records[1]);
+    });
+
+    const finishData = new GameScoreFinshDto(
+      user1,
+      user2,
+      GameStatus.TERMINATION,
+    );
+    const targetIdx = this.getRoomIdxWithRoom(room);
+
+    await server.to(room.roomId).emit('game_get_score', finishData);
+    user1.socket.leave(room.roomId);
+    user2.socket.leave(room.roomId);
+    this.playRoomList.splice(targetIdx);
+    this.popOnlineUser(user1.userIdx);
+    this.popOnlineUser(user2.userIdx);
+    user1.socket.disconnect(true);
+    user2.socket.disconnect(true);
+  }
+
+  private async scoreHandling(
+    user1: GamePlayer,
+    user2: GamePlayer,
+    room: GameRoom,
+    server: Server,
+  ) {
+    await this.gameChannelRepository.save(
+      room.saveChannelObject(user1.score, user2.score, RecordResult.PLAYING),
+    );
+    const records = room.saveRecordObject(
+      user1.score,
+      user2.score,
+      RecordResult.PLAYING,
+      RecordResult.PLAYING,
+    );
+    await this.gameRecordRepository.save(records[0]).then(async () => {
+      await this.gameRecordRepository.save(records[1]);
+    });
+
+    const finishData = new GameScoreFinshDto(user1, user2, GameStatus.ONGOING);
+    await server.to(room.roomId).emit('game_get_score', finishData);
+    room.predictBallCourse(0, 0);
+    await this.startPong(room, server);
+  }
+
+  public async handleScore(scoreData: GameScoreDto, server: Server) {
+    const userIdx = scoreData.userIdx;
+    const targetRoom = this.getRoomByUserIdx(userIdx);
+    if (targetRoom.setScoreData(scoreData)) {
+      const datas = targetRoom.getScoreDataList();
+      if (this.checkScoreData(datas)) {
+        if (targetRoom.user1.userIdx === datas[0].userIdx) {
+          targetRoom.user1.score = datas[0].score;
+          if (datas[0].score === 5) {
+            await this.winnerScoreHandling(
+              targetRoom.user1,
+              targetRoom.user2,
+              targetRoom,
+              server,
+            );
+            // DB 저장
+            // API 13
+            // 게임 종료 및 방 정리
+          } else {
+            await this.scoreHandling(
+              targetRoom.user1,
+              targetRoom.user2,
+              targetRoom,
+              server,
+            );
+            // DB 저장
+            // 재시작 준비
+          }
+        } else {
+          targetRoom.user2.score = datas[0].score;
+          if (datas[0].score === 5) {
+            await this.winnerScoreHandling(
+              targetRoom.user2,
+              targetRoom.user1,
+              targetRoom,
+              server,
+            );
+            // API 13
+            // DB 저장
+            // 게임 종료 및 방 정리
+          } else {
+            await this.scoreHandling(
+              targetRoom.user2,
+              targetRoom.user1,
+              targetRoom,
+              server,
+            );
+            // DB 저장
+            // 재시작 준비
+          }
+        }
+      } else {
+        //TODO: error handling
+      }
+    }
   }
 }
