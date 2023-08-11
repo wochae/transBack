@@ -21,6 +21,7 @@ import { GameOptions } from './class/game.options/game.options';
 import { GameRegiDto } from './dto/game.regi.dto';
 import { GameLatencyGetDto } from './dto/game.latency.get.dto';
 import { GameCancleDto } from './dto/game.cancle.dto';
+import { GamePaddleMoveDto } from './dto/game.paddle.move.dto';
 
 @WebSocketGateway({
   namespace: 'game',
@@ -204,10 +205,16 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_move_paddle')
-  async sendPaddleToTarget(): Promise<ReturnMsgDto> {
+  async sendPaddleToTarget(
+    @MessageBody() paddleMove: GamePaddleMoveDto,
+  ): Promise<ReturnMsgDto> {
+    const selfLatency = await this.gameService.movePaddle(
+      paddleMove,
+      Date.now(),
+    );
     // 누군지 파악하기
     // 해당 룸 상대방 소켓으로 전달하기
-    return new ReturnMsgDto(200, 'OK!');
+    return new ReturnMsgDto(selfLatency, 'check your latency');
   }
 
   @SubscribeMessage('game_pause_score')
