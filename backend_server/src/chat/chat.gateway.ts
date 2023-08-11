@@ -68,6 +68,7 @@ export class ChatGateway
     // client.join('chat_room_10');
     // client.join('chat_room_11');
     // TODO: 이미 존재하는 member 인지 확인 필요
+
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
     this.logger.log(`[ 💬 Client ] ${user.nickname} Connected`);
@@ -263,14 +264,7 @@ export class ChatGateway
     const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
       userIdx,
     );
-    // 이미 참여한 채널인지 확인한다.
-    if (
-      this.chat
-        .getProtectedChannel(channelIdx)
-        .getMember.some((member) => member.userIdx === userIdx)
-    ) {
-      return '이미 참여한 채널입니다.';
-    }
+
     if (channel instanceof Channel) {
       if (channel.getPassword === '') {
         this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);

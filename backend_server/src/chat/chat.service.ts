@@ -294,7 +294,14 @@ export class ChatService {
 
   /******************* Save Message Funcions *******************/
   async enterPublicRoom(user: UserObject, channel: Channel) {
-    channel.setMember = user;
+    // 이미 참여한 채널인지 확인한다.
+    if (
+      !this.chat
+        .getProtectedChannel(channel.getChannelIdx)
+        .getMember.some((member) => member.userIdx === user.userIdx)
+    ) {
+      channel.setMember = user;
+    }
     const channelInfo = {
       member: channel.getMember.map((member) => {
         return {
@@ -309,7 +316,13 @@ export class ChatService {
   }
 
   async enterProtectedRoom(user: UserObject, channel: Channel) {
-    channel.setMember = user;
+    if (
+      !this.chat
+        .getProtectedChannel(channel.getChannelIdx)
+        .getMember.some((member) => member.userIdx === user.userIdx)
+    ) {
+      channel.setMember = user;
+    }
     const channelInfo = {
       member: channel.getMember.map((member) => {
         return {
