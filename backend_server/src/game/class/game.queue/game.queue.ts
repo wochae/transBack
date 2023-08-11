@@ -1,30 +1,33 @@
-import { GameOptionDto } from 'src/game/dto/gameOption.dto';
+import { GameOptionDto } from 'src/game/dto/game.option.dto';
 import { UserObject } from 'src/entity/users.entity';
+import { GamePlayer } from '../game.player/game.player';
+import { WaitPlayerTuple } from '../game.wait.queue/game.wait.queue';
 
 export class GameQueue {
-  dataList: UserObject[];
-  optionList: GameOptionDto[];
+  queueData: WaitPlayerTuple[];
   rearHeadNumber: number;
 
   constructor() {
-    this.dataList = [];
+    this.queueData = [];
   }
 
-  public Enqueue(player: UserObject, options: GameOptionDto) {}
-  public DequeueData(): UserObject {
-    const user = this.dataList[0];
-    this.dataList.splice(0);
-    return user;
+  public Enqueue(player: WaitPlayerTuple) {
+    this.queueData.push(player);
   }
-  public DequeueOptions(): GameOptionDto {
-    const options = this.optionList[0];
-    this.optionList.splice(0);
-    return options;
+
+  public DequeueList(): WaitPlayerTuple[] | null {
+    if (this.queueData.length < 2) return null;
+    const data: WaitPlayerTuple[] = [];
+    data.push(this.queueData[0]);
+    data.push(this.queueData[1]);
+    this.queueData.splice(0, 2);
+    return data;
   }
+
   public isEmpty(): boolean {
-    return this.dataList.length == 0 ? true : false;
+    return this.queueData.length == 0 ? true : false;
   }
   public size() {
-    return this.dataList.length;
+    return this.queueData.length;
   }
 }

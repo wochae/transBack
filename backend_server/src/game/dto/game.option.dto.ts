@@ -1,22 +1,5 @@
-import { IsEnum, IsIn, IsNumber } from 'class-validator';
-
-export enum GameType {
-  FRIEND = 'friend',
-  NORMAL = 'normal match',
-  RANK = 'rank match',
-}
-
-export enum GameSpeed {
-  NORMAL = 'normal',
-  FAST = 'fast',
-  FATSTER = 'faster',
-}
-
-export enum MapNumber {
-  A = 'map 0',
-  B = 'map 1',
-  C = 'map 2',
-}
+import { IsEnum, IsNumber } from 'class-validator';
+import { GameType, GameSpeed, MapNumber } from '../enum/game.type.enum';
 
 export class GameOptionDto {
   @IsEnum(GameType, {

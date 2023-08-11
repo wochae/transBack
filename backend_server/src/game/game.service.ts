@@ -1,4 +1,4 @@
-import { Injectable, Options } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { GameRecordRepository } from './game.record.repository';
 import { GameChannelRepository } from './game.channel.repository';
 import { GameRoom } from './class/game.room/game.room';
@@ -8,7 +8,10 @@ import { GameOnlineMember } from './class/game.online.member/game.online.member'
 import { UserObjectRepository } from 'src/users/users.repository';
 import { GamePlayer } from './class/game.player/game.player';
 import { GameOptions } from './class/game.options/game.options';
-import { GameModule } from './game.module';
+import { GameType, GameSpeed, MapNumber } from './enum/game.type.enum';
+import { RecordType, RecordResult } from 'src/entity/gameChannel.entity';
+import { GameSmallOptionDto } from './dto/game.options.small.dto';
+import { Socket, Server } from 'socket.io';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -19,6 +22,7 @@ export class GameService {
   private rankQueue: GameQueue;
   private waitingList: GameWaitQueue;
   private onlinePlayerList: GameOnlineMember[];
+  private cnt: number;
 
   constructor(
     private gameRecordRepository: GameRecordRepository,
@@ -30,6 +34,7 @@ export class GameService {
     this.waitingList = new GameWaitQueue();
     this.normalQueue = new GameQueue();
     this.rankQueue = new GameQueue();
+    this.cnt = 0;
   }
 
   private findPlayerFromList(userIdx: number): number {
@@ -52,12 +57,131 @@ export class GameService {
   }
 
   public makeRoomId(): string {
-    const ret = 'game_room';
-    return ret.concat(this.playRoomList.length.toString());
+    const target = 'game_room'.concat(this.cnt.toString());
+    this.cnt++;
+    return target;
   }
 
   public sizeWaitPlayer(): number {
     return this.waitingList.size();
+  }
+
+  public putInQueue(userIdx: number): number {
+    const playerTuple: WaitPlayerTuple = this.waitingList.popPlayer(userIdx);
+    switch (playerTuple[1].getType()) {
+      case GameType.FRIEND:
+        return 999;
+      case GameType.NORMAL:
+        this.normalQueue.Enqueue(playerTuple);
+        if (this.normalQueue.size() >= 2) {
+          const playerList: WaitPlayerTuple[] | null =
+            this.normalQueue.DequeueList();
+          if (playerList === null) return 0;
+          const roomId = this.makeRoomId();
+          const gameRoom = new GameRoom(roomId);
+          gameRoom.setUser(playerList[0][0], playerList[0][1]);
+          gameRoom.setUser(playerList[1][0], playerList[2][1]);
+          return this.playRoomList.push(gameRoom);
+        }
+        return 999;
+      case GameType.RANK:
+        this.rankQueue.Enqueue(playerTuple);
+        if (this.rankQueue.size() >= 2) {
+          const playerList: WaitPlayerTuple[] | null =
+            this.rankQueue.DequeueList();
+          if (playerList === null) return 0;
+          const roomId = this.makeRoomId();
+          const gameRoom = new GameRoom(roomId);
+          gameRoom.setUser(playerList[0][0], playerList[0][1]);
+          gameRoom.setUser(playerList[1][0], playerList[2][1]);
+          return this.playRoomList.push(gameRoom);
+        }
+        return 999;
+      default:
+        return 0;
+    }
+  }
+
+  public async setRoomToDB(roomNumber: number) {
+    const target = this.playRoomList[roomNumber];
+    let type;
+    if (target.option.getType() == GameType.RANK) {
+      type = RecordType.SPECIAL;
+    } else type = RecordType.NORMAL;
+
+    const room = this.gameChannelRepository.create({
+      type: type,
+      userIdx1: target.user1.userIdx,
+      userIdx2: target.user2.userIdx,
+      score1: 0,
+      score2: 0,
+      status: RecordResult.DEFAULT,
+    });
+
+    await this.gameChannelRepository.save(room);
+  }
+
+  public getRoomByRoomNumber(roomNumber: number): GameRoom {
+    return this.playRoomList[roomNumber];
+  }
+
+  public getRoomByUserIdx(userIdx: number): GameRoom | null {
+    for (const room of this.playRoomList) {
+      if (room.user1.userIdx === userIdx || room.user2.userIdx === userIdx)
+        return room;
+    }
+    return null;
+  }
+
+  public setLatency(userIdx: number, roomId: string, latency: number): boolean {
+    for (const room of this.playRoomList) {
+      if (room.roomId === roomId) {
+        if (room.user1.userIdx === userIdx) room.user1.setLatency(latency);
+        else room.user2.setLatency(latency);
+        if (room.user1.getLatency() != 0 && room.user2.getLatency() != 0)
+          return true;
+      }
+    }
+    return false;
+  }
+
+  public getReadyFirst(roomNumber: number, server: Server): boolean {
+    const target = this.getRoomByRoomNumber(roomNumber);
+    target.user1.socket.join(target.roomId);
+    target.user2.socket.join(target.roomId);
+    const finalOptions = new GameSmallOptionDto(
+      target.option.getType(),
+      target.option.getSpeed(),
+      target.option.getMapNumber(),
+    );
+    return server.to(target.roomId).emit('game_ready_first', finalOptions);
+  }
+
+  public getReadySecond(roomNumber: number, server: Server): boolean {
+    const target = this.getRoomByRoomNumber(roomNumber);
+    const serverDateTime = Date.now();
+    return server.to(target.roomId).emit('game_ready_first', serverDateTime);
+  }
+
+  public getReadyFinal(userIdx: number, server: Server): boolean {
+    const target = this.getRoomByUserIdx(userIdx);
+    const userNicknameFirst = target.user1.userObject.nickname;
+    const userIdxFirst = target.user1.userIdx;
+    const firstLatency = target.user1.getLatency();
+    const userNicknameSecond = target.user2.userObject.nickname;
+    const userIdxSecond = target.user2.userIdx;
+    const secondLatency = target.user2.getLatency();
+    return server
+      .to(target.roomId)
+      .emit(
+        'game_ready_final',
+        userNicknameFirst,
+        userIdxFirst,
+        firstLatency,
+        userNicknameSecond,
+        userIdxSecond,
+        secondLatency,
+      );
   }
 
   public setWaitPlayer(userIdx: number, options: GameOptions): number {
