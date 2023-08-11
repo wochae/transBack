@@ -16,7 +16,7 @@ import { UserObject } from '../entity/users.entity';
 import { CertificateObject } from '../entity/certificate.entity';
 import { FriendList } from '../entity/friendList.entity';
 import { DataSource } from 'typeorm';
-import { IntraInfoDto } from './dto/user.dto';
+import { IntraInfoDto, UsersEditprofileDto } from './dto/user.dto';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 
 
@@ -35,7 +35,22 @@ export class UsersService {
   private logger: Logger = new Logger('UsersService');
 
   async findOneUser(userIdx: number): Promise<UserObject> {
+    console.log("찾는다: " + userIdx );
     return this.userObjectRepository.findOneBy({ userIdx });
+  }
+
+  async updateOneUser(updateUsersDto: UsersEditprofileDto) {
+    const { userIdx, userNickname, changedNickname } = updateUsersDto;
+    const user = await this.userObjectRepository.findOneBy({ userIdx });
+    console.log("updateOneUser: user : ", user);
+    if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
+    if (user.nickname === userNickname) { // 요청한 닉네임이 현재 닉네임과 다르다면
+      const isNicknameExist = await this.userObjectRepository.findOneBy({ nickname: changedNickname });
+      if (!isNicknameExist) { // 닉네임이 존재하지 않는다면
+        user.nickname = changedNickname;
+        await this.userObjectRepository.save(user);
+      } else { return false; } // 닉네임이 이미 존재한다면
+    } else { return new BadRequestException('변경을 실패 했습니다.'); } // 닉네임이 같다면
   }
 
   async getTokenInfo(accessToken: string) {
