@@ -217,6 +217,7 @@ export class ChatService {
     channel.setRoomId = channelIdx;
     channel.setMember = user;
     channel.setOwner = user;
+    channel.setAdmin = user;
     if (password === '') {
       channel.setMode = Mode.PUBLIC;
     } else if (password !== '') {
@@ -481,5 +482,25 @@ export class ChatService {
       channelIdx: channel.channelIdx,
     };
     return messageInfo;
+  }
+
+  kickMember(channel: Channel, user: UserObject) {
+    channel.removeMember(user);
+    const userSocket = this.chat.getSocketObject(user.userIdx);
+    // FIXME: return 으로 해도 될듯
+    userSocket.socket.emit('chat_room_exit', '퇴장 당했습니다.');
+    userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
+
+    const channelInfo = {
+      targetNickname: user.nickname,
+      targetIdx: user.userIdx,
+      leftMember: channel.getMember.map((member) => {
+        return {
+          userNickname: member.nickname,
+          userIdx: member.userIdx,
+        };
+      }),
+    };
+    return channelInfo;
   }
 }
