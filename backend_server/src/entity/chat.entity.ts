@@ -9,6 +9,7 @@ import {
   OneToOne,
   ManyToOne,
   JoinColumn,
+  ManyToMany,
 } from 'typeorm';
 
 export enum Mode {
@@ -71,9 +72,7 @@ export class DirectMessage extends BaseEntity {
   @Column()
   msgDate: Date;
 
-  @ManyToOne(() => DMChannel, (targetMessage) => targetMessage.channelIdx)
+  @ManyToMany(() => DMChannel, (targetMessage) => targetMessage.channelIdx)
   @JoinColumn({ name: 'channelIdx', referencedColumnName: 'channelIdx' })
   targetMessage: DMChannel;
 }
-
-// @ManyToOne(() => TargetEntity, targetEntity => targetEntity.relatedColumn)
