@@ -1,15 +1,18 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserObjectRepository } from './users.repository';
 import { CreateUsersDto } from './dto/create-users.dto';
-import { BlockTargetDto } from './dto/block-target.dto';
+import { BlockInfoDto, BlockTargetDto } from './dto/block-target.dto';
 import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
 import { UserObject } from 'src/entity/users.entity';
 import { InsertFriendDto } from './dto/insert-friend.dto';
+import { BlockList } from 'src/entity/blockList.entity';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class UsersService {
   constructor(
+    private dataSource: DataSource,
     private userObjectRepository: UserObjectRepository,
     private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
@@ -35,15 +38,38 @@ export class UsersService {
     return (await user).intra;
   }
 
-  async blockTarget(
-    blockTarget: BlockTargetDto,
+  async setBlock(
+    targetNickname: string,
     user: UserObject,
-  ): Promise<string> {
-    return this.blockedListRepository.blockTarget(
-      blockTarget,
-      user,
-      this.userObjectRepository,
+  ): Promise<BlockInfoDto[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      await this.blockedListRepository.blockTarget(
+        targetNickname,
+        user,
+        this.userObjectRepository,
+      );
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      return;
+    } finally {
+      await queryRunner.release();
+    }
+    const blockList = await this.getBlockedList(user);
+    console.log(blockList);
+    const blockInfoList: BlockInfoDto[] = await Promise.all(
+      blockList.map(async (resPromise) => {
+        const res = await resPromise;
+        return {
+          userNickname: res.blockedNickname,
+          userIdx: res.blockedUserIdx,
+        };
+      }),
     );
+    return blockInfoList;
   }
 
   async addFriend(
@@ -81,11 +107,10 @@ export class UsersService {
     );
   }
 
-  async getBlockedList(intra: string) {
-    const user: UserObject = await this.userObjectRepository.findOne({
-      where: { intra: intra },
+  async getBlockedList(user: UserObject) {
+    return await this.blockedListRepository.find({
+      where: { userIdx: user.userIdx },
     });
-    return this.blockedListRepository.getBlockedList(user);
   }
 
   async setIsOnline(user: UserObject, isOnline: boolean) {

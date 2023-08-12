@@ -582,16 +582,18 @@ export class ChatGateway
 
   // API: MAIN_CHAT_15
   @SubscribeMessage('chat_block')
-  blockMember(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-    // request data
-    //  {
-    //     target_nickname
-    //  }
-    // response data
-    // {
-    //   blockList[]
-    // }
-    // client 방식
+  async blockMember(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: string,
+  ) {
+    // FIXME: targetnickname 과 targetIdx 가 서로 맞는지 비교
+    // FIXME: targetIdx 가 본인인지 확인
+    const { targetNickname, targetIdx } = JSON.parse(payload);
+    const requestId: number = parseInt(client.handshake.query.userId as string);
+
+    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(requestId);
+    const blockInfo = await this.usersService.setBlock(targetNickname, user);
+    client.emit('chat_block', blockInfo);
   }
 
   // API: MAIN_CHAT_16
