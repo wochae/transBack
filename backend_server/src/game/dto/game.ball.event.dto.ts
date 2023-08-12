@@ -1,6 +1,9 @@
-import { IsInt } from 'class-validator';
+import { IsInt, IsString } from 'class-validator';
 
 export class GameBallEventDto {
+  @IsString()
+  roomId?: string;
+
   @IsInt()
   ballPosX: number;
   @IsInt()
@@ -10,5 +13,5 @@ export class GameBallEventDto {
   @IsInt()
   ballDegreeY: number;
   @IsInt()
-  ballHitDate: number;
+  ballHitDate?: number;
 }

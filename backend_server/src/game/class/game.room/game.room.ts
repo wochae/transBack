@@ -5,6 +5,7 @@ import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { RecordResult, RecordType } from 'src/game/enum/game.type.enum';
 import { GameScoreDto } from 'src/game/dto/game.score.dto';
+import { GameBallEventDto } from 'src/game/dto/game.ball.event.dto';
 
 export class GameRoom {
   public roomId: string;
@@ -16,6 +17,7 @@ export class GameRoom {
   private gameChannelObject: GameChannel;
   private gameRecordObject: GameRecord[];
   private scoreData: GameScoreDto[];
+  private eventData: GameBallEventDto[];
 
   constructor(roomId: string) {
     this.roomId = roomId;
@@ -26,8 +28,8 @@ export class GameRoom {
     this.gameRecordObject = [];
     this.scoreData = [];
     this.ballList = [];
-    this.ballList.push(new GameBall());
-    this.predictBallCourse(0, 0);
+    this.eventData = [];
+    this.ballList.push(new GameBall(null));
   }
 
   public async setUser(
@@ -81,40 +83,48 @@ export class GameRoom {
     else return true;
   }
 
+  public setEventData(data: GameBallEventDto): boolean {
+    this.eventData.push(data);
+    if (this.eventData.length == 1) return false;
+    else return true;
+  }
+
   public getScoreDataList(): GameScoreDto[] {
     return this.scoreData;
+  }
+
+  public getEventDataList(): GameBallEventDto[] {
+    return this.eventData;
   }
 
   public getChannelObject(): GameChannel {
     return this.gameChannelObject;
   }
 
-  public predictBallCourse(degreeX: number, degreeY: number) {
-    const p1x = this.ballList[0].initX;
-    const p1y = this.ballList[0].initY;
-    const earlyP2x = this.ballList[0].degreeX;
-    const earlyP2y = this.ballList[0].degreeY;
-    const p2x = p1x + earlyP2x;
-    const p2y = p1y + earlyP2y;
-    let p3x, p3y;
+  public deleteScoreData() {
+    this.scoreData.splice(0, 2);
+    this.scoreData = [];
+  }
 
-    const a = (p2y - p1y) / (p2x - p1x);
-    const b = p2y - a * p2x;
+  public deleteEventData() {
+    this.eventData.splice(0, 2);
+    this.eventData = [];
+  }
 
-    if (p2x > 0 && p2y > 0) {
-      p3y = 300;
-      p3x = (p3y - b) / a;
-    } else if (p2x < 0 && p2y > 0) {
-      p3y = 300;
-      p3x = (p3y - b) / a;
-    } else if (p2x > 0 && p2y < 0) {
-      p3y = -300;
-      p3x = (p3y - b) / a;
-    } else {
-      p3y = -300;
-      p3x = (p3y - b) / a;
+  public deleteBallEvent() {
+    this.ballList.splice(0, 2);
+    this.ballList = [];
+  }
+
+  public predictBallCourse() {
+    if (this.ballList.length == 2) {
+      this.ballList.splice(1);
     }
-    this.ballList[0].nextX = p3x;
-    this.ballList[0].nextY = p3y;
+    this.ballList[0].setBall({
+      ballPosX: 0,
+      ballPosY: 0,
+      ballDegreeX: 0,
+      ballDegreeY: 0,
+    });
   }
 }

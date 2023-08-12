@@ -255,6 +255,15 @@ export class GameService {
     return null;
   }
 
+  public getRoomByRoomId(roomId: string): GameRoom | null {
+    for (const room of this.playRoomList) {
+      if (room.roomId == roomId) {
+        return room;
+      }
+    }
+    return null;
+  }
+
   public setLatency(userIdx: number, roomId: string, latency: number): boolean {
     for (const room of this.playRoomList) {
       if (room.roomId === roomId) {
@@ -299,13 +308,11 @@ export class GameService {
     if (targetRoom.user1.getLatency() > targetRoom.user2.getLatency())
       latency = targetRoom.user1.getLatency();
     else latency = targetRoom.user2.getLatency();
-    // latency += 5000;
-    const ball = targetRoom.ballList[0];
     const ballExpectedEventDate = new Date();
     const startBall = new GameStartDto(
       Date.now() + latency,
       ballExpectedEventDate.getTime(),
-      ball,
+      targetRoom.ballList[0],
     );
     return server.to(targetRoom.roomId).emit('game_start', startBall);
   }
@@ -449,7 +456,7 @@ export class GameService {
 
     const finishData = new GameScoreFinshDto(user1, user2, GameStatus.ONGOING);
     await server.to(room.roomId).emit('game_get_score', finishData);
-    room.predictBallCourse(0, 0);
+    room.predictBallCourse();
     await this.startPong(room, server);
   }
 
@@ -504,11 +511,46 @@ export class GameService {
             // 재시작 준비
           }
         }
+        targetRoom.deleteScoreData();
       } else {
         //TODO: error handling
       }
     }
   }
 
-  public async nextBallEvent(ballEvent: GameBallEventDto, server: Server) {}
+  public async nextBallEvent(ballEvent: GameBallEventDto, server: Server) {
+    const targetRoom = this.getRoomByRoomId(ballEvent.roomId);
+    if (targetRoom === null) {
+      // TODO :  error handling
+    }
+    if (targetRoom.setEventData(ballEvent)) {
+      const eventData = targetRoom.getEventDataList();
+      if (
+        eventData[0].ballPosX != eventData[1].ballPosX ||
+        eventData[0].ballDegreeX != eventData[1].ballDegreeX
+      ) {
+        //TODO : event Error handling
+      }
+      targetRoom.deleteBallEvent();
+      targetRoom.ballList.push(new GameBall(ballEvent));
+      let latency = 0;
+      if (targetRoom.user1.getLatency() > targetRoom.user2.getLatency())
+        latency = targetRoom.user1.getLatency();
+      else latency = targetRoom.user2.getLatency();
+      targetRoom.deleteEventData();
+      server
+        .to(targetRoom.roomId)
+        .emit(
+          'game_predict_ball',
+          new GameStartDto(
+            Date.now() + latency,
+            Date.now(),
+            targetRoom.ballList[0],
+          ),
+        );
+    }
+    // 1. 공의 초기 값 입력, 각도 입력
+    // 2. 공의 다음 경로 예측
+    // 3.
+  }
 }

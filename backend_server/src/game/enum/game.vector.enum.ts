@@ -1,6 +1,6 @@
 export enum Vector {
-  UPRIGHT = 'upRight',
-  UPLEFT = 'upLeft',
-  DOWNRIGHT = 'downRight',
-  DWONLEFT = 'downLeft',
+  UPRIGHT = 1,
+  UPLEFT,
+  DOWNRIGHT,
+  DWONLEFT,
 }
