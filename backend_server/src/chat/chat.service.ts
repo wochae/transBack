@@ -351,6 +351,8 @@ export class ChatService {
   }
 
   setBan(channel: Channel, user: UserObject) {
+    this.kickMember(channel, user);
+    // 퇴장시켜야함
     const ban = channel.getBan.some(
       (member) => member.userIdx === user.userIdx,
     );
@@ -359,6 +361,7 @@ export class ChatService {
     } else {
       return 'Already Banned.';
     }
+    console.log('ban', channel.getBan);
     const banInfo = {
       targetNickname: user.nickname,
       targetIdx: user.userIdx,
@@ -370,6 +373,26 @@ export class ChatService {
       }),
     };
     return banInfo;
+  }
+
+  kickMember(channel: Channel, user: UserObject) {
+    channel.removeMember(user);
+    const userSocket = this.chat.getSocketObject(user.userIdx);
+    // FIXME: return 으로 해도 될듯
+    userSocket.socket.emit('chat_room_exit', '퇴장 당했습니다.');
+    userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
+
+    const channelInfo = {
+      targetNickname: user.nickname,
+      targetIdx: user.userIdx,
+      leftMember: channel.getMember.map((member) => {
+        return {
+          userNickname: member.nickname,
+          userIdx: member.userIdx,
+        };
+      }),
+    };
+    return channelInfo;
   }
 
   changePassword(channel: Channel, password: string) {
@@ -490,25 +513,5 @@ export class ChatService {
       imgUrl: targetUser.imgUri,
     };
     return messageInfo;
-  }
-
-  kickMember(channel: Channel, user: UserObject) {
-    channel.removeMember(user);
-    const userSocket = this.chat.getSocketObject(user.userIdx);
-    // FIXME: return 으로 해도 될듯
-    userSocket.socket.emit('chat_room_exit', '퇴장 당했습니다.');
-    userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
-
-    const channelInfo = {
-      targetNickname: user.nickname,
-      targetIdx: user.userIdx,
-      leftMember: channel.getMember.map((member) => {
-        return {
-          userNickname: member.nickname,
-          userIdx: member.userIdx,
-        };
-      }),
-    };
-    return channelInfo;
   }
 }

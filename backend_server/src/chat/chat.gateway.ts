@@ -264,7 +264,12 @@ export class ChatGateway
     const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
       userIdx,
     );
-
+    // ban 체크
+    console.log('banList: ', channel.getBan);
+    if (channel.getBan.some((member) => member.userIdx === userIdx)) {
+      this.logger.log(`[ 💬 ] ${user.nickname} 은 차단된 유저입니다.`);
+      return `${user.nickname} 은 차단된 유저입니다.`;
+    }
     if (channel instanceof Channel) {
       if (channel.getPassword === '') {
         this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
@@ -282,7 +287,7 @@ export class ChatGateway
     client.join(`chat_room_${channel.channelIdx}`);
     client.emit('chat_enter', channel);
 
-    // API: MAIN_CHAT_2
+    // API: MAIN_CHAT_3
     const member = channel.member.find(
       (member) => member.nickname === user.nickname,
     );
@@ -539,7 +544,7 @@ export class ChatGateway
     const requestId: number = parseInt(client.handshake.query.userId as string);
     const channel = this.chat.getProtectedChannel(channelIdx);
 
-    // console.log(channel);
+    console.log(channel);
     // owner 유효성 검사
     const requester: UserObject = channel.getMember.find((member) => {
       return member.userIdx === requestId;
@@ -570,8 +575,9 @@ export class ChatGateway
 
     // 대상 ban 처리 및 emit
     const banInfo = this.chatService.setBan(channel, target);
+    console.log('after ban : ', channel);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_room_admin', banInfo);
-    return '권한 부여 완료';
+    return 'ban 처리 되었습니다.';
   }
 
   // API: MAIN_CHAT_15
