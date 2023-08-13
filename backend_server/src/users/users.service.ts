@@ -206,11 +206,14 @@ export class UsersService {
           // 존재하는 유저가 있지만 토큰이 다른 경우 -> 토큰 업데이트
           this.logger.log('user is exist but token is different');
 
+          this.logger.log(` 유저가 존재하지 않은 경우 certi insert start`);
           userCerti.token = accessToken;
           await this.certificateRepository.update(userCerti.userIdx, userCerti);
           return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri);
-        }
-        this.logger.log(` 유저가 존재하지 않은 경우 certi insert start`);
+        } // 존재하는 유저가 있고 토큰이 같은 경우 -> 그대로
+        return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri);
+
+
         /*
             token: string;
             check2Auth: boolean;

@@ -18,8 +18,7 @@ export const apiSecret = authConfig.clientsecret;
 export const redirectUri = authConfig.redirecturi;
 export const frontcallback = authConfig.frontcallbackuri;
 export const callbackuri = authConfig.callbackuri;
-export const jwtSecret = "SecretKey"
-
+export const jwtSecret = authConfig.secret;
 
 export const intraApiTokenUri = 'https://api.intra.42.fr/oauth/token';
 export const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';

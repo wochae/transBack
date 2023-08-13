@@ -62,8 +62,8 @@ export class LoginController {
     this.logger.log(`codeCallback token : ${intraInfo.accessToken}`);
 
     // 이걸로 아래의 것들을 가져온다
-    let userDto = await this.usersService.validateUser(intraInfo.accessToken);
-    console.log(`codeCallback userDto : `,userDto);
+    let userSimpleDto = await this.usersService.validateUser(intraInfo.accessToken);
+    console.log(`codeCallback userSimpleDto : `,userSimpleDto);
     // IntraInfoDto : { userIdx, imgUri }
     // userDto : { userIdx, intra, imgUri, accessToken, email }
 
@@ -83,9 +83,9 @@ export class LoginController {
     const userData : Data = { 
       token:(await jwt).toString(), 
       user: { 
-        userIdx: userDto.userIdx, 
+        userIdx: userSimpleDto.userIdx, 
         intra: intraInfo.intra, 
-        imgUri: userDto.imgUri, 
+        imgUri: userSimpleDto.imgUri, 
         email: intraInfo.email
       }
     };
