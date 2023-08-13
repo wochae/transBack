@@ -56,9 +56,11 @@ export class IntraInfoDto {
 }
 */
 export class ProfileResDto {
+  nickname: string;
   imgUrl: string;
-  rate: string;
-  rank: string;
+  win: number;
+  lose: number; 
+  rank: number;
   email: string;
 }
 export class GameRecordDto {

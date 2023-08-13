@@ -32,15 +32,22 @@ export class UsersController {
     ) {}
     private logger: Logger = new Logger('UserController');
     @Get("profile")
-    async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) {
+    async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) { // body 를 안 쓰긴 함.
       const {id : userIdx, email } = req.jwtPayload;
       try {
         const user = await this.usersService.findOneUser(userIdx);
-        const userProfile = plainToClass(ProfileResDto, user);
-        userProfile.email = email;
+        const userProfile: ProfileResDto = 
+        { 
+          nickname: user.nickname, 
+          imgUrl : user.imgUri, 
+          win: user.win, 
+          lose: user.lose, 
+          rank: user.rankpoint, 
+          email: email 
+        };
         return res.status(HttpStatus.OK).json(userProfile);
-      } catch (err) {
-        this.logger.error(err);
+        
+      } catch (err) { this.logger.error(err);
         return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
       }
     }
