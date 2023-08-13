@@ -307,6 +307,7 @@ export class ChatService {
     const channelInfo = {
       member: channel.getMember.map((member) => {
         return {
+          userIdx: member.userIdx,
           nickname: member.nickname,
           imgUri: member.imgUri,
           permission: Permission.MEMBER,
@@ -328,6 +329,7 @@ export class ChatService {
     const channelInfo = {
       member: channel.getMember.map((member) => {
         return {
+          userIdx: member.userIdx,
           nickname: member.nickname,
           imgUri: member.imgUri,
           permission: Permission.MEMBER,
