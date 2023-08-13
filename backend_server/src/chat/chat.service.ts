@@ -519,12 +519,13 @@ export class ChatService {
 
   // MAIN_CHAT_INFINITY
   async getChatMessagesByInfinity(channelIdx: number, msgDate: Date) {
+    // 일단 channelIdx 로 채널을 꾸려야한다.
     const messages = await this.directMessagesRepository.find({
       where: [{ channelIdx: channelIdx, msgDate: LessThanOrEqual(msgDate) }],
       order: {
         msgDate: 'DESC',
       },
-      take: 20,
+      take: 5,
     });
 
     const messageInfo = await Promise.all(

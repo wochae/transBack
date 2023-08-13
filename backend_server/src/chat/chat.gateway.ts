@@ -56,15 +56,6 @@ export class ChatGateway
       client.disconnect();
       return;
     }
-    // TODO: socketObject의 user nickname 을 통해 존재하는 member 인지 확인 필요
-    const checkMember = this.chat.getSocketList.some((socketObject) => {
-      return socketObject.user.userIdx === userId;
-    });
-    if (checkMember) {
-      console.log(`[ ❗️ Client ] ${user.nickname} is already connected`);
-      client.disconnect();
-      return;
-    }
     // TODO: 본인이 속한 DM 채널 idx 찾아서 roomId 에 join 하기
     const dmChannelList: Promise<DMChannel[]> =
       this.chatService.findPrivateChannelByUserIdx(user.userIdx);
