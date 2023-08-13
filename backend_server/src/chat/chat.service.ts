@@ -414,7 +414,7 @@ export class ChatService {
 
   changePassword(channel: Channel, password: string) {
     channel.setPassword = password;
-    if (password === '') {
+    if (password === '' || !password) {
       channel.setMode = Mode.PUBLIC;
     } else {
       channel.setMode = Mode.PROTECTED;
