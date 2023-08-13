@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { FriendList } from '../../entity/friendList.entity';
 
-export class InsertFriendReqDto {
+export class FollowFriendDto {
   @IsNotEmpty()
   @IsString()
   @MaxLength(100)
@@ -17,17 +17,7 @@ export class InsertFriendReqDto {
   targetIdx : number;
 }
 
-export class InsertFriendDto {
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(100)
-  @MinLength(1)
-  @Matches(/^[a-zA-Z0-9]*$/, { message: 'intra is unique' })
-  targetNickname: string;
-}
-
-
-export class InsertFriendResDto {
+export class FriendResDto {
   friendList: FriendList[]; // 이거 하나의 객체인데 왜 이름이 리스트 ㅋㅋ
 }
 

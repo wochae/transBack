@@ -5,7 +5,7 @@ import { BlockTargetDto } from './dto/block-target.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
-import { InsertFriendDto } from './dto/insert-friend.dto';
+import { FollowFriendDto, FriendResDto, } from './dto/friend.dto';
 import axios from 'axios';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { response } from 'express';
@@ -104,7 +104,7 @@ export class UsersService {
   }
 
   async addFriend(
-    insertFriendDto: InsertFriendDto,
+    insertFriendDto: FollowFriendDto,
     user: UserObject,
   ): Promise<FriendList[]> {
     return this.friendListRepository.insertFriend(
