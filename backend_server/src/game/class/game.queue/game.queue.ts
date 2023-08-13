@@ -1,11 +1,7 @@
-import { GameOptionDto } from 'src/game/dto/game.option.dto';
-import { UserObject } from 'src/entity/users.entity';
-import { GamePlayer } from '../game.player/game.player';
 import { WaitPlayerTuple } from '../game.wait.queue/game.wait.queue';
 
 export class GameQueue {
   queueData: WaitPlayerTuple[];
-  rearHeadNumber: number;
 
   constructor() {
     this.queueData = [];
