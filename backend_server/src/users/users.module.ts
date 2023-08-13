@@ -6,6 +6,7 @@ import { UserObjectRepository } from './users.repository';
 import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
 import { CertificateRepository } from './certificate.repository';
+import { DMChannelRepository } from 'src/chat/DM.repository';
 
 // @Global()
 @Module({
@@ -15,6 +16,7 @@ import { CertificateRepository } from './certificate.repository';
       BlockListRepository,
       FriendListRepository,
       CertificateRepository,
+      DMChannelRepository,
     ]),
   ],
   controllers: [UsersController],

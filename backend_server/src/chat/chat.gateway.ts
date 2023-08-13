@@ -293,23 +293,33 @@ export class ChatGateway
     client.emit('chat_enter', channel);
 
     // API: MAIN_CHAT_3
-    const member = channel.member.find(
-      (member) => member.nickname === user.nickname,
-    );
-    if (member) {
-      const memberInfo = {
+    const member = channel.member.map((member) => {
+      return {
         nickname: member.nickname,
         imgUri: member.imgUri,
         permission: member.permission,
       };
-      this.server
-        .to(`chat_room_${channel.channelIdx}`)
-        .emit('chat_enter_noti', memberInfo);
-    } else {
-      // FIXME: 예외처리 필요
-      console.log('Member not found');
-    }
-    console.log(channel);
+    });
+    this.server
+      .to(`chat_room_${channel.channelIdx}`)
+      .emit('chat_enter_noti', member);
+    // const member = channel.member.find(
+    //   (member) => member.nickname === user.nickname,
+    // );
+    // if (member) {
+    //   const memberInfo = {
+    //     nickname: member.nickname,
+    //     imgUri: member.imgUri,
+    //     permission: member.permission,
+    //   };
+    //   this.server
+    //     .to(`chat_room_${channel.channelIdx}`)
+    //     .emit('chat_enter_noti', memberInfo);
+    // } else {
+    //   // FIXME: 예외처리 필요
+    //   console.log('Member not found');
+    // }
+    // console.log(channel);
     return;
   }
 
