@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { apiUid, LoginService, redirectUri } from './login.service';
+import { LoginService } from './login.service';
 import { IntraInfoDto } from 'src/users/dto/user.dto';
 import { UsersService } from 'src/users/users.service';
 import { plainToClass } from 'class-transformer';

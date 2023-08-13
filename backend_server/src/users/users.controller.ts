@@ -22,6 +22,7 @@ import { AuthService,} from 'src/auth/auth.service';
 import { plainToClass } from 'class-transformer';
 import { UserObject } from '../entity/users.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { UserEditprofileDto } from './dto/user.dto';
 
 @UseGuards(AuthGuard)
 @Controller("users")
@@ -32,7 +33,7 @@ export class UsersController {
     private logger: Logger = new Logger('UserController');
     @Get("profile")
     async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) {
-      const {id : userIdx, email} = req.jwtPayload;
+      const {id : userIdx} = req.jwtPayload;
       try {
         const user = await this.usersService.findOneUser(userIdx);
         const userProfile = plainToClass(UserObject, user);
@@ -44,14 +45,13 @@ export class UsersController {
     }
 
     @Put('profile/:userNickname')
-    async updateUserProfile(@Param() userNickname : string, @Res() res: Response, @Body() body: any) {
+    async updateUserProfile(@Req() req, @Res() res: Response, @Body() body: any) {
       try {
         console.log(body);
-        console.log(userNickname);
-        const user = await this.usersService.findOneUser(body.userIdx);
-        console.log("user.nickname, userNickname ",user.nickname , userNickname.valueOf());
+        const user = await this.usersService.findOneUser(req.jwtPayload.id);
+        const changedUser = plainToClass(UserEditprofileDto, user);
         // if (body.nickname === userNickname) { // 해당 유저가 맞고, 닉네임이 같다면
-          if (await this.usersService.updateOneUser(body))
+          if (await this.usersService.updateUserNick(changedUser))
             return res.status(HttpStatus.OK).json({ message: '유저 정보가 업데이트 되었습니다.' });
           else
             return res.status(HttpStatus.OK).json({ message: '이미 존재하는 유저 닉네임입니다.' });

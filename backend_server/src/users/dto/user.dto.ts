@@ -9,16 +9,15 @@ export class UserDto {
   mfaNeed: boolean;
 };
 
-export class UsersEditprofileDto {
-  userIdx: number;
+export class UserEditprofileDto {
+  userIdx : number;
   userNickname: string;
-  changedNickname: string;
+  imgUri: string;
 }
 
 export class UserEditImgDto {
   userIdx: number;
   userNickName : string;
-  imgUri: string;
 }
 export class IntraInfoDto {
   constructor(userIdx: number, intra: string, imgUri: string, accessToken: string, email: string,
