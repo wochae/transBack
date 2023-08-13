@@ -310,7 +310,7 @@ export class ChatGateway
     this.server
       .to(`chat_room_${channel.channelIdx}`)
       .emit('chat_enter_noti', memberInfo);
-    return;
+    return 200;
   }
 
   // API: MAIN_CHAT_4
