@@ -19,6 +19,19 @@ export class GameBall {
       this.nextY = 0;
       this.degreeX = this.getRandomInt(-2, 2);
       this.degreeY = this.getRandomInt(-2, 2);
+      if (this.degreeX == 2 && this.degreeY == 2) {
+        this.degreeX = 1;
+        this.degreeY = 1;
+      } else if (this.degreeX == 2 && this.degreeY == -2) {
+        this.degreeX = 1;
+        this.degreeY = -1;
+      } else if (this.degreeX == -2 && this.degreeY == 2) {
+        this.degreeX = -1;
+        this.degreeY = 1;
+      } else {
+        this.degreeX = -1;
+        this.degreeY = -1;
+      }
       this.vector = this.checkVector();
       this.operateNextPos();
     } else {

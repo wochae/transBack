@@ -101,6 +101,10 @@ export class GameRoom {
     return this.gameChannelObject;
   }
 
+  public getRecrodObject(): GameRecord[] {
+    return this.gameRecordObject;
+  }
+
   public deleteScoreData() {
     this.scoreData.splice(0, 2);
     this.scoreData = [];
@@ -118,13 +122,10 @@ export class GameRoom {
 
   public predictBallCourse() {
     if (this.ballList.length == 2) {
+      this.ballList.splice(0, 2);
+    } else {
       this.ballList.splice(1);
     }
-    this.ballList[0].setBall({
-      ballPosX: 0,
-      ballPosY: 0,
-      ballDegreeX: 0,
-      ballDegreeY: 0,
-    });
+    this.ballList.push(new GameBall(null));
   }
 }

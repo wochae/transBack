@@ -27,6 +27,8 @@ import { GameScoreDto } from './dto/game.score.dto';
 import { GameScoreFinshDto } from './dto/game.score.finish.dto';
 import { GameBall } from './class/game.ball/game.ball';
 import { GameBallEventDto } from './dto/game.ball.event.dto';
+import { GameRecord } from 'src/entity/gameRecord.entity';
+import { GameChannel } from 'src/entity/gameChannel.entity';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -154,7 +156,7 @@ export class GameService {
   }
 
   /**
-   *
+   * 지정한 큐에 집어 넣음으로써 매칭 될 수 있도록 만들어준다. 2명이 큐에 들어가면 매칭이 성사된다.
    * @param userIdx
    * @returns
    */
@@ -223,6 +225,10 @@ export class GameService {
     return null;
   }
 
+  /**
+   * 게임룸의 내용을 DB에 저장한다.
+   * @param roomNumber
+   */
   public async setRoomToDB(roomNumber: number) {
     const target = this.playRoomList[roomNumber];
     let type;
@@ -272,10 +278,20 @@ export class GameService {
     console.log('DB 저장 성공');
   }
 
+  /**
+   * RoomNumber로 Room 객체를 받아낸다.
+   * @param roomNumber
+   * @returns
+   */
   public getRoomByRoomNumber(roomNumber: number): GameRoom {
     return this.playRoomList[roomNumber];
   }
 
+  /**
+   * userIdx를 통해 Room 객체를 호출한다.
+   * @param userIdx
+   * @returns
+   */
   public getRoomByUserIdx(userIdx: number): GameRoom | null {
     for (const room of this.playRoomList) {
       if (room.user1.userIdx === userIdx || room.user2.userIdx === userIdx)
@@ -284,6 +300,11 @@ export class GameService {
     return null;
   }
 
+  /**
+   * roomId를 통해 Room 객체를 호출한다.
+   * @param roomId
+   * @returns
+   */
   public getRoomByRoomId(roomId: string): GameRoom | null {
     for (const room of this.playRoomList) {
       if (room.roomId == roomId) {
@@ -293,6 +314,13 @@ export class GameService {
     return null;
   }
 
+  /**
+   * Latency 를 비교하고, 가장 큰 쪽으로 레이턴시를 설정한다.
+   * @param userIdx
+   * @param roomId
+   * @param latency
+   * @returns
+   */
   public setLatency(userIdx: number, roomId: string, latency: number): boolean {
     for (const room of this.playRoomList) {
       if (room.roomId === roomId) {
@@ -306,6 +334,12 @@ export class GameService {
     return false;
   }
 
+  /**
+   * 최초 비즈니스 로직. 룸 생성 이후, 방에 player를 Join 하고 확정된 옵션을 반환한다.
+   * @param roomNumber
+   * @param server
+   * @returns
+   */
   public getReadyFirst(roomNumber: number, server: Server): boolean {
     const target = this.getRoomByRoomNumber(roomNumber);
     target.user1.socket.join(target.roomId);
@@ -318,12 +352,24 @@ export class GameService {
     return server.to(target.roomId).emit('game_ready_first', finalOptions);
   }
 
+  /**
+   * 레이턴시를 측정하기 위한 용도
+   * @param roomNumber
+   * @param server
+   * @returns
+   */
   public getReadySecond(roomNumber: number, server: Server): boolean {
     const target = this.getRoomByRoomNumber(roomNumber);
     const serverDateTime = new GameServerTimeDto(target.roomId, Date.now());
     return server.to(target.roomId).emit('game_ready_second', serverDateTime);
   }
 
+  /**
+   * 게임 시작 전 최종 정리 로직
+   * @param userIdx
+   * @param server
+   * @returns
+   */
   public getReadyFinal(userIdx: number, server: Server): boolean {
     const target = this.getRoomByUserIdx(userIdx);
     const finalReady = new GameFinalReadyDto(target);
@@ -332,6 +378,12 @@ export class GameService {
     return this.startPong(target, server);
   }
 
+  /**
+   * 최초 경로와 함께 게임 시작 메소드
+   * @param targetRoom
+   * @param server
+   * @returns
+   */
   public startPong(targetRoom: GameRoom, server: Server): boolean {
     let latency = 0;
     if (targetRoom.user1.getLatency() > targetRoom.user2.getLatency())
@@ -346,6 +398,12 @@ export class GameService {
     return server.to(targetRoom.roomId).emit('game_start', startBall);
   }
 
+  /**
+   * player를 waiting List 에 직접 집어넣는다.
+   * @param userIdx
+   * @param options
+   * @returns
+   */
   public setWaitPlayer(userIdx: number, options: GameOptions): number {
     // console.log('here?');
     const player = this.makeGamePlayer(userIdx);
@@ -353,6 +411,11 @@ export class GameService {
     return this.waitingList.pushPlayer(player, options);
   }
 
+  /**
+   * 유저를 온라인 된 대상으로 넘긴다.
+   * @param player
+   * @returns
+   */
   public async pushOnlineUser(player: GameOnlineMember): Promise<number> {
     const index = this.findPlayerFromList(player.user.userIdx);
 
@@ -365,6 +428,11 @@ export class GameService {
     return this.onlinePlayerList.length;
   }
 
+  /**
+   * 온라인 리스트에 올라온 유저를 offline으로 처리한다.
+   * @param userIdx
+   * @returns
+   */
   public async popOnlineUser(userIdx: number): Promise<number> {
     const index = this.findPlayerFromList(userIdx);
 
@@ -377,12 +445,22 @@ export class GameService {
     return this.onlinePlayerList.length;
   }
 
+  /**
+   * 모든 리스트에서 해당 userId가 있다면, 제거하고, 온라인 목록에서 제거한다.
+   * @param userIdx
+   */
   public async deleteUserFromAllList(userIdx: number) {
     this.deleteUserFromQueue(userIdx, this.normalQueue);
     this.deleteUserFromQueue(userIdx, this.rankQueue);
     await this.popOnlineUser(userIdx);
   }
 
+  /**
+   * 패들 움직임을 상대방에게 전달한다.
+   * @param paddleMove
+   * @param time
+   * @returns
+   */
   public async movePaddle(
     paddleMove: GamePaddleMoveDto,
     time: number,
@@ -406,12 +484,22 @@ export class GameService {
     return latency;
   }
 
+  /**
+   * 스코어 데이터가 양쪽에서 정상적으로 수신 되는지를 파악하는 용도의 메소드다.
+   * @param datas
+   * @returns
+   */
   private checkScoreData(datas: GameScoreDto[]): boolean {
     if (datas[0].userIdx !== datas[1].userIdx) return false;
     if (datas[0].score !== datas[1].score) return false;
     return true;
   }
 
+  /**
+   * Room 객체를 통해 Room의 현재 인덱싱 위치를 반환한다.
+   * @param targetRoom
+   * @returns
+   */
   private getRoomIdxWithRoom(targetRoom: GameRoom): number {
     let index = 0;
 
@@ -427,6 +515,13 @@ export class GameService {
     return -1;
   }
 
+  /**
+   * 5점을 달성 했을 때, 스코어를 포함 처리를 위한 메소드
+   * @param user1
+   * @param user2
+   * @param room
+   * @param server
+   */
   private async winnerScoreHandling(
     user1: GamePlayer,
     user2: GamePlayer,
@@ -447,10 +542,21 @@ export class GameService {
       await this.gameRecordRepository.save(records[1]);
     });
 
+    if (room.getChannelObject().type == RecordType.RANK) {
+      user1.userObject.rankpoint += 10;
+      user1.userObject.win++;
+      user2.userObject.rankpoint -= 10;
+      user2.userObject.lose++;
+      await this.userObjectRepository.save(user1.userObject).then(async () => {
+        await this.userObjectRepository.save(user2.userObject);
+      });
+    }
+
     const finishData = new GameScoreFinshDto(
       user1,
       user2,
       GameStatus.TERMINATION,
+      user1.userIdx,
     );
     const targetIdx = this.getRoomIdxWithRoom(room);
 
@@ -464,6 +570,13 @@ export class GameService {
     user2.socket.disconnect(true);
   }
 
+  /**
+   * 득점을 했을 때, 스코어를 포함 처리를 위한 메소드
+   * @param user1
+   * @param user2
+   * @param room
+   * @param server
+   */
   private async scoreHandling(
     user1: GamePlayer,
     user2: GamePlayer,
@@ -483,12 +596,22 @@ export class GameService {
       await this.gameRecordRepository.save(records[1]);
     });
 
-    const finishData = new GameScoreFinshDto(user1, user2, GameStatus.ONGOING);
+    const finishData = new GameScoreFinshDto(
+      user1,
+      user2,
+      GameStatus.ONGOING,
+      0,
+    );
     await server.to(room.roomId).emit('game_get_score', finishData);
     room.predictBallCourse();
     await this.startPong(room, server);
   }
 
+  /**
+   * 스코어에 대한 처리를 위한 로직
+   * @param scoreData
+   * @param server
+   */
   public async handleScore(scoreData: GameScoreDto, server: Server) {
     const userIdx = scoreData.userIdx;
     const targetRoom = this.getRoomByUserIdx(userIdx);
@@ -547,6 +670,11 @@ export class GameService {
     }
   }
 
+  /**
+   * 다음 볼의 경로를 확인하고, 예측된 값을 계산해낸다.
+   * @param ballEvent
+   * @param server
+   */
   public async nextBallEvent(ballEvent: GameBallEventDto, server: Server) {
     const targetRoom = this.getRoomByRoomId(ballEvent.roomId);
     if (targetRoom === null) {
@@ -581,5 +709,77 @@ export class GameService {
     // 1. 공의 초기 값 입력, 각도 입력
     // 2. 공의 다음 경로 예측
     // 3.
+  }
+
+  public async checkOnGameOrNOT(userId: number, server: Server) {
+    const room = this.getRoomByUserIdx(userId);
+    if (room == null) {
+      // TODO: 이미 정상 처리 상태
+    }
+    let winner;
+    if (userId == room.user1.userIdx) winner = room.user2.userIdx;
+    else winner = room.user1.userIdx;
+    const finishData = new GameScoreFinshDto(
+      room.user1,
+      room.user2,
+      GameStatus.JUDGEMENT,
+      winner,
+    );
+    await server.to(room.roomId).emit('game_get_score', finishData);
+    const recordList: GameRecord[] = room.getRecrodObject();
+    const channelObject: GameChannel = room.getChannelObject();
+    if (winner == room.user1.userIdx) {
+      recordList[0].result = RecordResult.WIN;
+      recordList[0].score = room.user1.score
+        .toString()
+        .concat(` : ${room.user2.score.toString()}`);
+      recordList[1].result = RecordResult.LOSE;
+      recordList[1].score = room.user2.score
+        .toString()
+        .concat(` : ${room.user1.score.toString()}`);
+      if (channelObject.type == RecordType.RANK) {
+        room.user1.userObject.rankpoint += 10;
+        room.user1.userObject.win++;
+        room.user2.userObject.rankpoint -= 10;
+        room.user2.userObject.lose--;
+      }
+    } else {
+      recordList[1].result = RecordResult.WIN;
+      recordList[1].score = room.user1.score
+        .toString()
+        .concat(` : ${room.user1.score.toString()}`);
+      recordList[0].result = RecordResult.LOSE;
+      recordList[0].score = room.user2.score
+        .toString()
+        .concat(` : ${room.user2.score.toString()}`);
+      if (channelObject.type == RecordType.RANK) {
+        room.user2.userObject.rankpoint += 10;
+        room.user2.userObject.win++;
+        room.user1.userObject.rankpoint -= 10;
+        room.user1.userObject.lose--;
+        await this.userObjectRepository
+          .save(room.user1.userObject)
+          .then(async () => {
+            await this.userObjectRepository.save(room.user2.userObject);
+          });
+      }
+    }
+    channelObject.score1 = room.user1.score;
+    channelObject.score2 = room.user2.score;
+    channelObject.status = RecordResult.DONE;
+    await this.gameRecordRepository.save(recordList[0]).then(async () => {
+      await this.gameRecordRepository.save(recordList[1]);
+    });
+    await this.gameChannelRepository.save(channelObject);
+
+    this.deleteUserFromAllList(room.user1.userIdx);
+    this.deleteUserFromAllList(room.user2.userIdx);
+    room.user1.socket.leave(room.roomId);
+    room.user2.socket.leave(room.roomId);
+    this.playRoomList.splice(this.getRoomIdxWithRoom(room));
+    this.popOnlineUser(room.user1.userIdx);
+    this.popOnlineUser(room.user2.userIdx);
+    room.user1.socket.disconnect(true);
+    room.user2.socket.disconnect(true);
   }
 }

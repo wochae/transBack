@@ -19,7 +19,7 @@ export class CertificateObject extends BaseEntity {
   @Column({ type: 'boolean', default: false })
   check2Auth: boolean;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: 'varchar', unique: true, nullable: true })
   email: string;
 
   @OneToOne(() => UserObject, (userObject) => userObject) // 이거 cascade 로 테스트 해봐야하는 것
