@@ -56,6 +56,15 @@ export class ChatGateway
       client.disconnect();
       return;
     }
+    // TODO: socketObject의 user nickname 을 통해 존재하는 member 인지 확인 필요
+    const checkMember = this.chat.getSocketList.some((socketObject) => {
+      return socketObject.user.userIdx === userId;
+    });
+    if (checkMember) {
+      console.log(`[ ❗️ Client ] ${user.nickname} is already connected`);
+      client.disconnect();
+      return;
+    }
     // TODO: 본인이 속한 DM 채널 idx 찾아서 roomId 에 join 하기
     const dmChannelList: Promise<DMChannel[]> =
       this.chatService.findPrivateChannelByUserIdx(user.userIdx);
@@ -67,7 +76,6 @@ export class ChatGateway
     // FIXME: 테스트용  코드
     client.join('chat_room_10');
     // client.join('chat_room_11');
-    // TODO: 이미 존재하는 member 인지 확인 필요
 
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
@@ -157,7 +165,7 @@ export class ChatGateway
       isOnline: user.isOnline,
     };
     this.server.emit('BR_main_enter', BR_main_enter);
-    return;
+    return 200;
   }
 
   // API: MAIN_PROFILE
