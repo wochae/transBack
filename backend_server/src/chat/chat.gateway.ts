@@ -65,7 +65,7 @@ export class ChatGateway
       });
     });
     // FIXME: 테스트용  코드
-    // client.join('chat_room_10');
+    client.join('chat_room_10');
     // client.join('chat_room_11');
     // TODO: 이미 존재하는 member 인지 확인 필요
 
@@ -359,20 +359,26 @@ export class ChatGateway
       this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else if (channel instanceof DMChannel) {
       const message: SendDMDto = { msg: msg };
-      const msgInfo = await this.chatService.saveMessageInDB(
-        channelIdx,
-        senderIdx,
-        message,
-      );
+      const msgInfo = await this.chatService
+        .saveMessageInDB(channelIdx, senderIdx, message)
+        .then((msgInfo) => {
+          return {
+            channelIdx: channelIdx,
+            senderIdx: senderIdx,
+            msg: message.msg,
+            msgDate: msgInfo.msgDate,
+          };
+        });
+      console.log(msgInfo);
       // TODO: channelIdx 로 Block 검사
-      const checkBlock = await this.usersService.checkBlockList(
-        user,
-        channelIdx,
-      );
-      if (checkBlock) {
-        console.log('차단된 유저입니다.');
-        return;
-      }
+      // const checkBlock = await this.usersService.checkBlockList(
+      //   user,
+      //   channelIdx,
+      // );
+      // if (checkBlock) {
+      //   console.log('차단된 유저입니다.');
+      //   return;
+      // }
       this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else {
       // 예상하지 못한 타입일 경우 처리

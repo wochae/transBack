@@ -258,6 +258,7 @@ export class ChatService {
     }
     // const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
     const message = {
+      channelIdx: channelIdx,
       senderIdx: await this.inMemoryUsers.getUserByIdFromIM(senderIdx).userIdx,
       msg: msgInfo.getMessage,
       msgDate: msgInfo.getMsgDate,
