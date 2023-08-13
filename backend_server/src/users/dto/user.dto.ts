@@ -3,7 +3,7 @@ import { RecordResult, RecordType } from "src/game/enum/game.type.enum";
 export class UserDto {
   userIdx: number;
   displayName: string;
-
+  email: string;
   imgUri: string;
   rating: number;
   mfaNeed: boolean;
@@ -55,12 +55,11 @@ export class IntraInfoDto {
 	}
 }
 */
-export class profileResDto {
+export class ProfileResDto {
   imgUrl: string;
   rate: string;
   rank: string;
   email: string;
-  gameRecord: GameRecordDto[];
 }
 export class GameRecordDto {
   matchUserNickname : string;

@@ -22,7 +22,7 @@ import { AuthService,} from 'src/auth/auth.service';
 import { plainToClass } from 'class-transformer';
 import { UserObject } from '../entity/users.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { UserEditprofileDto } from './dto/user.dto';
+import { UserEditprofileDto, ProfileResDto } from './dto/user.dto';
 
 @UseGuards(AuthGuard)
 @Controller("users")
@@ -33,10 +33,11 @@ export class UsersController {
     private logger: Logger = new Logger('UserController');
     @Get("profile")
     async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) {
-      const {id : userIdx} = req.jwtPayload;
+      const {id : userIdx, email } = req.jwtPayload;
       try {
         const user = await this.usersService.findOneUser(userIdx);
-        const userProfile = plainToClass(UserObject, user);
+        const userProfile = plainToClass(ProfileResDto, user);
+        userProfile.email = email;
         return res.status(HttpStatus.OK).json(userProfile);
       } catch (err) {
         this.logger.error(err);
