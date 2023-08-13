@@ -310,7 +310,6 @@ export class ChatService {
           userIdx: member.userIdx,
           nickname: member.nickname,
           imgUri: member.imgUri,
-          permission: Permission.MEMBER,
         };
       }),
       channelIdx: channel.getChannelIdx,
@@ -332,7 +331,6 @@ export class ChatService {
           userIdx: member.userIdx,
           nickname: member.nickname,
           imgUri: member.imgUri,
-          permission: Permission.MEMBER,
         };
       }),
       channelIdx: channel.getChannelIdx,
@@ -350,6 +348,7 @@ export class ChatService {
     const adminInfo = {
       userIdx: user.userIdx,
       grant: grant,
+      admin: channel.getAdmin,
     };
     return adminInfo;
   }
@@ -373,6 +372,7 @@ export class ChatService {
         return {
           userNickname: member.nickname,
           userIdx: member.userIdx,
+          imgUri: member.imgUri,
         };
       }),
     };
@@ -385,7 +385,6 @@ export class ChatService {
     // FIXME: return 으로 해도 될듯
     userSocket.socket.emit('chat_room_exit', '퇴장 당했습니다.');
     userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
-
     const channelInfo = {
       targetNickname: user.nickname,
       targetIdx: user.userIdx,
@@ -393,6 +392,7 @@ export class ChatService {
         return {
           userNickname: member.nickname,
           userIdx: member.userIdx,
+          imgUri: member.imgUri,
         };
       }),
     };

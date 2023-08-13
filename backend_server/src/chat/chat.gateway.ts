@@ -294,31 +294,22 @@ export class ChatGateway
     // API: MAIN_CHAT_3
     const member = channel.member.map((member) => {
       return {
+        userIdx: member.userIdx,
         nickname: member.nickname,
         imgUri: member.imgUri,
-        permission: member.permission,
       };
     });
+    const newMember = member.find(
+      (member) => member.userIdx === userIdx,
+    ).nickname;
+    const memberInfo = {
+      member: member,
+      newMember: newMember,
+    };
+    // FIXME: 새로 들어온 멤버도 같이 보내기
     this.server
       .to(`chat_room_${channel.channelIdx}`)
-      .emit('chat_enter_noti', member);
-    // const member = channel.member.find(
-    //   (member) => member.nickname === user.nickname,
-    // );
-    // if (member) {
-    //   const memberInfo = {
-    //     nickname: member.nickname,
-    //     imgUri: member.imgUri,
-    //     permission: member.permission,
-    //   };
-    //   this.server
-    //     .to(`chat_room_${channel.channelIdx}`)
-    //     .emit('chat_enter_noti', memberInfo);
-    // } else {
-    //   // FIXME: 예외처리 필요
-    //   console.log('Member not found');
-    // }
-    // console.log(channel);
+      .emit('chat_enter_noti', memberInfo);
     return;
   }
 
