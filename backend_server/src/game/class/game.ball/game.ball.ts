@@ -62,17 +62,6 @@ export class GameBall {
     return ret;
   }
 
-  //   public resetBall() {
-  //     this.initX = 0;
-  //     this.initY = 0;
-  //     this.nextX = 0;
-  //     this.nextY = 0;
-  //     this.vector = this.getRandomInt(0, 3);
-  //     this.degreeX = this.getRandomInt(-2, 2);
-  //     this.degreeY = this.getRandomInt(-2, 2);
-  //     this.operateNextPos();
-  //   }
-
   public setBall(ballEvent: GameBallEventDto) {
     if (ballEvent.ballDegreeX == 0 && ballEvent.ballDegreeY == 0) {
       ballEvent.ballDegreeX = this.getRandomInt(-2, 2);

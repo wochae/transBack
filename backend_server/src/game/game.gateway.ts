@@ -51,7 +51,11 @@ export class GameGateway
       10,
     );
     this.gameService.popOnlineUser(userId);
+    // TODO: 작성해야 할 부분
     // 게임 중에 있는지 파악하기
+    //	// 게임 중에 있을 시 판정 승으로 전달(api 는 승리와 동일하게 사용 가능)
+    //	//	// DB 중에 관련 기록 탐색 (1. 게임 채널-> 2. 게임 레코드)
+    //	//	//	// 내용 수정 및 정리
     // 게임 판정 승 로직 추가
     // 종료 시키기
     this.logger.log(userId + ' is disconnected');

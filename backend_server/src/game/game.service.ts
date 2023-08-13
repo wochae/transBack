@@ -51,7 +51,10 @@ export class GameService {
     this.rankQueue = new GameQueue();
     this.cnt = 0;
   }
-
+  /**
+   * 전체 비즈니스 로직 인스턴스를 점검하는 함수
+   * @param msg
+   */
   public async checkStatus(msg: string) {
     console.log(msg);
     console.log(`PlayRoom List : ${this.playRoomList.length}`);
@@ -89,6 +92,11 @@ export class GameService {
     console.log(`${msg} is end`);
   }
 
+  /**
+   * 지정된 큐에서 GameUser를 지운다
+   * @param userIdx
+   * @param queue
+   */
   private deleteUserFromQueue(userIdx: number, queue: GameQueue) {
     for (let i = 0; i < queue.size(); i++) {
       if (queue.queueData[i][0].userIdx === userIdx) {
@@ -97,6 +105,11 @@ export class GameService {
     }
   }
 
+  /**
+   * OnlineList에 포함된 player를 발견한다.
+   * @param userIdx
+   * @returns
+   */
   private findPlayerFromList(userIdx: number): number {
     for (let index = 0; index < this.onlinePlayerList.length; index++) {
       if (this.onlinePlayerList[index].user.userIdx == userIdx) return index;
@@ -104,8 +117,11 @@ export class GameService {
     return -1;
   }
 
-  //TODO: check dubble login
-
+  /**
+   * UserObject에서 idx와 socket 정보를 합쳐 GamePlayer 객체 생성용
+   * @param userIdx
+   * @returns
+   */
   private makeGamePlayer(userIdx: number): GamePlayer | null {
     const index = this.findPlayerFromList(userIdx);
     if (index == -1) {
@@ -118,17 +134,30 @@ export class GameService {
     return returnPlayer;
   }
 
+  /**
+   * RoomId를 만들기 위한 메소드
+   * @returns
+   */
   public makeRoomId(): string {
     const target = 'game_room_'.concat(this.cnt.toString());
     this.cnt++;
     return target;
   }
 
+  /**
+   * waiting list에 담겨진 길이를 반환한다.
+   * @returns
+   */
   public sizeWaitPlayer(): number {
     // console.log(`sizeWaitPlayer: ${this.waitingList.size()}`);
     return this.waitingList.size();
   }
 
+  /**
+   *
+   * @param userIdx
+   * @returns
+   */
   public async putInQueue(userIdx: number): Promise<Promise<number | null>> {
     const playerTuple: WaitPlayerTuple = this.waitingList.popPlayer(userIdx);
     // console.log(playerTuple[0].userIdx);
@@ -292,7 +321,7 @@ export class GameService {
   public getReadySecond(roomNumber: number, server: Server): boolean {
     const target = this.getRoomByRoomNumber(roomNumber);
     const serverDateTime = new GameServerTimeDto(target.roomId, Date.now());
-    return server.to(target.roomId).emit('game_ready_first', serverDateTime);
+    return server.to(target.roomId).emit('game_ready_second', serverDateTime);
   }
 
   public getReadyFinal(userIdx: number, server: Server): boolean {
