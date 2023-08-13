@@ -655,4 +655,19 @@ export class ChatGateway
     );
     client.emit('check_dm', dm);
   }
+
+  // API: MAIN_CHAT_19
+  @SubscribeMessage('chat_get_grant')
+  async getGrant(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any,
+  ) {
+    // const { userIdx, channelIdx } = payload;
+    const { userIdx, channelIdx } = JSON.parse(payload);
+    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userIdx);
+    const channel = this.chat.getProtectedChannel(channelIdx);
+    const grant = this.chatService.getGrant(channel, user);
+    client.emit('chat_get_grant', grant);
+    return;
+  }
 }

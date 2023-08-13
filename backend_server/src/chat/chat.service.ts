@@ -339,6 +339,19 @@ export class ChatService {
   }
 
   /******************* Funcions in chat *******************/
+  getGrant(channelIdx: Channel, user: UserObject) {
+    const checkOwner = channelIdx.getOwner.userIdx === user.userIdx;
+    const checkAdmin = channelIdx.getAdmin.some(
+      (member) => member.userIdx === user.userIdx,
+    );
+    if (checkOwner) {
+      return Permission.OWNER;
+    } else if (checkAdmin) {
+      return Permission.ADMIN;
+    }
+    return Permission.MEMBER;
+  }
+
   setAdmin(channel: Channel, user: UserObject, grant: boolean) {
     if (grant) {
       channel.setAdmin = user;
