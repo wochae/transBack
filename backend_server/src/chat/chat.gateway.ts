@@ -241,6 +241,12 @@ export class ChatGateway
       console.log('DM 채널 생성에 실패했습니다.');
       return '실패';
     }
+    // TODO: Block 검사
+    const checkBlock = await this.usersService.checkBlockList(user, targetUser);
+    if (checkBlock) {
+      console.log('차단된 유저입니다.');
+      return;
+    }
     this.server
       .to(`chat_room_${newChannelAndMsg.channelIdx}`)
       .emit('create_dm', newChannelAndMsg);
@@ -265,7 +271,6 @@ export class ChatGateway
       userIdx,
     );
     // ban 체크
-    console.log('banList: ', channel.getBan);
     if (channel.getBan.some((member) => member.userIdx === userIdx)) {
       this.logger.log(`[ 💬 ] ${user.nickname} 은 차단된 유저입니다.`);
       return `${user.nickname} 은 차단된 유저입니다.`;
@@ -316,6 +321,10 @@ export class ChatGateway
   ) {
     // const { channelIdx, senderIdx, msg } = payload;
     const { channelIdx, senderIdx, msg } = JSON.parse(payload);
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    const user: UserObject = await this.usersService.getUserInfoFromDB(
+      this.inMemoryUsers.getUserByIdFromIM(userId).nickname,
+    );
     // FIXME: 테스트용 코드 ------------------------------------------------------
     const testChannel: Channel | DMChannel =
       await this.chatService.findChannelByRoomId(channelIdx);
@@ -345,6 +354,15 @@ export class ChatGateway
         senderIdx,
         message,
       );
+      // TODO: channelIdx 로 Block 검사
+      const checkBlock = await this.usersService.checkBlockList(
+        user,
+        channelIdx,
+      );
+      if (checkBlock) {
+        console.log('차단된 유저입니다.');
+        return;
+      }
       this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else {
       // 예상하지 못한 타입일 경우 처리

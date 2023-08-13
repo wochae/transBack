@@ -6,8 +6,8 @@ import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
 import { UserObject } from 'src/entity/users.entity';
 import { InsertFriendDto } from './dto/insert-friend.dto';
-import { BlockList } from 'src/entity/blockList.entity';
 import { DataSource } from 'typeorm';
+import { DMChannelRepository } from 'src/chat/DM.repository';
 
 @Injectable()
 export class UsersService {
@@ -16,6 +16,7 @@ export class UsersService {
     private userObjectRepository: UserObjectRepository,
     private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
+    private dmChannelRepository: DMChannelRepository,
   ) {}
 
   async signUp(createUsersDto: CreateUsersDto): Promise<string> {
@@ -70,6 +71,50 @@ export class UsersService {
       }),
     );
     return blockInfoList;
+  }
+
+  async checkBlockList(
+    user: UserObject,
+    target?: UserObject,
+    channelIdx?: number,
+  ): Promise<boolean> {
+    if (target) {
+      const blockList = await this.getBlockedList(user);
+      const check = blockList.find(
+        (res) => res.blockedUserIdx === target.userIdx,
+      );
+      if (check) return true;
+      else return false;
+    } else if (channelIdx) {
+      // 내가 속한 channelIdx 로 direct_message_members 에서 타겟 찾기 -> 블락리스트에 있는지 확인
+      // const target = await this.dmChannelRepository
+      //   .find({
+      //     where: { channelIdx: channelIdx },
+      //   })
+      //   .then();
+      // const blockList = await this.getBlockedList(user);
+      // if (check) return true;
+      // else return false;
+      /*
+        const channel = await this.dmChannelRepository.findOne({
+            where: { channelIdx: channelIdx },
+            relations: ['user1', 'user2'], // Load related user objects
+          });
+
+          if (!channel) {
+            // No channel found with the given channelIdx
+            return false;
+          }
+
+          const targetIdx = user.userIdx === channel.userIdx1 ? channel.userIdx2 : channel.userIdx1;
+
+          const blockList = await this.getBlockedList(user); // Assuming this function gets the block list
+
+          const isBlocked = blockList.some((blockedUser) => blockedUser.userIdx === targetIdx);
+
+          return isBlocked;
+      */
+    }
   }
 
   async addFriend(
