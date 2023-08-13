@@ -406,11 +406,13 @@ export class ChatService {
     } else {
       channel.setMode = Mode.PROTECTED;
     }
-    const channelInfo = {
-      channelIdx: channel.getChannelIdx,
-      mode: channel.getMode,
-    };
-    return channelInfo;
+    const channels = this.getPublicAndProtectedChannel();
+    // const channelInfo = {
+    //   channelIdx: channel.getChannelIdx,
+    //   mode: channel.getMode,
+    // };
+    // return channelInfo;
+    return channels;
   }
 
   /******************* Funcions about Exit Room *******************/
