@@ -1,7 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Channel } from './class/channel.class';
 import { Chat, MessageInfo, MessageInteface } from './class/chat.class';
-import { DataSource, EntityManager, Repository, Transaction } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  LessThan,
+  LessThanOrEqual,
+  Repository,
+  Transaction,
+} from 'typeorm';
 import { Permission, UserObject } from 'src/entity/users.entity';
 import { DMChannel, DirectMessage, Mode } from '../entity/chat.entity';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
@@ -16,14 +23,8 @@ export class ChatService {
   constructor(
     private chat: Chat,
     private dataSource: DataSource,
-    // @InjectRepository(DMChannel)
     private dmChannelRepository: DMChannelRepository,
-    // @InjectRepository(DirectMessage)
     private directMessagesRepository: DirectMessageRepository,
-    // @InjectRepository(DMChannel)
-    // private dmChannelRepository: Repository<DMChannel>,
-    // @InjectRepository(DirectMessage)
-    // private directMessagesRepository: Repository<DirectMessage>,
     // TODO: gateway에서도 InmemoryUsers 를 사용하는데, service 로 옮기자
     private inMemoryUsers: InMemoryUsers,
   ) {}
@@ -513,6 +514,34 @@ export class ChatService {
       channelIdx: channel.channelIdx,
       imgUrl: targetUser.imgUri,
     };
+    return messageInfo;
+  }
+
+  // MAIN_CHAT_INFINITY
+  async getChatMessagesByInfinity(channelIdx: number, msgDate: Date) {
+    const messages = await this.directMessagesRepository.find({
+      where: [{ channelIdx: channelIdx, msgDate: LessThanOrEqual(msgDate) }],
+      order: {
+        msgDate: 'DESC',
+      },
+      take: 20,
+    });
+
+    const messageInfo = await Promise.all(
+      messages.map(async (message) => {
+        // FIXME: senderIdx 를 inmemory를 사용해서 찾자.
+        const senderIdx = this.inMemoryUsers.getUserByIntraFromIM(
+          message.sender,
+        ).userIdx;
+        return {
+          channelIdx: message.channelIdx,
+          senderIdx: senderIdx,
+          msg: message.msg,
+          msgDate: message.msgDate,
+        };
+      }),
+    );
+    console.log(messageInfo);
     return messageInfo;
   }
 }

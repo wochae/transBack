@@ -9,17 +9,19 @@ import { UsersService } from 'src/users/users.service';
 import { Channel } from './class/channel.class';
 import { Mode } from '../entity/chat.entity';
 import { SharedModule } from 'src/shared/shared.module';
+import { ChatController } from './chat.controller';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함
   imports: [
     TypeOrmExModule.forCustomRepository([
-      DMChannelRepository,
+      // DMChannelRepository,
       DirectMessageRepository,
     ]),
     SharedModule,
   ],
   providers: [ChatGateway, ChatService, Chat, InMemoryUsers],
+  controllers: [ChatController],
 })
 export class ChatModule {
   private logger: Logger = new Logger('ChatModule');
@@ -36,6 +38,7 @@ export class ChatModule {
     // channel 11 에는 haryu 와 클라이언트가 들어가있음.비번은 1234
     const testChannel = new Channel();
     testChannel.setOwner = await this.usersService.getUserInfoFromDB('jaekim');
+    testChannel.setAdmin = await this.usersService.getUserInfoFromDB('jaekim');
     testChannel.setMember = await this.usersService.getUserInfoFromDB('jaekim');
     testChannel.setChannelIdx = 10;
     testChannel.setMode = Mode.PUBLIC;
@@ -44,6 +47,7 @@ export class ChatModule {
 
     const testChannel1 = new Channel();
     testChannel1.setOwner = await this.usersService.getUserInfoFromDB('haryu');
+    testChannel1.setAdmin = await this.usersService.getUserInfoFromDB('haryu');
     testChannel1.setMember = await this.usersService.getUserInfoFromDB('haryu');
     testChannel1.setChannelIdx = 11;
     testChannel1.setMode = Mode.PROTECTED;
