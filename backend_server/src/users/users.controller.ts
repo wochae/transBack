@@ -30,11 +30,10 @@ export class UsersController {
     private usersService: UsersService,
     ) {}
     private logger: Logger = new Logger('UserController');
-
     @Get("profile")
     async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) {
+      const {id : userIdx, email} = req.jwtPayload;
       try {
-        const { userNickname, userIdx } = body;
         const user = await this.usersService.findOneUser(userIdx);
         const userProfile = plainToClass(UserObject, user);
         return res.status(HttpStatus.OK).json(userProfile);
