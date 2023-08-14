@@ -5,6 +5,7 @@ import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { RecordResult, RecordType } from 'src/game/enum/game.type.enum';
 import { GameScoreDto } from 'src/game/dto/game.score.dto';
+import { GameBallEventDto } from 'src/game/dto/game.ball.event.dto';
 
 export class GameRoom {
   public roomId: string;
@@ -16,6 +17,7 @@ export class GameRoom {
   private gameChannelObject: GameChannel;
   private gameRecordObject: GameRecord[];
   private scoreData: GameScoreDto[];
+  private eventData: GameBallEventDto[];
 
   constructor(roomId: string) {
     this.roomId = roomId;
@@ -26,7 +28,8 @@ export class GameRoom {
     this.gameRecordObject = [];
     this.scoreData = [];
     this.ballList = [];
-    this.ballList.push(new GameBall());
+    this.eventData = [];
+    this.ballList.push(new GameBall(null));
   }
 
   public async setUser(
@@ -80,19 +83,49 @@ export class GameRoom {
     else return true;
   }
 
+  public setEventData(data: GameBallEventDto): boolean {
+    this.eventData.push(data);
+    if (this.eventData.length == 1) return false;
+    else return true;
+  }
+
   public getScoreDataList(): GameScoreDto[] {
     return this.scoreData;
+  }
+
+  public getEventDataList(): GameBallEventDto[] {
+    return this.eventData;
   }
 
   public getChannelObject(): GameChannel {
     return this.gameChannelObject;
   }
 
-  public predictBallCourse(degreeX: number, degreeY: number) {
-    if (degreeX == 0 && degreeY == 0) {
-      //TODO: 최초 경로 예측(있는자료로)
+  public getRecrodObject(): GameRecord[] {
+    return this.gameRecordObject;
+  }
+
+  public deleteScoreData() {
+    this.scoreData.splice(0, 2);
+    this.scoreData = [];
+  }
+
+  public deleteEventData() {
+    this.eventData.splice(0, 2);
+    this.eventData = [];
+  }
+
+  public deleteBallEvent() {
+    this.ballList.splice(0, 2);
+    this.ballList = [];
+  }
+
+  public predictBallCourse() {
+    if (this.ballList.length == 2) {
+      this.ballList.splice(0, 2);
+    } else {
+      this.ballList.splice(1);
     }
-    //TODO: 볼경로 예측
-    //TODO: 볼 벽 부딪히면 다음 볼 경로 계산
+    this.ballList.push(new GameBall(null));
   }
 }

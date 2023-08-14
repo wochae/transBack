@@ -6,7 +6,6 @@ import {
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
-  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { GameChannel } from './gameChannel.entity';
@@ -45,7 +44,7 @@ export class GameRecord extends BaseEntity {
   @JoinColumn([{ name: 'matchUserIdx', referencedColumnName: 'userIdx' }])
   matchUser: UserObject;
 
-  @OneToOne(() => GameChannel, (channel) => channel.record)
+  @ManyToOne(() => GameChannel, (channel) => channel.record)
   @JoinColumn([{ name: 'gameIdx', referencedColumnName: 'gameIdx' }])
   channel: GameChannel;
 
