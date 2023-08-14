@@ -19,6 +19,9 @@ import { DMChannel, Mode } from '../entity/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import { SendDMDto } from './dto/send-dm.dto';
+import { GameInvitationDto } from './dto/game.invitation.dto';
+import { ReturnMsgDto } from 'src/game/dto/error.message.dto';
+import { GameInvitationAnswerDto } from './dto/game.invitation.answer.dto';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -511,5 +514,14 @@ export class ChatGateway
     //   blockList[]
     // }
     // client 방식
+  }
+  @SubscribeMessage('chat_invite_ask')
+  inviteFriendToGame(@MessageBody() invitation: GameInvitationDto) {
+    return new ReturnMsgDto(200, 'OK!');
+  }
+
+  @SubscribeMessage('chat_invite_answer')
+  acceptFriendToGame(@MessageBody() answer: GameInvitationAnswerDto) {
+    return new ReturnMsgDto(200, 'Ok!');
   }
 }
