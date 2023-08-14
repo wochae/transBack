@@ -46,17 +46,13 @@ export class ChatGateway
   }
 
   handleConnection(client: Socket) {
-    // TODO: 함수로 빼기
-    const userId: number = parseInt(
-      client.handshake.query.userId as string,
-      10,
-    );
+    const userId: number = parseInt(client.handshake.query.userId as string);
     // TODO: client.handshake.query.userId & intra 가 db 에 있는 userIdx & intra 와 일치한지 확인하는 함수 추가
     const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
       return user.userIdx === userId;
     });
     if (!user) {
-      this.logger.log(`[ ❗️ Client ] ${client.id} Not Found`);
+      console.log(`[ ❗️ Client ] ${client.id} Not Found`);
       client.disconnect();
       return;
     }
@@ -70,8 +66,8 @@ export class ChatGateway
     });
     // FIXME: 테스트용  코드
     client.join('chat_room_10');
-    client.join('chat_room_11');
-    // TODO: 이미 존재하는 member 인지 확인 필요
+    // client.join('chat_room_11');
+
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
     this.logger.log(`[ 💬 Client ] ${user.nickname} Connected`);
@@ -120,6 +116,7 @@ export class ChatGateway
     // TODO: intra 를 class 로 만들어서 DTO 처리?
     @MessageBody() payload: any,
   ) {
+    // const { intra } = payload;
     const { intra } = JSON.parse(payload);
 
     // API: MAIN_ENTER_0
@@ -138,7 +135,7 @@ export class ChatGateway
     const blockList = await this.usersService.getBlockedList(intra);
     const channelList = this.chat.getProtectedChannels.map(
       ({ getOwner: owner, getChannelIdx: channelIdx, getMode: mode }) => ({
-        owner,
+        owner: owner.nickname,
         channelIdx,
         mode,
       }),
@@ -159,7 +156,7 @@ export class ChatGateway
       isOnline: user.isOnline,
     };
     this.server.emit('BR_main_enter', BR_main_enter);
-    return;
+    return 200;
   }
 
   // API: MAIN_PROFILE
@@ -169,6 +166,7 @@ export class ChatGateway
     @MessageBody() payload: any,
   ) {
     const { targetNickname, targetIdx } = JSON.parse(payload);
+    // const { targetNickname, targetIdx } = payload;
     const user_profile = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
 
     if (!user_profile || user_profile.nickname !== targetNickname) {
@@ -186,31 +184,33 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
+    // const { targetIdx } = payload;
     const { targetIdx } = JSON.parse(payload);
     const userId: number = parseInt(
       client.handshake.query.userId as string,
       10,
     );
-    // TODO: 논의 사항. 빈배열 대신에 boolean 해도 되나..?
     const check_dm: MessageInfo | boolean = await this.chatService.checkDM(
       userId,
       targetIdx,
     );
-    client.emit('check_dm', check_dm);
+    if (check_dm === false) {
+      client.emit('check_dm', []);
+      return check_dm;
+    } else {
+      client.emit('check_dm', check_dm);
+    }
   }
 
   // API: MAIN_CHAT_1
-  // FIXME: msgDate 같이 반환
   @SubscribeMessage('create_dm')
   async createDM(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: string,
   ) {
+    // const { targetNickname, targetIdx, msg } = payload;
     const { targetNickname, targetIdx, msg } = JSON.parse(payload);
-    const userId: number = parseInt(
-      client.handshake.query.userId as string,
-      10,
-    );
+    const userId: number = parseInt(client.handshake.query.userId as string);
     const user: UserObject = await this.usersService.getUserInfoFromDB(
       this.inMemoryUsers.getUserByIdFromIM(userId).nickname,
     );
@@ -218,7 +218,6 @@ export class ChatGateway
     const targetUser: UserObject = await this.usersService.getUserInfoFromDB(
       targetNickname,
     );
-    // TODO: connect 할 때 검사하는데 필요할까?
     if (!user || !targetUser) {
       this.logger.log(`[ ❗️ Client ] Not Found`);
       client.disconnect();
@@ -230,47 +229,85 @@ export class ChatGateway
       return;
     }
     const message: SendDMDto = { msg: msg };
+    // TODO: Block 검사
+    const checkBlock = await this.usersService.checkBlockList(user, targetUser);
     const newChannelAndMsg = await this.chatService.createDM(
       client,
       user,
       targetUser,
       message,
+      checkBlock,
     );
-
+    if (!newChannelAndMsg) {
+      console.log('DM 채널 생성에 실패했습니다.');
+      return '실패';
+    }
     this.server
       .to(`chat_room_${newChannelAndMsg.channelIdx}`)
       .emit('create_dm', newChannelAndMsg);
-    return;
+    return '성공';
   }
 
   // API: MAIN_CHAT_2
-  // @SubscribeMessage('chat_enter')
-  // async enterProtectedAndPublicRoom(
-  //   @ConnectedSocket() client: Socket,
-  //   @MessageBody() data: any,
-  //   // 반환형 선언하기
-  // ) {
-  //   // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
-  //   const jsonData = JSON.parse(data);
-  //   this.logger.log(
-  //     `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${jsonData.nickname}`,
-  //   );
-  //   if (this.chatService.checkAlreadyInRoom(jsonData)) {
-  //     console.log('Already in Room');
-  //     // FIXME: 이미 들어와있기 때문에 데이터 전송을 해야한다. ✅ 무한스크롤 이벤트 발생으로 해결 가능
-  //     return 'Already in Room';
-  //   }
-  //   let channel: Channel = this.chatService.findProtectedChannelByRoomId(
-  //     jsonData.roomId,
-  //   );
-  //   if (channel === null) {
-  //     this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
-  //     channel = this.chatService.findPublicChannelByRoomId(jsonData.roomId);
-  //   } else {
-  //     this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
-  //   }
-  //   // return this.chatService.enterChatRoom(client, jsonData, channel);
-  // }
+  @SubscribeMessage('chat_enter')
+  async enterProtectedAndPublicRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any,
+    // 반환형 선언하기
+  ) {
+    // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
+    const { userNickname, userIdx, channelIdx, password } = JSON.parse(payload);
+    // const jsonData = payload;
+    this.logger.log(
+      `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${userNickname}`,
+    );
+    let channel: any = await this.chatService.findChannelByRoomId(channelIdx);
+    const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
+      userIdx,
+    );
+    // ban 체크
+    if (channel.getBan.some((member) => member.userIdx === userIdx)) {
+      this.logger.log(`[ 💬 ] ${user.nickname} 은 차단된 유저입니다.`);
+      return `${user.nickname} 은 차단된 유저입니다.`;
+    }
+    if (channel instanceof Channel) {
+      if (channel.getPassword === '') {
+        this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
+        channel = await this.chatService.enterPublicRoom(user, channel);
+      } else {
+        this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
+        if (channel.getPassword !== password) {
+          this.logger.log(`[ 💬 ] 비밀번호가 틀렸습니다.`);
+          // FIXME: 에러 코드로 보내기
+          return false;
+        }
+        channel = await this.chatService.enterProtectedRoom(user, channel);
+      }
+    }
+    client.join(`chat_room_${channel.channelIdx}`);
+    client.emit('chat_enter', channel);
+
+    // API: MAIN_CHAT_3
+    const member = channel.member.map((member) => {
+      return {
+        userIdx: member.userIdx,
+        nickname: member.nickname,
+        imgUri: member.imgUri,
+      };
+    });
+    const newMember = member.find(
+      (member) => member.userIdx === userIdx,
+    ).nickname;
+    const memberInfo = {
+      member: member,
+      newMember: newMember,
+    };
+    // FIXME: 새로 들어온 멤버도 같이 보내기
+    this.server
+      .to(`chat_room_${channel.channelIdx}`)
+      .emit('chat_enter_noti', memberInfo);
+    return 200;
+  }
 
   // API: MAIN_CHAT_4
   @SubscribeMessage('chat_send_msg')
@@ -278,7 +315,12 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
+    // const { channelIdx, senderIdx, msg } = payload;
     const { channelIdx, senderIdx, msg } = JSON.parse(payload);
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    const user: UserObject = await this.usersService.getUserInfoFromDB(
+      this.inMemoryUsers.getUserByIdFromIM(userId).nickname,
+    );
     // FIXME: 테스트용 코드 ------------------------------------------------------
     const testChannel: Channel | DMChannel =
       await this.chatService.findChannelByRoomId(channelIdx);
@@ -293,21 +335,37 @@ export class ChatGateway
     );
     const channel: Channel | DMChannel =
       await this.chatService.findChannelByRoomId(channelIdx);
+
     if (channel instanceof Channel) {
       const msgInfo = await this.chatService.saveMessageInIM(
         channelIdx,
         senderIdx,
         msg,
       );
-      // sender, msg, msgDate
-      console.log(msgInfo);
       this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else if (channel instanceof DMChannel) {
-      // TODO: DB 에 저장
-      // channel이 DMChannel 타입일 경우 처리
       const message: SendDMDto = { msg: msg };
-      this.chatService.saveMessageInDB(channelIdx, senderIdx, message);
-      // this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msg);
+      const msgInfo = await this.chatService
+        .saveMessageInDB(channelIdx, senderIdx, message)
+        .then((msgInfo) => {
+          return {
+            channelIdx: channelIdx,
+            senderIdx: senderIdx,
+            msg: message.msg,
+            msgDate: msgInfo.msgDate,
+          };
+        });
+      console.log(msgInfo);
+      // TODO: channelIdx 로 Block 검사
+      // const checkBlock = await this.usersService.checkBlockList(
+      //   user,
+      //   channelIdx,
+      // );
+      // if (checkBlock) {
+      //   console.log('차단된 유저입니다.');
+      //   return;
+      // }
+      this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else {
       // 예상하지 못한 타입일 경우 처리
       console.log('Unexpected type of channel');
@@ -320,11 +378,9 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any, // chatCreateRoomReqDto
   ) {
-    const { password = null } = JSON.parse(payload);
-    const userId: number = parseInt(
-      client.handshake.query.userId as string,
-      10,
-    );
+    const { password = '' } = JSON.parse(payload);
+    // const { password = null } = payload;
+    const userId: number = parseInt(client.handshake.query.userId as string);
     const user = await this.inMemoryUsers.inMemoryUsers.find((user) => {
       return user.userIdx === userId;
     });
@@ -338,119 +394,106 @@ export class ChatGateway
 
   // API: MAIN_CHAT_6
   @SubscribeMessage('chat_room_admin')
-  setChatAdmin(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-    // request data
-    // {
-    //   member,
-    //   grant : boolean
-    // }
-    // response data
-    // {
-    //   member,
-    //   grant
-    // }
-    // roomId 방식
-    // client.to().emit('', );
+  async setAdmin(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any,
+  ) {
+    const { channelIdx, userIdx, grant } = JSON.parse(payload);
+    const ownerId: number = parseInt(client.handshake.query.userId as string);
+    const channel = this.chat.getProtectedChannel(channelIdx);
+
+    // owner 유효성 검사
+    const owner: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === ownerId;
+    });
+    if (owner === undefined) {
+      return '요청자가 대화방에 없습니다.';
+    }
+    const isOwner: boolean = channel.getOwner.userIdx === owner.userIdx;
+    if (!isOwner) {
+      return '요청자가 owner 가 아닙니다.';
+    }
+
+    // 대상 유효성 검사
+    const target = channel.getMember.find((member) => {
+      return member.userIdx === userIdx;
+    });
+    if (target === undefined) {
+      return '대상이 채널에 없습니다.';
+    }
+
+    // 대상 권한 검사
+    const checkGrant = channel.getAdmin.some(
+      (admin) => admin.userIdx === target.userIdx,
+    );
+    if (grant === checkGrant) {
+      return '이미 권한이 부여되어있습니다.';
+    }
+
+    // 대상 권한 부여 및 emit
+    const adminInfo = this.chatService.setAdmin(channel, target, grant);
+    this.server
+      .to(`chat_room_${channelIdx}`)
+      .emit('chat_room_admin', adminInfo);
+    return '권한 부여 완료';
   }
-
-  // @SubscribeMessage('dm_start')
-  // async handleCheckDM(
-  //   @ConnectedSocket() client: Socket,
-  //   @MessageBody() targetNickname: string) {
-  //   if (!this.chatService.checkDM(targetNickname)) {
-  //     client.emit('not_found_dm'); // 여기서 찾을 수 없다는 메시지를 받으면 그 둘의 관련된 channel 페이지로 이동시킨다.
-  //   } else { const { Message[], member[], channelIdx } = await this.chatService.getDM(targetNickname);
-  //   to().emit('found_dm', { Message[], member[], channelIdx });
-  //   }
-  // }
-
-  // @SubscribeMessage('createChat')
-  // create(@MessageBody() createChatDto: CreateChatDto) {
-  //   return this.chatService.create(createChatDto);
-  // }
-
-  // @SubscribeMessage('findAllChat')
-  // findAll() {
-  //   return this.chatService.findAll();
-  // }
-
-  // @SubscribeMessage('findOneChat')
-  // findOne(@MessageBody() id: number) {
-  //   return this.chatService.findOne(id);
-  // }
-
-  // @SubscribeMessage('updateChat')
-  // update(@MessageBody() updateChatDto: UpdateChatDto) {
-  //   return this.chatService.update(updateChatDto.id, updateChatDto);
-  // }
-
-  // @SubscribeMessage('removeChat')
-  // remove(@MessageBody() id: number) {
-  //   return this.chatService.remove(id);
-  // }
 
   // API: MAIN_CHAT_7
-  @SubscribeMessage('chat_room_password')
-  setPassword(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-    // request data
-    // {
-    //   changed_password,
-    // }
-    // response data
-    // {
-    //   channel :{
-    //     member[]?,
-    //     channelIdx,
-    //     password : true / false
-    //   }
-    // }
-    // broadcast 방식
-  }
+  @SubscribeMessage('BR_chat_room_password')
+  changePassword(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any,
+  ) {
+    const { channelIdx, userIdx, changePassword } = JSON.parse(payload);
+    const ownerId: number = parseInt(client.handshake.query.userId as string);
+    const channel = this.chat.getProtectedChannel(channelIdx);
 
-  // API: MAIN_CHAT_8
-  @SubscribeMessage('chat_room_exit')
-  exitRoom(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-    // request data
-    // {
-    //   chat_user_id
-    // }
-    // response data
-    // owner 가 나갈 경우 전달하고 나감.
-    // {
-    //  left_members[],
-    //  owner
-    // }
-    // roomId 방식
+    // owner 유효성 검사
+    const owner: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === ownerId;
+    });
+    if (owner === undefined) {
+      return '요청자가 대화방에 없습니다.';
+    }
+    const isOwner: boolean = channel.getOwner.userIdx === owner.userIdx;
+    if (!isOwner) {
+      return '요청자가 owner 가 아닙니다.';
+    }
+    const channelInfo = this.chatService.changePassword(
+      channel,
+      changePassword,
+    );
+    console.log(channelInfo);
+    // broadcast 방식
+    this.server.emit('BR_chat_room_password', channelInfo);
   }
 
   // API: MAIN_CHAT_9
   @SubscribeMessage('chat_goto_lobby')
-  goToLooby(@ConnectedSocket() client: Socket) {
-    // request data
-    // response data
-    // {
-    //   channel :{
-    //     member[]?,
-    //     channelIdx,
-    //     password : true / false
-    //   }
-    // }
-    // client 방식
-  }
+  goToLobby(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+    const { channelIdx, userIdx } = JSON.parse(payload);
+    const channel = this.chat.getProtectedChannel(channelIdx);
+    const user: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === userIdx;
+    });
+    if (user === undefined) {
+      return '요청자가 대화방에 없습니다.';
+    }
+    const channelInfo = this.chatService.goToLobby(client, channel, user);
+    client.emit('chat_room_exit', channelInfo);
 
-  // API: MAIN_CHAT_10
-  @SubscribeMessage('chat_rooom_delete')
-  deleteRoom(@ConnectedSocket() client: Socket) {
-    // request data
-    // response data
-    //   {
-    //     channel[] :{
-    //      member[]?,
-    //      channelIdx,
-    //      password : true / false
-    //    }
-    //  }
-    // broadcast 방식
+    // API: MAIN_CHAT_10
+    const isEmpty = this.chatService.checkEmptyChannel(channel);
+    if (isEmpty) {
+      const channels = this.chatService.removeEmptyChannel(channel);
+      this.server.emit('BR_chat_room_delete', channels);
+      return '채널이 삭제되었습니다. 로비로 이동합니다.';
+    }
+
+    // API: MAIN_CHAT_8
+    const announce = this.chatService.exitAnnounce(channel);
+    this.server.to(`chat_room_${channelIdx}`).emit('chat_room_exit', announce);
+    return '로비로 이동합니다.';
   }
 
   // API: MAIN_CHAT_12
@@ -469,47 +512,158 @@ export class ChatGateway
 
   // API: MAIN_CHAT_13
   @SubscribeMessage('chat_kick')
-  kickMember(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-    // request data
-    //  {
-    //     roomId,
-    //     target_nickname
-    //  }
-    // response data
-    // {
-    //   targetNickname,
-    //   left_member[]
-    // }
-    // RoomId 방식
+  kickMember(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: string,
+  ) {
+    const { channelIdx, targetNciname, targetIdx } = JSON.parse(payload);
+    const requestId: number = parseInt(client.handshake.query.userId as string);
+    const channel = this.chat.getProtectedChannel(channelIdx);
+
+    // console.log(channel);
+    // owner 유효성 검사
+    const requester: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === requestId;
+    });
+    if (requester === undefined) {
+      return '요청자가 대화방에 없습니다.';
+    }
+    const clientIsAdmin: boolean = channel.getAdmin.some(
+      (admin) => admin.userIdx === requester.userIdx,
+    );
+    if (clientIsAdmin) {
+      return '요청자가 적절한 권한자가 아닙니다.';
+    }
+    // 대상 유효성 검사
+    const target = channel.getMember.find((member) => {
+      return member.userIdx === targetIdx;
+    });
+    if (target === undefined) {
+      return '대상이 채널에 없습니다.';
+    }
+    // 대상 권한 검사
+    const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
+      return admin.userIdx === target.userIdx;
+    });
+    if (targetIsAdmin) {
+      return '대상을 퇴장할 수 없습니다.';
+    }
+    // 대상이 나간걸 감지 후 emit
+    const channelInfo = this.chatService.kickMember(channel, target);
+    this.server
+      .to(`chat_room_${channelIdx}`)
+      .emit('chat_room_exit', channelInfo);
+    // console.log(channel);
+    return;
   }
 
   // API: MAIN_CHAT_14
   @SubscribeMessage('chat_ban')
-  banMember(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-    // request data
-    //  {
-    //     roomId,
-    //     target_nickname
-    //  }
-    // response data
-    // {
-    //   targetNickname,
-    //   left_member[]
-    // }
-    // RoomId 방식
+  banMember(@ConnectedSocket() client: Socket, @MessageBody() payload: string) {
+    const { channelIdx, targetNickname, targetIdx } = JSON.parse(payload);
+    const requestId: number = parseInt(client.handshake.query.userId as string);
+    const channel = this.chat.getProtectedChannel(channelIdx);
+
+    console.log(channel);
+    // owner 유효성 검사
+    const requester: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === requestId;
+    });
+    if (requester === undefined) {
+      return '요청자가 대화방에 없습니다.';
+    }
+    const clientIsAdmin: boolean = channel.getAdmin.some(
+      (admin) => admin.userIdx === requester.userIdx,
+    );
+    if (!clientIsAdmin) {
+      return '요청자가 적절한 권한자가 아닙니다.';
+    }
+    // 대상 유효성 검사
+    const target = channel.getMember.find((member) => {
+      return member.userIdx === targetIdx;
+    });
+    if (target === undefined) {
+      return '대상이 채널에 없습니다.';
+    }
+    // 대상 권한 검사
+    const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
+      return admin.userIdx === target.userIdx;
+    });
+    if (targetIsAdmin) {
+      return '대상을 퇴장할 수 없습니다.';
+    }
+
+    // 대상 ban 처리 및 emit
+    const banInfo = this.chatService.setBan(channel, target);
+    console.log('after ban : ', channel);
+    this.server.to(`chat_room_${channelIdx}`).emit('chat_room_admin', banInfo);
+    return 'ban 처리 되었습니다.';
   }
 
   // API: MAIN_CHAT_15
   @SubscribeMessage('chat_block')
-  blockMember(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-    // request data
-    //  {
-    //     target_nickname
-    //  }
-    // response data
-    // {
-    //   blockList[]
-    // }
-    // client 방식
+  async blockMember(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: string,
+  ) {
+    // FIXME: targetnickname 과 targetIdx 가 서로 맞는지 비교
+    // FIXME: targetIdx 가 본인인지 확인
+    const { targetNickname, targetIdx } = JSON.parse(payload);
+    const requestId: number = parseInt(client.handshake.query.userId as string);
+
+    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(requestId);
+    const blockInfo = await this.usersService.setBlock(targetNickname, user);
+    client.emit('chat_block', blockInfo);
+  }
+
+  // API: MAIN_CHAT_16
+  @SubscribeMessage('chat_get_roomList')
+  getPublicAndProtectedChannel(@ConnectedSocket() client: Socket) {
+    const channels = this.chatService.getPublicAndProtectedChannel();
+    client.emit('chat_get_roomList', channels);
+    return;
+  }
+
+  // API: MAIN_CHAT_17
+  @SubscribeMessage('chat_get_DMList')
+  async getPrivateChannels(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: string,
+  ) {
+    const { userNickname, userIdx } = JSON.parse(payload);
+    const userId = parseInt(client.handshake.query.userId as string);
+    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const channels = await this.chatService.getPrivateChannels(user);
+    client.emit('chat_get_DMList', channels);
+    return;
+  }
+
+  // API: MAIN_CHAT_18
+  @SubscribeMessage('chat_get_DM')
+  async getPrivateChannel(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any,
+  ) {
+    // const { targetIdx } = payload;
+    const { channelIdx } = JSON.parse(payload);
+    const dm: MessageInfo = await this.chatService.getPrivateChannel(
+      channelIdx,
+    );
+    client.emit('check_dm', dm);
+  }
+
+  // API: MAIN_CHAT_19
+  @SubscribeMessage('chat_get_grant')
+  async getGrant(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: any,
+  ) {
+    // const { userIdx, channelIdx } = payload;
+    const { userIdx, channelIdx } = JSON.parse(payload);
+    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userIdx);
+    const channel = this.chat.getProtectedChannel(channelIdx);
+    const grant = this.chatService.getGrant(channel, user);
+    client.emit('chat_get_grant', grant);
+    return;
   }
 }

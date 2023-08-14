@@ -20,6 +20,12 @@ export enum OnlineStatus {
   ONGAME,
 }
 
+export enum Permission {
+  MEMBER = 'member',
+  ADMIN = 'admin',
+  OWNER = 'owner',
+}
+
 @Entity('users')
 export class UserObject extends BaseEntity {
   @PrimaryColumn({ type: 'int' })

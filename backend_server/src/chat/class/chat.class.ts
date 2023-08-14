@@ -10,7 +10,7 @@ interface SocketObject {
 export interface MessageInteface {
   sender: string;
   msg: string;
-  // msgDate: Date;
+  msgDate: Date;
 }
 
 export interface MessageInfo {
@@ -38,6 +38,14 @@ export class Chat {
   get getProtectedChannels(): Channel[] {
     return this.protectedChannels;
   }
+  getProtectedChannel(channelIdx: number): Channel {
+    for (const channel of this.protectedChannels) {
+      if (channel.getChannelIdx === channelIdx) {
+        return channel;
+      }
+    }
+  }
+
   get getSocketList(): SocketObject[] {
     return this.socektList;
   }

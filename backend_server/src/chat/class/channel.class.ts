@@ -8,11 +8,12 @@ export class Channel {
   /******************************* 멤버 변수 *******************************/
   private channelIdx: number;
   private roomId: number;
-  private member: UserObject[] = []; //   private member: member[];
+  private member: UserObject[] = [];
   private messages: Message[] = [];
   private mode: Mode;
-  private owner: UserObject; //   private owner: member;
-  private admin: UserObject[] = []; //   private admin: member[];
+  private owner: UserObject;
+  private admin: UserObject[] = [];
+  private ban: UserObject[] = [];
   private password: string;
 
   /******************************* 메서드 *******************************/
@@ -44,7 +45,7 @@ export class Channel {
     return this.roomId;
   }
   get getMember(): UserObject[] {
-    return this.member; //   member: member[];
+    return this.member;
   }
   get getMessages(): Message[] {
     return this.messages;
@@ -52,17 +53,21 @@ export class Channel {
   get getMode(): string {
     return this.mode;
   }
-  get getOwner(): any {
-    return this.owner; //   owner: member;
+  get getOwner(): UserObject {
+    return this.owner;
   }
-  get getAdmin(): any {
-    return this.admin; //   admin: member[];
+  get getAdmin(): UserObject[] {
+    return this.admin;
+  }
+  get getBan(): UserObject[] {
+    return this.ban;
   }
   get getPassword(): string {
     return this.password;
   }
 
   // setter
+  // TODO: 함수 내부에서 에러 처리 해줘야함.
   set setChannelIdx(channelIdx: number) {
     this.channelIdx = channelIdx++;
   }
@@ -70,7 +75,7 @@ export class Channel {
     this.roomId = roomId;
   }
   set setMember(member: UserObject) {
-    this.member.push(member); // member: member[];
+    this.member.push(member);
   }
   set setMessage(message: Message) {
     this.messages.push(message);
@@ -78,13 +83,24 @@ export class Channel {
   set setMode(mode: Mode) {
     this.mode = mode;
   }
-  set setOwner(owner: any) {
-    this.owner = owner; // owner: member;
+  set setOwner(owner: UserObject) {
+    this.owner = owner;
   }
-  set setAdmin(admin: any) {
-    this.admin.push(admin); // admin: member[];
+  set setAdmin(admin: UserObject) {
+    this.admin.push(admin);
+  }
+  set setBan(ban: UserObject) {
+    this.ban.push(ban);
   }
   set setPassword(password: string) {
     this.password = password;
+  }
+
+  // remove
+  removeAdmin(admin: UserObject) {
+    this.admin.splice(this.admin.indexOf(admin), 1);
+  }
+  removeMember(member: UserObject) {
+    this.member.splice(this.member.indexOf(member), 1);
   }
 }
