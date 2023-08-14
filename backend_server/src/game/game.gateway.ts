@@ -28,7 +28,7 @@ import { GameBallEventDto } from './dto/game.ball.event.dto';
 @WebSocketGateway({
   namespace: 'game',
   cors: {
-    origin: ['http://localhost:3001'],
+    origin: ['http://localhost:3000'],
   },
 })
 @UseFilters(new WsExceptionFilter())

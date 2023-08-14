@@ -23,7 +23,7 @@ import { SendDMDto } from './dto/send-dm.dto';
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://localhost:3001'],
+    origin: ['http://localhost:3000'],
   },
 })
 export class ChatGateway
