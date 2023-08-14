@@ -17,7 +17,7 @@ import { Chat, MessageInfo } from './class/chat.class';
 import { UsersService } from 'src/users/users.service';
 import { DMChannel, Mode } from '../entity/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
-import { UserObject } from 'src/entity/users.entity';
+import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import { SendDMDto } from './dto/send-dm.dto';
 
 @WebSocketGateway({
@@ -86,7 +86,7 @@ export class ChatGateway
     if (user) {
       // TODO: disconnect 도 BR??
       // TODO: room 나가기, 소켓 리스트 지우기 등.
-      await this.usersService.setIsOnline(user, false);
+      await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
       await this.chat.removeSocketObject(
         this.chat.setSocketObject(client, user),
       );
@@ -152,7 +152,7 @@ export class ChatGateway
     client.emit('main_enter', main_enter);
 
     // API: MAIN_ENTER_1
-    await this.usersService.setIsOnline(user, true);
+    await this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
     const BR_main_enter = {
       targetNickname: user.nickname,
       targetIdx: user.userIdx,

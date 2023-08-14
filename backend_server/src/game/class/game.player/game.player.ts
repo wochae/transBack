@@ -7,20 +7,19 @@ export class GamePlayer {
   paddlePosY: number;
   latency: number; //ms
   score: number;
-  standardDate: any;
 
   constructor(userIdx: number, userObject: UserObject, socket: Socket) {
     this.userIdx = userIdx;
     this.userObject = userObject;
     this.socket = socket;
-    this.paddlePosY = 0;
+    // this.paddlePosY = 0;
     this.latency = -1;
     this.score = 0;
   }
 
-  public resetPlayer() {
-    this.paddlePosY = 0;
-  }
+  //   public resetPlayer() {
+  //     this.paddlePosY = 0;
+  //   }
 
   public setLatency(value: number) {
     this.latency = value;

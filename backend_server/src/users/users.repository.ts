@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm'; // EntityRepository 가 deprecated 되어 직접 호출함
-import { UserObject } from 'src/entity/users.entity';
+import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import { CreateUsersDto } from './dto/create-users.dto';
 import { CustomRepository } from 'src/typeorm-ex.decorator';
 
@@ -14,17 +14,19 @@ export class UserObjectRepository extends Repository<UserObject> {
       nickname: nickname,
       imgUri: imgUri,
       rankpoint: 0,
-      isOnline: true,
+      isOnline: OnlineStatus.ONLINE,
       available: true,
       win: 0,
       lose: 0,
     });
-    user = await this.save(user);
-
-    return user;
+    
+    return await this.save(user);
   }
 
-  async setIsOnline(user: UserObject, isOnline: boolean): Promise<boolean> {
+  async setIsOnline(
+    user: UserObject,
+    isOnline: OnlineStatus,
+  ): Promise<OnlineStatus> {
     user.isOnline = isOnline;
     await this.update(user.userIdx, { isOnline: user.isOnline });
     return user.isOnline;

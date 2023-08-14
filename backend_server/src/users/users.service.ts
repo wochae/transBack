@@ -1,4 +1,10 @@
-import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { UserObjectRepository } from './users.repository';
 import { CreateUsersDto } from './dto/create-users.dto';
 import { BlockTargetDto } from './dto/block-target.dto';
@@ -9,16 +15,16 @@ import { FollowFriendDto, FriendResDto, } from './dto/friend.dto';
 import axios from 'axios';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { response } from 'express';
+// import { CreateCertificateDto, IntraInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import { CreateCertificateDto, IntraSimpleInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import { Socket } from 'socket.io';
 import { CertificateRepository } from './certificate.repository';
-import { UserObject } from '../entity/users.entity';
+import { OnlineStatus, UserObject } from '../entity/users.entity';
 import { CertificateObject } from '../entity/certificate.entity';
 import { FriendList } from '../entity/friendList.entity';
 import { DataSource } from 'typeorm';
 import { IntraInfoDto, UserEditImgDto, UserEditprofileDto, } from './dto/user.dto';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
-
 
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 @Injectable()
@@ -29,8 +35,7 @@ export class UsersService {
     private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
     private certificateRepository: CertificateRepository,
-  ) { }
-
+  ) {}
 
   private logger: Logger = new Logger('UsersService');
 
@@ -70,6 +75,7 @@ export class UsersService {
   async getTokenInfo(accessToken: string) {
     return await this.certificateRepository.findOneBy({ token: accessToken });
   }
+
   async saveToken(createCertificateDto: CreateCertificateDto): Promise<CertificateObject> {
     try {
       let beforeSaveToken = await this.certificateRepository.findOneBy({ userIdx: createCertificateDto.userIdx });
@@ -85,7 +91,6 @@ export class UsersService {
       }
     } catch (e) { console.log("토큰 디비에 문제가 있다."); throw new InternalServerErrorException(e);}
   };
-
 
 
   async blockTarget(
@@ -123,7 +128,7 @@ export class UsersService {
       nickname: intra,
       imgUri: imgUri,
       rankpoint: 0,
-      isOnline: true,
+      isOnline: OnlineStatus.ONLINE,
       available: true,
       win: 0,
       lose: 0,
@@ -146,11 +151,13 @@ export class UsersService {
       console.log(`getIntraInfo: response.data.id : ${response.data.id}`);
       const userInfo = response.data;
 
-      this.logger.log(`getIntraInfo: userInfo : ${userInfo.id}, ${userInfo.image.versions.small}`);
+      this.logger.log(
+        `getIntraInfo: userInfo : ${userInfo.id}, ${userInfo.image.versions.small}`,
+      );
       if (!userInfo.id) {
         throw this.logger.error('인트라 정보 불러오기 실패했습니다.');
       }
-      let existedUser: UserObject = await this.findOneUser(userInfo.id);
+      const existedUser: UserObject = await this.findOneUser(userInfo.id);
       console.log(`existedUser, userIdx :  `, existedUser);
       if (!existedUser) {
         this.logger.log('No user');
@@ -214,8 +221,6 @@ export class UsersService {
           return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri);
         } // 존재하는 유저가 있고 토큰이 같은 경우 -> 그대로
         return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri);
-
-
         /*
             token: string;
             check2Auth: boolean;
@@ -223,19 +228,15 @@ export class UsersService {
             userIdx: number;
          */
       }
-
     } catch (error) {
       // 에러 핸들링
       console.error('Error making about cerification - ', error);
     }
   }
 
-
   async createCertificate(
     createCertificateDto: CreateCertificateDto,
-
   ): Promise<CertificateObject> {
-
     return this.certificateRepository.insertCertificate(
       createCertificateDto.userIdx,
       createCertificateDto.token,
@@ -258,7 +259,7 @@ export class UsersService {
 
   async getFriendList(
     intra: string,
-  ): Promise<{ friendNicname: string; isOnline: boolean }[]> {
+  ): Promise<{ friendNicname: string; isOnline: OnlineStatus }[]> {
     const user: UserObject = await this.userObjectRepository.findOne({
       where: { intra: intra },
     });
@@ -275,7 +276,7 @@ export class UsersService {
     return this.blockedListRepository.getBlockedList(user);
   }
 
-  async setIsOnline(user: UserObject, isOnline: boolean) {
+  async setIsOnline(user: UserObject, isOnline: OnlineStatus) {
     // user.isOnline = isOnline;
     return this.userObjectRepository.setIsOnline(user, isOnline);
   }

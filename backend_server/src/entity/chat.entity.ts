@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
   ManyToOne,
+  ManyToMany,
   JoinColumn,
 } from 'typeorm';
 
@@ -34,7 +35,7 @@ export class DMChannel extends BaseEntity {
   @Column()
   userNickname2: string;
 
-  @Column({ unique: true })
+  @Column()
   channelIdx: number;
 
   @OneToMany(
@@ -71,7 +72,7 @@ export class DirectMessage extends BaseEntity {
   @Column()
   msgDate: Date;
 
-  @ManyToOne(() => DMChannel, (targetMessage) => targetMessage.channelIdx)
+  @ManyToMany(() => DMChannel, (targetMessage) => targetMessage.channelIdx)
   @JoinColumn({ name: 'channelIdx', referencedColumnName: 'channelIdx' })
   targetMessage: DMChannel;
 }

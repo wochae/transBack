@@ -23,6 +23,7 @@ import { GameLatencyGetDto } from './dto/game.latency.get.dto';
 import { GameCancleDto } from './dto/game.cancle.dto';
 import { GamePaddleMoveDto } from './dto/game.paddle.move.dto';
 import { GameScoreDto } from './dto/game.score.dto';
+import { GameBallEventDto } from './dto/game.ball.event.dto';
 
 @WebSocketGateway({
   namespace: 'game',
@@ -49,8 +50,13 @@ export class GameGateway
       client.handshake.query.userId as string,
       10,
     );
+    this.gameService.checkOnGameOrNOT(userId, this.server);
     this.gameService.popOnlineUser(userId);
+    // TODO: 작성해야 할 부분₩
     // 게임 중에 있는지 파악하기
+    //	// 게임 중에 있을 시 판정 승으로 전달(api 는 승리와 동일하게 사용 가능)
+    //	//	// DB 중에 관련 기록 탐색 (1. 게임 채널-> 2. 게임 레코드)
+    //	//	//	// 내용 수정 및 정리
     // 게임 판정 승 로직 추가
     // 종료 시키기
     this.logger.log(userId + ' is disconnected');
@@ -201,7 +207,10 @@ export class GameGateway
   //   }
 
   @SubscribeMessage('game_predict_ball')
-  async sendBallPrediction(): Promise<ReturnMsgDto> {
+  async sendBallPrediction(
+    @MessageBody() ballEvent: GameBallEventDto,
+  ): Promise<ReturnMsgDto> {
+    await this.gameService.nextBallEvent(ballEvent, this.server);
     // 공 부딪힌 시점 #1
     // 공 부딪힌 시점 #2
     //	// 공 예측 알고리즘으로 들어가기
