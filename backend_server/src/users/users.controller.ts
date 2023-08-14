@@ -56,12 +56,10 @@ export class UsersController {
   @Put('profile/:userNickname')
   async updateUserProfile(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: any) {
     try {
-      const { changedNickname } = body.changedNickname;
+      const changedNickname = body.changedNickname;
 
       const user = await this.usersService.findOneUser(req.jwtPayload.id);
-      user.nickname = changedNickname;
-      const changedUser = plainToClass(UserEditprofileDto, user);
-
+      const changedUser: UserEditprofileDto = { userIdx: user.userIdx , userNickname: changedNickname, imgUri: user.imgUri};
       const result = await this.usersService.updateUserNick(changedUser);
       if (result) {
         console.log("success :", result)

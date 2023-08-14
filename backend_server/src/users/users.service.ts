@@ -45,12 +45,9 @@ export class UsersService {
   }
 
   async updateUserNick(updateUsersDto: UserEditprofileDto) {
-    const { userIdx, userNickname } = updateUsersDto;
+    const { userIdx, userNickname, imgUri } = updateUsersDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
-    console.log("updateOneUser: user : ", user);
     if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
-    // 요청한 닉네임이 현재 닉네임과 다르다면
-    console.log("updateOneUser: userNickname : ", user, userNickname);
     // 존재하는 닉네임인지 확인
     const isNicknameExist = await this.userObjectRepository.findOneBy({ nickname: userNickname });
     if (!isNicknameExist) { // 닉네임이 존재하지 않는다면
