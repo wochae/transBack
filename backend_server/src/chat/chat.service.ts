@@ -302,19 +302,19 @@ export class ChatService {
   /******************* Save Message Funcions *******************/
   async enterPublicRoom(user: UserObject, channel: Channel) {
     // 이미 참여한 채널인지 확인한다.
+    console.log('channel ', channel);
+    console.log('user ', user);
     if (
-      !this.chat
-        .getProtectedChannel(channel.getChannelIdx)
-        .getMember.some((member) => member.userIdx === user.userIdx)
+      !channel.getMember?.some((member) => member?.userIdx === user?.userIdx)
     ) {
       channel.setMember = user;
     }
     const channelInfo = {
       member: channel.getMember.map((member) => {
         return {
-          userIdx: member.userIdx,
-          nickname: member.nickname,
-          imgUri: member.imgUri,
+          userIdx: member?.userIdx,
+          nickname: member?.nickname,
+          imgUri: member?.imgUri,
         };
       }),
       channelIdx: channel.getChannelIdx,

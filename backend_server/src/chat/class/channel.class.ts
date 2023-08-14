@@ -89,8 +89,10 @@ export class Channel {
   set setAdmin(admin: UserObject) {
     this.admin.push(admin);
   }
-  set setBan(ban: UserObject) {
-    this.ban.push(ban);
+  set setBan(ban: UserObject | null) {
+    if (ban !== null) {
+      this.ban.push(ban);
+    }
   }
   set setPassword(password: string) {
     this.password = password;

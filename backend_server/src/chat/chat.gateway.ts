@@ -51,6 +51,8 @@ export class ChatGateway
     const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
       return user.userIdx === userId;
     });
+    console.log(this.inMemoryUsers.inMemoryUsers);
+    console.log(user);
     if (!user) {
       console.log(`[ ❗️ Client ] ${client.id} Not Found`);
       client.disconnect();
@@ -65,7 +67,7 @@ export class ChatGateway
       });
     });
     // FIXME: 테스트용  코드
-    client.join('chat_room_10');
+    // client.join('chat_room_10');
     // client.join('chat_room_11');
 
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
@@ -116,8 +118,8 @@ export class ChatGateway
     // TODO: intra 를 class 로 만들어서 DTO 처리?
     @MessageBody() payload: any,
   ) {
-    // const { intra } = payload;
-    const { intra } = JSON.parse(payload);
+    const { intra } = payload;
+    // const { intra } = JSON.parse(payload);
 
     // API: MAIN_ENTER_0
     // TODO: 정리가 필요할듯
@@ -257,19 +259,22 @@ export class ChatGateway
   ) {
     // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
     const { userNickname, userIdx, channelIdx, password } = JSON.parse(payload);
+    // const { userNickname, userIdx, channelIdx, password } = payload;
     // const jsonData = payload;
     this.logger.log(
       `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${userNickname}`,
     );
+    console.log('payload : ', payload);
     let channel: any = await this.chatService.findChannelByRoomId(channelIdx);
     const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
       userIdx,
     );
+    console.log('user :', user);
     // ban 체크
-    if (channel.getBan.some((member) => member.userIdx === userIdx)) {
-      this.logger.log(`[ 💬 ] ${user.nickname} 은 차단된 유저입니다.`);
-      return `${user.nickname} 은 차단된 유저입니다.`;
-    }
+    // if (channel.getBan?.some((member) => member.userIdx === userIdx)) {
+    //   this.logger.log(`[ 💬 ] ${user.nickname} 은 차단된 유저입니다.`);
+    //   return `${user.nickname} 은 차단된 유저입니다.`;
+    // }
     if (channel instanceof Channel) {
       if (channel.getPassword === '') {
         this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
@@ -315,20 +320,20 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    // const { channelIdx, senderIdx, msg } = payload;
-    const { channelIdx, senderIdx, msg } = JSON.parse(payload);
+    const { channelIdx, senderIdx, msg } = payload;
+    // const { channelIdx, senderIdx, msg } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user: UserObject = await this.usersService.getUserInfoFromDB(
       this.inMemoryUsers.getUserByIdFromIM(userId).nickname,
     );
     // FIXME: 테스트용 코드 ------------------------------------------------------
-    const testChannel: Channel | DMChannel =
-      await this.chatService.findChannelByRoomId(channelIdx);
-    if (testChannel instanceof Channel) {
-      testChannel.setMember = await this.usersService.getUserInfoFromDBById(
-        senderIdx,
-      );
-    }
+    // const testChannel: Channel | DMChannel =
+    //   await this.chatService.findChannelByRoomId(channelIdx);
+    // if (testChannel instanceof Channel) {
+    //   testChannel.setMember = await this.usersService.getUserInfoFromDBById(
+    //     senderIdx,
+    //   );
+    // }
     // ------------------------------------------------------------------------
     this.logger.log(
       `[ 💬 Socket API CALL ] 'chat_send_msg' _ nickname: ${client.handshake.auth}`,
@@ -378,6 +383,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any, // chatCreateRoomReqDto
   ) {
+    console.log('payload : ', payload);
     const { password = '' } = JSON.parse(payload);
     // const { password = null } = payload;
     const userId: number = parseInt(client.handshake.query.userId as string);
@@ -471,7 +477,8 @@ export class ChatGateway
   // API: MAIN_CHAT_9
   @SubscribeMessage('chat_goto_lobby')
   goToLobby(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
-    const { channelIdx, userIdx } = JSON.parse(payload);
+    // const { channelIdx, userIdx } = JSON.parse(payload);
+    const { channelIdx, userIdx } = payload;
     const channel = this.chat.getProtectedChannel(channelIdx);
     const user: UserObject = channel.getMember.find((member) => {
       return member.userIdx === userIdx;
