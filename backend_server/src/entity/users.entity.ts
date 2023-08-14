@@ -14,6 +14,12 @@ import { DMChannel } from 'src/entity/chat.entity';
 import { GameRecord } from './gameRecord.entity';
 import { GameChannel } from 'src/entity/gameChannel.entity';
 
+export enum OnlineStatus {
+  ONLINE = 0,
+  OFFLINE,
+  ONGAME,
+}
+
 @Entity('users')
 export class UserObject extends BaseEntity {
   @PrimaryGeneratedColumn({ type: 'int' })
@@ -31,8 +37,8 @@ export class UserObject extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   rankpoint: number;
 
-  @Column({ type: 'boolean', default: true })
-  isOnline: boolean;
+  @Column({ type: 'enum', default: OnlineStatus.ONLINE, enum: OnlineStatus })
+  isOnline: OnlineStatus;
 
   @Column({ type: 'boolean', default: true })
   available: boolean;

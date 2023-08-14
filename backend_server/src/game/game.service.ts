@@ -29,6 +29,7 @@ import { GameBall } from './class/game.ball/game.ball';
 import { GameBallEventDto } from './dto/game.ball.event.dto';
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { GameChannel } from 'src/entity/gameChannel.entity';
+import { OnlineStatus } from 'src/entity/users.entity';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -421,7 +422,8 @@ export class GameService {
 
     if (index != -1) return -1;
 
-    if (player.user.isOnline == false) player.user.isOnline = true;
+    if (player.user.isOnline == OnlineStatus.OFFLINE)
+      player.user.isOnline = OnlineStatus.ONGAME;
     await this.userObjectRepository.save(player.user);
     this.onlinePlayerList.push(player);
     // console.log(this.onlinePlayerList[index].user.nickname);
@@ -438,7 +440,7 @@ export class GameService {
 
     if (index == -1) return this.onlinePlayerList.length;
 
-    this.onlinePlayerList[index].user.isOnline = false;
+    this.onlinePlayerList[index].user.isOnline = OnlineStatus.OFFLINE;
     await this.userObjectRepository.save(this.onlinePlayerList[index].user);
     this.onlinePlayerList.splice(index);
 

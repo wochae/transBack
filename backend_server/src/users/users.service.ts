@@ -1,4 +1,10 @@
-import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { UserObjectRepository } from './users.repository';
 import { CreateUsersDto } from './dto/create-users.dto';
 import { BlockTargetDto } from './dto/block-target.dto';
@@ -9,14 +15,17 @@ import { InsertFriendDto } from './dto/insert-friend.dto';
 import axios from 'axios';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { response } from 'express';
-import { CreateCertificateDto, IntraInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
+import {
+  CreateCertificateDto,
+  IntraInfoDto,
+  JwtPayloadDto,
+} from 'src/auth/dto/auth.dto';
 import { Socket } from 'socket.io';
 import { CertificateRepository } from './certificate.repository';
-import { UserObject } from '../entity/users.entity';
+import { OnlineStatus, UserObject } from '../entity/users.entity';
 import { CertificateObject } from '../entity/certificate.entity';
 import { FriendList } from '../entity/friendList.entity';
 import { DataSource } from 'typeorm';
-
 
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 @Injectable()
@@ -27,8 +36,7 @@ export class UsersService {
     private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
     private certificateRepository: CertificateRepository,
-  ) { }
-
+  ) {}
 
   private logger: Logger = new Logger('UsersService');
 
@@ -39,11 +47,11 @@ export class UsersService {
   async getTokenInfo(accessToken: string) {
     return await this.certificateRepository.findOneBy({ token: accessToken });
   }
-  async saveToken(createCertificateDto: CreateCertificateDto): Promise<CertificateObject> {
+  async saveToken(
+    createCertificateDto: CreateCertificateDto,
+  ): Promise<CertificateObject> {
     return await this.certificateRepository.save(createCertificateDto);
-  };
-
-
+  }
 
   async blockTarget(
     blockTarget: BlockTargetDto,
@@ -80,7 +88,7 @@ export class UsersService {
       nickname: intra,
       imgUri: imgUri,
       rankpoint: 0,
-      isOnline: true,
+      isOnline: OnlineStatus.ONLINE,
       available: true,
       win: 0,
       lose: 0,
@@ -103,11 +111,13 @@ export class UsersService {
       console.log(`getIntraInfo: response.data.id : ${response.data.id}`);
       const userInfo = response.data;
 
-      this.logger.log(`getIntraInfo: userInfo : ${userInfo.id}, ${userInfo.image.versions.small}`);
+      this.logger.log(
+        `getIntraInfo: userInfo : ${userInfo.id}, ${userInfo.image.versions.small}`,
+      );
       if (!userInfo.id) {
         throw this.logger.error('인트라 정보 불러오기 실패했습니다.');
       }
-      let existedUser: UserObject = await this.findOneUser(userInfo.id);
+      const existedUser: UserObject = await this.findOneUser(userInfo.id);
       console.log(`existedUser, userIdx :  `, existedUser);
       if (!existedUser) {
         this.logger.log('No user');
@@ -125,12 +135,10 @@ export class UsersService {
           check2Auth: boolean;
          */
         const certi = await this.certificateRepository.insertCertificate(
-
           userInfo.id,
           accessToken, // intraInfo에 있지
           userInfo.email,
           false,
-
         );
 
         console.log('certificate insert', certi);
@@ -166,7 +174,10 @@ export class UsersService {
           this.logger.log('user is exist but token is different');
 
           existedUser.certificate.token = accessToken;
-          await this.certificateRepository.update(existedUser.userIdx, existedUser.certificate);
+          await this.certificateRepository.update(
+            existedUser.userIdx,
+            existedUser.certificate,
+          );
           return existedUser;
         }
         this.logger.log(` 유저가 존재하지 않은 경우 certi insert start`);
@@ -177,19 +188,15 @@ export class UsersService {
             userIdx: number;
          */
       }
-
     } catch (error) {
       // 에러 핸들링
       console.error('Error making GET request:', error);
     }
   }
 
-
   async createCertificate(
     createCertificateDto: CreateCertificateDto,
-
   ): Promise<CertificateObject> {
-
     return this.certificateRepository.insertCertificate(
       createCertificateDto.userIdx,
       createCertificateDto.token,
@@ -212,7 +219,7 @@ export class UsersService {
 
   async getFriendList(
     intra: string,
-  ): Promise<{ friendNicname: string; isOnline: boolean }[]> {
+  ): Promise<{ friendNicname: string; isOnline: OnlineStatus }[]> {
     const user: UserObject = await this.userObjectRepository.findOne({
       where: { intra: intra },
     });
@@ -229,7 +236,7 @@ export class UsersService {
     return this.blockedListRepository.getBlockedList(user);
   }
 
-  async setIsOnline(user: UserObject, isOnline: boolean) {
+  async setIsOnline(user: UserObject, isOnline: OnlineStatus) {
     // user.isOnline = isOnline;
     return this.userObjectRepository.setIsOnline(user, isOnline);
   }
