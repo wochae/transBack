@@ -190,7 +190,6 @@ export class ChatGateway
       client.handshake.query.userId as string,
       10,
     );
-    // TODO: 논의 사항. 빈배열 대신에 boolean 해도 되나..?
     const check_dm: MessageInfo | boolean = await this.chatService.checkDM(
       userId,
       targetIdx,
@@ -230,21 +229,18 @@ export class ChatGateway
       return;
     }
     const message: SendDMDto = { msg: msg };
+    // TODO: Block 검사
+    const checkBlock = await this.usersService.checkBlockList(user, targetUser);
     const newChannelAndMsg = await this.chatService.createDM(
       client,
       user,
       targetUser,
       message,
+      checkBlock,
     );
     if (!newChannelAndMsg) {
       console.log('DM 채널 생성에 실패했습니다.');
       return '실패';
-    }
-    // TODO: Block 검사
-    const checkBlock = await this.usersService.checkBlockList(user, targetUser);
-    if (checkBlock) {
-      console.log('차단된 유저입니다.');
-      return;
     }
     this.server
       .to(`chat_room_${newChannelAndMsg.channelIdx}`)

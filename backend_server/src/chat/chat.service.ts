@@ -184,6 +184,7 @@ export class ChatService {
     user: UserObject,
     targetUser: UserObject,
     msg: SendDMDto,
+    checkBlock: boolean,
   ) {
     const channelIdx = await this.setNewChannelIdx();
     // TODO: 예외처리 필요
@@ -199,11 +200,15 @@ export class ChatService {
       channelIdx: channelIdx,
     };
     // 상대방 소켓 찾아서 join 시키기
-    const targetSocket = await this.chat.getSocketObject(targetUser.userIdx);
-    if (targetSocket) {
-      await targetSocket.socket.join(`chat_room_${channelIdx}`);
+    if (checkBlock) {
+      console.log('차단된 유저입니다.');
     } else {
-      console.log('상대방이 오프라인입니다.');
+      const targetSocket = await this.chat.getSocketObject(targetUser.userIdx);
+      if (targetSocket) {
+        await targetSocket.socket.join(`chat_room_${channelIdx}`);
+      } else {
+        console.log('상대방이 오프라인입니다.');
+      }
     }
     client.join(`chat_room_${channelIdx}`);
     console.log('dmInfo', dmInfo);
@@ -482,7 +487,7 @@ export class ChatService {
   }
 
   getPublicAndProtectedChannel() {
-    const channels = this.chat.getProtectedChannels.map((channel) => {
+    const channels = this.chat.getProtectedChannels?.map((channel) => {
       return {
         owner: channel.getOwner.nickname,
         channelIdx: channel.getChannelIdx,
@@ -496,7 +501,7 @@ export class ChatService {
     const channels: DMChannel[] =
       await this.dmChannelRepository.findDMChannelsByUserIdx(user.userIdx);
 
-    const channelsInfo = channels.map((channel) => {
+    const channelsInfo = channels?.map((channel) => {
       return {
         targetNickname: channel.userNickname2,
         channelIdx: channel.channelIdx,
