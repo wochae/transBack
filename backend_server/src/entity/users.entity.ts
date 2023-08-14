@@ -3,9 +3,9 @@ import {
   Entity,
   Column,
   OneToOne,
-  PrimaryGeneratedColumn,
   OneToMany,
   JoinColumn,
+  PrimaryColumn,
 } from 'typeorm';
 import { FriendList } from './friendList.entity';
 import { BlockList } from './blockList.entity';
@@ -22,7 +22,7 @@ export enum OnlineStatus {
 
 @Entity('users')
 export class UserObject extends BaseEntity {
-  @PrimaryGeneratedColumn({ type: 'int' })
+  @PrimaryColumn({ type: 'int' })
   userIdx: number;
 
   @Column({ type: 'varchar', unique: true })

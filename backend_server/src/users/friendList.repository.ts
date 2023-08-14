@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm'; // EntityRepository 가 deprecated 되어 직접 호출함
 import { CustomRepository } from 'src/typeorm-ex.decorator';
-import { InsertFriendDto } from './dto/insert-friend.dto';
+import { FollowFriendDto } from './dto/friend.dto';
 import { FriendList } from 'src/entity/friendList.entity';
 import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import { UserObjectRepository } from './users.repository';
@@ -8,7 +8,7 @@ import { UserObjectRepository } from './users.repository';
 @CustomRepository(FriendList)
 export class FriendListRepository extends Repository<FriendList> {
   async insertFriend(
-    insertFriendDto: InsertFriendDto,
+    insertFriendDto: FollowFriendDto,
     user: UserObject,
     userList: UserObjectRepository,
   ): Promise<FriendList[]> {

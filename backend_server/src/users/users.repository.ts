@@ -6,19 +6,20 @@ import { CustomRepository } from 'src/typeorm-ex.decorator';
 @CustomRepository(UserObject)
 export class UserObjectRepository extends Repository<UserObject> {
   async createUser(createUsersDto: CreateUsersDto): Promise<UserObject> {
-    const { intra } = createUsersDto;
+    const { userIdx, intra, nickname, imgUri } = createUsersDto;
 
-    const user = this.create({
+    let user = this.create({
+      userIdx: userIdx,
       intra: intra,
-      nickname: intra,
+      nickname: nickname,
+      imgUri: imgUri,
       rankpoint: 0,
-      imgUri: 'https://cdn.intra.42.fr/users/medium_default.png',
       isOnline: OnlineStatus.ONLINE,
       available: true,
       win: 0,
       lose: 0,
     });
-
+    
     return await this.save(user);
   }
 
@@ -31,30 +32,3 @@ export class UserObjectRepository extends Repository<UserObject> {
     return user.isOnline;
   }
 }
-
-// @CustomRepository(Histories)
-// export class HistoriesRepository extends Repository<Histories> {
-//   async createHistories(
-//     createHistoryDto: CreateHistoryDto,
-//     argGameId: number,
-//   ): Promise<Histories> {
-//     const { userIdx, type, result } = createHistoryDto;
-//     let histories;
-//     if (type == HistoriesType.NORMAL) {
-//       histories = this.create({
-//         gameId: argGameId,
-//         userIdx,
-//         result,
-//       });
-//     } else {
-//       histories = this.create({
-//         gameId: argGameId,
-//         userIdx,
-//         type,
-//         result,
-//       });
-//     }
-//     await this.save(histories);
-//     return histories;
-//   }
-// }
