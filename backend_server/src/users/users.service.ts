@@ -35,12 +35,12 @@ export class UsersService {
     private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
     private certificateRepository: CertificateRepository,
-  ) {}
+  ) { }
 
   private logger: Logger = new Logger('UsersService');
 
   async findOneUser(userIdx: number): Promise<UserObject> {
-    console.log("찾는다: " + userIdx );
+    console.log("찾는다: " + userIdx);
     return this.userObjectRepository.findOneBy({ userIdx });
   }
 
@@ -49,16 +49,18 @@ export class UsersService {
     const user = await this.userObjectRepository.findOneBy({ userIdx });
     console.log("updateOneUser: user : ", user);
     if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
-    if (user.nickname === userNickname) { // 요청한 닉네임이 현재 닉네임과 다르다면
-      const isNicknameExist = await this.userObjectRepository.findOneBy({ nickname: userNickname });
-      if (!isNicknameExist) { // 닉네임이 존재하지 않는다면
-        user.nickname = userNickname;
-        await this.userObjectRepository.save(user);
-      } else { return false; } // 닉네임이 이미 존재한다면
-    } else { return new BadRequestException('변경을 실패 했습니다.'); } // 닉네임이 같다면
+    // 요청한 닉네임이 현재 닉네임과 다르다면
+    console.log("updateOneUser: userNickname : ", user, userNickname);
+    // 존재하는 닉네임인지 확인
+    const isNicknameExist = await this.userObjectRepository.findOneBy({ nickname: userNickname });
+    if (!isNicknameExist) { // 닉네임이 존재하지 않는다면
+      user.nickname = userNickname;
+      return await this.userObjectRepository.save(user);
+    } else { return false; } // 닉네임이 이미 존재한다면
+
   }
 
-  async uploadUserImg(UserEditprofileDto : UserEditprofileDto) {
+  async uploadUserImg(UserEditprofileDto: UserEditprofileDto) {
     const { userIdx, imgUri } = UserEditprofileDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
     if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
@@ -80,7 +82,8 @@ export class UsersService {
     try {
       let beforeSaveToken = await this.certificateRepository.findOneBy({ userIdx: createCertificateDto.userIdx });
       // 없다면
-      if (!beforeSaveToken) { return await this.certificateRepository.save(createCertificateDto);
+      if (!beforeSaveToken) {
+        return await this.certificateRepository.save(createCertificateDto);
       } else {
         // 있다면 다른지
         if (beforeSaveToken.token != createCertificateDto.token) {
@@ -89,7 +92,7 @@ export class UsersService {
           return await this.certificateRepository.findOneBy({ userIdx: createCertificateDto.userIdx });
         } else { return beforeSaveToken; } // 같다면 그대로
       }
-    } catch (e) { console.log("토큰 디비에 문제가 있다."); throw new InternalServerErrorException(e);}
+    } catch (e) { console.log("토큰 디비에 문제가 있다."); throw new InternalServerErrorException(e); }
   };
 
 
@@ -185,16 +188,16 @@ export class UsersService {
           @Column({ default: false })
           check2Auth: boolean;
          */
-          this.logger.log(`user create start`);
-          const user = await this.userObjectRepository.createUser({
-            userIdx: userInfo.id,
-            intra: response.data.login,
-            nickname: response.data.login,
-            imgUri: response.data.image.link,
-            email: response.data.email,
-          });
-          console.log('user create end', user);
-          
+        this.logger.log(`user create start`);
+        const user = await this.userObjectRepository.createUser({
+          userIdx: userInfo.id,
+          intra: response.data.login,
+          nickname: response.data.login,
+          imgUri: response.data.image.link,
+          email: response.data.email,
+        });
+        console.log('user create end', user);
+
         const certi = await this.certificateRepository.insertCertificate(
           userInfo.id,
           accessToken,
@@ -217,7 +220,7 @@ export class UsersService {
         } finally {
           await queryRunner.release();
         }
-        
+
         return new IntraSimpleInfoDto(user.userIdx, user.imgUri);;
       } else {
         // 유저가 존재하는 경우
