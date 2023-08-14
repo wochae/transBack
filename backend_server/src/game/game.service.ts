@@ -471,14 +471,21 @@ export class GameService {
     const { userIdx, clientDate, paddleInput } = paddleMove;
     const latency = time - clientDate;
     const targetRoom = this.getRoomByUserIdx(userIdx);
-    const targetUser =
-      targetRoom.user1.userIdx === userIdx
-        ? targetRoom.user2
-        : targetRoom.user1;
-    await targetUser.socket.emit(
+    let target: GamePlayer;
+    let nonTarget: GamePlayer;
+    if (targetRoom.user1.userIdx === userIdx) {
+      target = targetRoom.user1;
+      nonTarget = targetRoom.user2;
+    } else {
+      target = targetRoom.user2;
+      nonTarget = targetRoom.user1;
+    }
+    await target.socket.emit(
       'game_move_paddle',
       new GamePaddlePassDto(latency, paddleInput),
     );
+    nonTarget.setLatency(latency);
+
     // play Room 찾기
     // 상대방 찾기
     // 레이턴 계산하기

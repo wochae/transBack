@@ -250,10 +250,8 @@ export class GameGateway
   async sendPaddleToTarget(
     @MessageBody() paddleMove: GamePaddleMoveDto,
   ): Promise<ReturnMsgDto> {
-    const selfLatency = await this.gameService.movePaddle(
-      paddleMove,
-      Date.now(),
-    );
+    const time = Date.now();
+    const selfLatency = await this.gameService.movePaddle(paddleMove, time);
     // 누군지 파악하기
     // 해당 룸 상대방 소켓으로 전달하기
     return new ReturnMsgDto(selfLatency, 'check your latency');
