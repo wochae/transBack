@@ -715,12 +715,15 @@ export class GameService {
 
   public async checkOnGameOrNOT(userId: number, server: Server) {
     const room = this.getRoomByUserIdx(userId);
-    if (room == null) {
-      // TODO: 이미 정상 처리 상태
+    if (!room) {
+      return;
     }
     let winner;
-    if (userId == room.user1.userIdx) winner = room.user2.userIdx;
-    else winner = room.user1.userIdx;
+    if (userId === room.user1.userIdx) {
+      winner = room.user2.userIdx;
+    } else {
+      winner = room.user1.userIdx;
+    }
     const finishData = new GameScoreFinshDto(
       room.user1,
       room.user2,
