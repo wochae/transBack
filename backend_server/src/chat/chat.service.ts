@@ -250,10 +250,12 @@ export class ChatService {
 
   /******************* Save Message Funcions *******************/
 
-  async saveMessageInIM(channelIdx: number, senderIdx: number, msg: string) {
-    const channel = await this.chat.getProtectedChannels.find(
+  saveMessageInIM(channelIdx: number, senderIdx: number, msg: string) {
+    const channel = this.chat.getProtectedChannels.find(
       (channel) => channel.getChannelIdx === channelIdx,
     );
+    console.log(channel.getMember);
+
     const msgInfo = new Message(channelIdx, senderIdx, msg);
     msgInfo.setMsgDate = new Date();
     if (channel) {
@@ -265,7 +267,7 @@ export class ChatService {
     // const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
     const message = {
       channelIdx: channelIdx,
-      senderIdx: await this.inMemoryUsers.getUserByIdFromIM(senderIdx).userIdx,
+      senderIdx: this.inMemoryUsers.getUserByIdFromIM(senderIdx).userIdx,
       msg: msgInfo.getMessage,
       msgDate: msgInfo.getMsgDate,
     };
@@ -302,6 +304,11 @@ export class ChatService {
   /******************* Save Message Funcions *******************/
   async enterPublicRoom(user: UserObject, channel: Channel) {
     // 이미 참여한 채널인지 확인한다.
+    console.log(
+      this.chat
+        .getProtectedChannel(channel.getChannelIdx)
+        .getMember.some((member) => member.userIdx === user.userIdx),
+    );
     if (
       !this.chat
         .getProtectedChannel(channel.getChannelIdx)
@@ -436,11 +443,13 @@ export class ChatService {
   /******************* Funcions about Exit Room *******************/
 
   goToLobby(client: Socket, channel: Channel, user: UserObject) {
-    channel.removeMember(user);
     const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
     if (isOwner) {
       channel.setOwner = channel.getMember[0];
+      channel.removeOwner();
     }
+    channel.removeMember(user);
+    channel.removeAdmin(user);
     // const userSocket = this.chat.getSocketObject(user.userIdx);
     // userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
     // userSocket.socket.emit('chat_goto_lobby', '방을 나왔습니다.');
@@ -462,7 +471,7 @@ export class ChatService {
           userIdx: member.userIdx,
         };
       }),
-      owner: channel.getOwner.nickname,
+      owner: channel.getOwner?.nickname,
     };
     return channelInfo;
   }
@@ -478,7 +487,7 @@ export class ChatService {
     this.chat.removeChannel(channel.getChannelIdx);
     const channels = this.chat.getProtectedChannels.map((channel) => {
       return {
-        owner: channel.getOwner.nickname,
+        owner: channel.getOwner?.nickname,
         channelIdx: channel.getChannelIdx,
         mode: channel.getMode,
       };

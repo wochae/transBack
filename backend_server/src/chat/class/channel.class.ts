@@ -98,9 +98,13 @@ export class Channel {
 
   // remove
   removeAdmin(admin: UserObject) {
-    this.admin.splice(this.admin.indexOf(admin), 1);
+    this.admin?.splice(this.admin.indexOf(admin), 1);
   }
   removeMember(member: UserObject) {
+    console.log('sadfasfd', this.member);
     this.member.splice(this.member.indexOf(member), 1);
+  }
+  removeOwner() {
+    this.owner = null;
   }
 }
