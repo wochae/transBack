@@ -59,6 +59,17 @@ export class UsersGateway
         client.emit('add_friend', res);
     }
 
-    // @SubscribeMessage('delete_friends')
-    
+    @SubscribeMessage('delete_friend')
+    async handleDeleteFriend(
+        @ConnectedSocket() client: Socket,
+        @MessageBody() req: FollowFriendDto,
+    ) {
+        const { targetNickname, targetIdx } = req;
+        // logic
+        const targetUser = await this.usersService.findOneUser(targetIdx);
+        const res = await this.usersService.deleteFriend(req, targetUser);
+        console.log(res);
+
+        client.emit('delete_friends', res);
+    }
 }

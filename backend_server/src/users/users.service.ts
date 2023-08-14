@@ -119,6 +119,17 @@ export class UsersService {
     );
   }
 
+  async deleteFriend(
+    deleteFriendDto: FollowFriendDto,
+    user: UserObject,
+  ): Promise<FriendList[]> {
+    return this.friendListRepository.deleteFriend(
+      deleteFriendDto,
+      user,
+      this.userObjectRepository,
+    );
+  }
+
   async createUser(createUsersDto: CreateUsersDto): Promise<UserObject> {
     const { userIdx, intra, imgUri } = createUsersDto;
 
