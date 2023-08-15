@@ -235,7 +235,11 @@ export class ChatGateway
     }
     const message: SendDMDto = { msg: msg };
     // TODO: Block 검사
-    const checkBlock = await this.usersService.checkBlockList(user, targetUser);
+    const checkBlock = await this.usersService.checkBlockList(
+      user,
+      this.inMemoryUsers,
+      targetUser,
+    );
     const newChannelAndMsg = await this.chatService.createDM(
       client,
       user,

@@ -145,16 +145,26 @@ export class UsersService {
         user,
         this.userObjectRepository,
       );
+      // check inmemory
+      const checkTarget = await this.blockedListRepository.findOne({
+        where: {
+          userIdx: user.userIdx,
+          blockedNickname: targetNickname,
+        },
+      });
+      if (!checkTarget) {
+        inMemory.removeBlockListByNicknameFromIM(targetNickname);
+      } else {
+        inMemory.setBlockListByIdFromIM(blockInfo);
+      }
       await queryRunner.commitTransaction();
-      // in memory 에서도 블락리스트 추가
-      inMemory.setBlockListByIdFromIM(blockInfo);
     } catch (err) {
       await queryRunner.rollbackTransaction();
       return;
     } finally {
       await queryRunner.release();
     }
-    const blockList = await inMemory.getBlockListByIdFromIM(user.userIdx);
+    const blockList = inMemory.getBlockListByIdFromIM(user.userIdx);
     console.log(blockList);
     // const blockInfoList: BlockInfoDto[] = await Promise.all(
     //   blockList.map(async (resPromise) => {
@@ -176,12 +186,13 @@ export class UsersService {
 
   async checkBlockList(
     user: UserObject,
+    inMemoryUsers: InMemoryUsers,
     target?: UserObject,
     channelIdx?: number,
   ): Promise<boolean> {
     if (target) {
       //  inmemory 에서 가져오기
-      const blockList = this.getBlockedLi(user);
+      const blockList = inMemoryUsers.getBlockListByIdFromIM(user.userIdx);
       const check = blockList.find(
         (res) => res.blockedUserIdx === target.userIdx,
       );

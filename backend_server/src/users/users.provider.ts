@@ -22,4 +22,10 @@ export class InMemoryUsers {
   setBlockListByIdFromIM(blockList: BlockList): void {
     this.inMemoryBlockList.push(blockList);
   }
+
+  removeBlockListByNicknameFromIM(nickname: string): void {
+    this.inMemoryBlockList = this.inMemoryBlockList.filter(
+      (user) => user.blockedNickname !== nickname,
+    );
+  }
 }
