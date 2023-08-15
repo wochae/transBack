@@ -369,7 +369,11 @@ export class ChatService {
     const adminInfo = {
       userIdx: user.userIdx,
       grant: grant,
-      admin: channel.getAdmin,
+      admin: channel.getAdmin.map((member) => {
+        return {
+          userNickname: member.nickname,
+        };
+      }),
     };
     return adminInfo;
   }
