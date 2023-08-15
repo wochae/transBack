@@ -666,7 +666,7 @@ export class ChatGateway
     client.emit('check_dm', dm);
   }
 
-  // API: MAIN_CHAT_19
+  // API: MAIN_CHAT_20
   @SubscribeMessage('chat_get_grant')
   async getGrant(
     @ConnectedSocket() client: Socket,
