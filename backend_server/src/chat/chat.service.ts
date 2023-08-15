@@ -203,10 +203,10 @@ export class ChatService {
       message: msgInfo,
       channelIdx: channelIdx,
     };
-    // 상대방 소켓 찾아서 join 시키기
     if (checkBlock) {
       console.log('차단된 유저입니다.');
     } else {
+      // 상대방 소켓 찾아서 join 시키기
       const targetSocket = await this.chat.getSocketObject(targetUser.userIdx);
       if (targetSocket) {
         await targetSocket.socket.join(`chat_room_${channelIdx}`);
@@ -215,7 +215,6 @@ export class ChatService {
       }
     }
     client.join(`chat_room_${channelIdx}`);
-    console.log('dmInfo', dmInfo);
     return dmInfo;
   }
 
@@ -466,6 +465,7 @@ export class ChatService {
         return {
           userNickname: member.nickname,
           userIdx: member.userIdx,
+          imgUri: member.imgUri,
         };
       }),
       owner: channel.getOwner?.nickname,
@@ -558,7 +558,6 @@ export class ChatService {
 
     const messageInfo = await Promise.all(
       messages.map(async (message) => {
-        // FIXME: senderIdx 를 inmemory를 사용해서 찾자.
         const senderIdx = this.inMemoryUsers.getUserByIntraFromIM(
           message.sender,
         ).userIdx;
