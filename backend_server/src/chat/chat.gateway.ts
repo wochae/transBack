@@ -352,6 +352,12 @@ export class ChatGateway
         msg,
       );
 
+      // TODO: userId 로 Mute 검사
+      const checkMute = this.chatService.checkMuteList(channel, user);
+      if (checkMute) {
+        console.log('뮤트된 유저입니다.');
+        return '뮤트되었습니다.';
+      }
       await this.server
         .to(`chat_room_${channelIdx}`)
         .emit('chat_send_msg', msgInfo);
@@ -512,16 +518,46 @@ export class ChatGateway
 
   // API: MAIN_CHAT_12
   @SubscribeMessage('chat_mute')
-  setMute(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-    // request data
-    // {
-    //   target_nickname
-    // }
-    // response data
-    // {
-    //   friend[]
-    // }
-    // client 방식
+  setMute(@ConnectedSocket() client: Socket, @MessageBody() payload: string) {
+    const { channelIdx, targetNickname, targetIdx } = JSON.parse(payload);
+    const requestId: number = parseInt(client.handshake.query.userId as string);
+    const channel: Channel = this.chat.getProtectedChannel(channelIdx);
+
+    const requester: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === requestId;
+    });
+    if (requester === undefined) {
+      return '요청자가 대화방에 없습니다.';
+    }
+    const clientIsAdmin: boolean = channel.getAdmin.some(
+      (admin) => admin.userIdx === requester.userIdx,
+    );
+    if (!clientIsAdmin) {
+      return '요청자가 적절한 권한자가 아닙니다.';
+    }
+    // 대상 유효성 검사
+    const target = channel.getMember.find((member) => {
+      return member.userIdx === targetIdx;
+    });
+    if (target === undefined) {
+      return '대상이 채널에 없습니다.';
+    }
+    // 대상 권한 검사
+    const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
+      return admin.userIdx === target.userIdx;
+    });
+    if (targetIsAdmin) {
+      return '대상을 뮤트할 수 없습니다.';
+    }
+    let muteInfo = this.chatService.setMute(channel, target, true);
+
+    // 방 입장 시각을 기준으로 30초 후에 뮤트 해제
+    setTimeout(() => {
+      muteInfo = this.chatService.setMute(channel, target, false);
+      this.server.to(`chat_room_${channelIdx}`).emit('chat_mute', muteInfo);
+    }, 10000);
+    this.server.to(`chat_room_${channelIdx}`).emit('chat_mute', muteInfo);
+    return '뮤트 처리 되었습니다.';
   }
 
   // API: MAIN_CHAT_13
@@ -545,7 +581,7 @@ export class ChatGateway
     const clientIsAdmin: boolean = channel.getAdmin.some(
       (admin) => admin.userIdx === requester.userIdx,
     );
-    if (clientIsAdmin) {
+    if (!clientIsAdmin) {
       return '요청자가 적절한 권한자가 아닙니다.';
     }
     // 대상 유효성 검사

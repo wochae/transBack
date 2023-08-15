@@ -14,6 +14,7 @@ export class Channel {
   private owner: UserObject;
   private admin: UserObject[] = [];
   private ban: UserObject[] = [];
+  private mute: UserObject[] = [];
   private password: string;
 
   /******************************* 메서드 *******************************/
@@ -62,6 +63,9 @@ export class Channel {
   get getBan(): UserObject[] {
     return this.ban;
   }
+  get getMute(): UserObject[] {
+    return this.mute;
+  }
   get getPassword(): string {
     return this.password;
   }
@@ -83,15 +87,24 @@ export class Channel {
   set setMode(mode: Mode) {
     this.mode = mode;
   }
-  set setOwner(owner: UserObject) {
-    this.owner = owner;
+  set setOwner(owner: UserObject | null) {
+    if (owner !== null) {
+      this.owner = owner;
+    }
   }
-  set setAdmin(admin: UserObject) {
-    this.admin.push(admin);
+  set setAdmin(admin: UserObject | null) {
+    if (admin !== null) {
+      this.admin.push(admin);
+    }
   }
   set setBan(ban: UserObject | null) {
     if (ban !== null) {
       this.ban.push(ban);
+    }
+  }
+  set setMute(mute: UserObject | null) {
+    if (mute !== null) {
+      this.mute.push(mute);
     }
   }
   set setPassword(password: string) {
@@ -103,10 +116,12 @@ export class Channel {
     this.admin?.splice(this.admin.indexOf(admin), 1);
   }
   removeMember(member: UserObject) {
-    console.log('sadfasfd', this.member);
-    this.member.splice(this.member.indexOf(member), 1);
+    this.member?.splice(this.member.indexOf(member), 1);
   }
   removeOwner() {
     this.owner = null;
+  }
+  removeMute(mute: UserObject) {
+    this.mute?.splice(this.mute.indexOf(mute), 1);
   }
 }

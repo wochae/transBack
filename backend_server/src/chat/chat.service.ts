@@ -378,6 +378,29 @@ export class ChatService {
     return adminInfo;
   }
 
+  checkMuteList(channel: Channel, user: UserObject) {
+    const mute = channel.getMute.some(
+      (member) => member.userIdx === user.userIdx,
+    );
+    return mute;
+  }
+
+  setMute(channel: Channel, targetUser: UserObject, mute: boolean) {
+    if (mute) {
+      channel.setMute = targetUser;
+    } else {
+      channel.removeMute(targetUser);
+    }
+
+    const muteInfo = {
+      targetNickname: targetUser.nickname,
+      targetIdx: targetUser.userIdx,
+      mute: mute,
+    };
+
+    return muteInfo;
+  }
+
   setBan(channel: Channel, user: UserObject) {
     this.kickMember(channel, user);
     // 퇴장시켜야함
