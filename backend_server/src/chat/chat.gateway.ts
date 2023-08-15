@@ -12,8 +12,8 @@ import {
 } from '@nestjs/websockets';
 import { ChatService } from './chat.service';
 import { Socket, Server } from 'socket.io';
-import { Channel } from './class/channel.class';
-import { Chat, MessageInfo } from './class/chat.class';
+import { Channel } from './class/chat.channel/channel.class';
+import { Chat, MessageInfo } from './class/chat.chat/chat.class';
 import { UsersService } from 'src/users/users.service';
 import { DMChannel, Mode } from '../entity/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
@@ -134,7 +134,10 @@ export class ChatGateway
       userIdx: user.userIdx,
     };
     const friendList = await this.usersService.getFriendList(intra);
-    const blockList = await this.usersService.getBlockedList(intra);
+    // in memory 에서 가져오기
+    const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
+      user.userIdx,
+    );
     const channelList = this.chat.getProtectedChannels.map(
       ({ getOwner: owner, getChannelIdx: channelIdx, getMode: mode }) => ({
         owner: owner.nickname,
@@ -269,7 +272,6 @@ export class ChatGateway
     const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
       userIdx,
     );
-    console.log('user :', user);
     // ban 체크
     // if (channel.getBan?.some((member) => member.userIdx === userIdx)) {
     //   this.logger.log(`[ 💬 ] ${user.nickname} 은 차단된 유저입니다.`);
@@ -289,6 +291,7 @@ export class ChatGateway
         channel = await this.chatService.enterProtectedRoom(user, channel);
       }
     }
+    console.log('MAIN_CHAT_2 : ', channel);
     client.join(`chat_room_${channel.channelIdx}`);
     client.emit('chat_enter', channel);
 
@@ -321,6 +324,7 @@ export class ChatGateway
     @MessageBody() payload: any,
   ) {
     const { channelIdx, senderIdx, msg } = payload;
+    console.log('aa');
     // const { channelIdx, senderIdx, msg } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user: UserObject = await this.usersService.getUserInfoFromDB(
@@ -347,7 +351,10 @@ export class ChatGateway
         senderIdx,
         msg,
       );
-      this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
+
+      await this.server
+        .to(`chat_room_${channelIdx}`)
+        .emit('chat_send_msg', msgInfo);
     } else if (channel instanceof DMChannel) {
       const message: SendDMDto = { msg: msg };
       const msgInfo = await this.chatService
@@ -360,7 +367,6 @@ export class ChatGateway
             msgDate: msgInfo.msgDate,
           };
         });
-      console.log(msgInfo);
       // TODO: channelIdx 로 Block 검사
       // const checkBlock = await this.usersService.checkBlockList(
       //   user,
@@ -483,10 +489,11 @@ export class ChatGateway
     const user: UserObject = channel.getMember.find((member) => {
       return member.userIdx === userIdx;
     });
-    if (user === undefined) {
+    if (!user) {
       return '요청자가 대화방에 없습니다.';
     }
     const channelInfo = this.chatService.goToLobby(client, channel, user);
+    // console.log('------------ : ', channelInfo);
     client.emit('chat_room_exit', channelInfo);
 
     // API: MAIN_CHAT_10
@@ -619,7 +626,11 @@ export class ChatGateway
     const requestId: number = parseInt(client.handshake.query.userId as string);
 
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(requestId);
-    const blockInfo = await this.usersService.setBlock(targetNickname, user);
+    const blockInfo = await this.usersService.setBlock(
+      targetNickname,
+      user,
+      this.inMemoryUsers,
+    );
     client.emit('chat_block', blockInfo);
   }
 

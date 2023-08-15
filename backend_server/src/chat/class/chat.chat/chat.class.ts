@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io';
-import { Channel } from './channel.class';
+import { Channel } from '../chat.channel/channel.class';
 import { UserObject } from 'src/entity/users.entity';
 
 interface SocketObject {

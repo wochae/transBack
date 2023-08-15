@@ -1,6 +1,6 @@
 import { UserObject } from 'src/entity/users.entity';
-import { Mode } from '../../entity/chat.entity';
-import { Message } from './message.class';
+import { Mode } from '../../../entity/chat.entity';
+import { Message } from '../chat.message/message.class';
 
 // FIXME: any type 을 적절하게 수정해야함
 // FIXME: message -> messages 는 어떤지?
@@ -100,9 +100,13 @@ export class Channel {
 
   // remove
   removeAdmin(admin: UserObject) {
-    this.admin.splice(this.admin.indexOf(admin), 1);
+    this.admin?.splice(this.admin.indexOf(admin), 1);
   }
   removeMember(member: UserObject) {
+    console.log('sadfasfd', this.member);
     this.member.splice(this.member.indexOf(member), 1);
+  }
+  removeOwner() {
+    this.owner = null;
   }
 }

@@ -1,12 +1,12 @@
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
-import { Chat } from './class/chat.class';
+import { Chat } from './class/chat.chat/chat.class';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { TypeOrmExModule } from '../typeorm-ex.module';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { UsersService } from 'src/users/users.service';
-import { Channel } from './class/channel.class';
+import { Channel } from './class/chat.channel/channel.class';
 import { Mode } from '../entity/chat.entity';
 import { SharedModule } from 'src/shared/shared.module';
 import { ChatController } from './chat.controller';
@@ -58,6 +58,9 @@ export class ChatModule {
   private async initializeInMemoryDataFromDatabase() {
     const usersFromDatabase = await this.usersService.getAllUsersFromDB();
     this.inMemoryUsers.inMemoryUsers = usersFromDatabase;
-    console.log('usersFromDatabase', usersFromDatabase);
+
+    const blockListFromDatabase =
+      await this.usersService.getAllBlockedListFromDB();
+    this.inMemoryUsers.inMemoryBlockList = blockListFromDatabase;
   }
 }
