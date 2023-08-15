@@ -1,6 +1,6 @@
 import { UserObject } from 'src/entity/users.entity';
-import { Mode } from '../../entity/chat.entity';
-import { Message } from './message.class';
+import { Mode } from '../../../entity/chat.entity';
+import { Message } from '../chat.message/message.class';
 
 // FIXME: any type 을 적절하게 수정해야함
 // FIXME: message -> messages 는 어떤지?

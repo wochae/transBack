@@ -8,6 +8,8 @@ import { UserObject } from 'src/entity/users.entity';
 import { InsertFriendDto } from './dto/insert-friend.dto';
 import { DataSource } from 'typeorm';
 import { DMChannelRepository } from 'src/chat/DM.repository';
+import { BlockList } from 'src/entity/blockList.entity';
+import { InMemoryUsers } from './users.provider';
 
 @Injectable()
 export class UsersService {
@@ -42,34 +44,43 @@ export class UsersService {
   async setBlock(
     targetNickname: string,
     user: UserObject,
+    inMemory: InMemoryUsers,
   ): Promise<BlockInfoDto[]> {
     const queryRunner = this.dataSource.createQueryRunner();
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      await this.blockedListRepository.blockTarget(
+      const blockInfo = await this.blockedListRepository.blockTarget(
         targetNickname,
         user,
         this.userObjectRepository,
       );
       await queryRunner.commitTransaction();
+      // in memory 에서도 블락리스트 추가
+      inMemory.setBlockListByIdFromIM(blockInfo);
     } catch (err) {
       await queryRunner.rollbackTransaction();
       return;
     } finally {
       await queryRunner.release();
     }
-    const blockList = await this.getBlockedList(user);
+    const blockList = await inMemory.getBlockListByIdFromIM(user.userIdx);
     console.log(blockList);
-    const blockInfoList: BlockInfoDto[] = await Promise.all(
-      blockList.map(async (resPromise) => {
-        const res = await resPromise;
-        return {
-          userNickname: res.blockedNickname,
-          userIdx: res.blockedUserIdx,
-        };
-      }),
-    );
+    // const blockInfoList: BlockInfoDto[] = await Promise.all(
+    //   blockList.map(async (resPromise) => {
+    //     const res = await resPromise;
+    //     return {
+    //       userNickname: res.blockedNickname,
+    //       userIdx: res.blockedUserIdx,
+    //     };
+    //   }),
+    // );
+    const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
+      return {
+        userNickname: res.blockedNickname,
+        userIdx: res.blockedUserIdx,
+      };
+    });
     return blockInfoList;
   }
 
@@ -79,7 +90,8 @@ export class UsersService {
     channelIdx?: number,
   ): Promise<boolean> {
     if (target) {
-      const blockList = await this.getBlockedList(user);
+      //  inmemory 에서 가져오기
+      const blockList = this.getBlockedLi(user);
       const check = blockList.find(
         (res) => res.blockedUserIdx === target.userIdx,
       );
@@ -140,6 +152,10 @@ export class UsersService {
     return this.userObjectRepository.findOne({ where: { userIdx: userId } });
   }
 
+  async getAllBlockedListFromDB() {
+    return await this.blockedListRepository.find();
+  }
+
   async getFriendList(
     intra: string,
   ): Promise<{ friendNicname: string; isOnline: boolean }[]> {
@@ -150,12 +166,6 @@ export class UsersService {
       user.userIdx,
       this.userObjectRepository,
     );
-  }
-
-  async getBlockedList(user: UserObject) {
-    return await this.blockedListRepository.find({
-      where: { userIdx: user.userIdx },
-    });
   }
 
   async setIsOnline(user: UserObject, isOnline: boolean) {

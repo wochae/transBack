@@ -12,8 +12,8 @@ import {
 } from '@nestjs/websockets';
 import { ChatService } from './chat.service';
 import { Socket, Server } from 'socket.io';
-import { Channel } from './class/channel.class';
-import { Chat, MessageInfo } from './class/chat.class';
+import { Channel } from './class/chat.channel/channel.class';
+import { Chat, MessageInfo } from './class/chat.chat/chat.class';
 import { UsersService } from 'src/users/users.service';
 import { DMChannel, Mode } from '../entity/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
@@ -132,7 +132,10 @@ export class ChatGateway
       userIdx: user.userIdx,
     };
     const friendList = await this.usersService.getFriendList(intra);
-    const blockList = await this.usersService.getBlockedList(intra);
+    // in memory 에서 가져오기
+    const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
+      user.userIdx,
+    );
     const channelList = this.chat.getProtectedChannels.map(
       ({ getOwner: owner, getChannelIdx: channelIdx, getMode: mode }) => ({
         owner: owner.nickname,
@@ -619,7 +622,11 @@ export class ChatGateway
     const requestId: number = parseInt(client.handshake.query.userId as string);
 
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(requestId);
-    const blockInfo = await this.usersService.setBlock(targetNickname, user);
+    const blockInfo = await this.usersService.setBlock(
+      targetNickname,
+      user,
+      this.inMemoryUsers,
+    );
     client.emit('chat_block', blockInfo);
   }
 

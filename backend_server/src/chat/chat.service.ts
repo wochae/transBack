@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Channel } from './class/channel.class';
-import { Chat, MessageInfo, MessageInteface } from './class/chat.class';
+import { Channel } from './class/chat.channel/channel.class';
+import {
+  Chat,
+  MessageInfo,
+  MessageInteface,
+} from './class/chat.chat/chat.class';
 import {
   DataSource,
   EntityManager,
@@ -15,7 +19,7 @@ import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { Socket } from 'socket.io';
-import { Message } from './class/message.class';
+import { Message } from './class/chat.message/message.class';
 import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
