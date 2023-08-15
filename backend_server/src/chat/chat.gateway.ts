@@ -51,8 +51,6 @@ export class ChatGateway
     const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
       return user.userIdx === userId;
     });
-    console.log(this.inMemoryUsers.inMemoryUsers);
-    console.log(user);
     if (!user) {
       console.log(`[ ❗️ Client ] ${client.id} Not Found`);
       client.disconnect();
@@ -207,7 +205,7 @@ export class ChatGateway
     }
   }
 
-  // API: MAIN_CHAT_1
+  // API: MAIN_CHAT_1.
   @SubscribeMessage('create_dm')
   async createDM(
     @ConnectedSocket() client: Socket,
@@ -327,13 +325,11 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    const { channelIdx, senderIdx, msg } = payload;
-    console.log('aa');
-    // const { channelIdx, senderIdx, msg } = JSON.parse(payload);
+    // const { channelIdx, senderIdx, msg, targetIdx } = payload;
+    const { channelIdx, senderIdx, msg, targetIdx } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
-    const user: UserObject = await this.usersService.getUserInfoFromDB(
-      this.inMemoryUsers.getUserByIdFromIM(userId).nickname,
-    );
+    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const target: UserObject = this.inMemoryUsers.getUserByIdFromIM(targetIdx);
     // FIXME: 테스트용 코드 ------------------------------------------------------
     // const testChannel: Channel | DMChannel =
     //   await this.chatService.findChannelByRoomId(channelIdx);
@@ -371,15 +367,16 @@ export class ChatGateway
             msgDate: msgInfo.msgDate,
           };
         });
-      // TODO: channelIdx 로 Block 검사
-      // const checkBlock = await this.usersService.checkBlockList(
-      //   user,
-      //   channelIdx,
-      // );
-      // if (checkBlock) {
-      //   console.log('차단된 유저입니다.');
-      //   return;
-      // }
+      // TODO: target 로 Block 검사
+      const checkBlock = await this.usersService.checkBlockList(
+        user,
+        this.inMemoryUsers,
+        target,
+      );
+      if (checkBlock) {
+        console.log('차단된 유저입니다.');
+        return '차단되었습니다.';
+      }
       this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else {
       // 예상하지 못한 타입일 경우 처리
@@ -497,7 +494,6 @@ export class ChatGateway
       return '요청자가 대화방에 없습니다.';
     }
     const channelInfo = this.chatService.goToLobby(client, channel, user);
-    // console.log('------------ : ', channelInfo);
     client.emit('chat_room_exit', channelInfo);
 
     // API: MAIN_CHAT_10
@@ -648,11 +644,7 @@ export class ChatGateway
 
   // API: MAIN_CHAT_17
   @SubscribeMessage('chat_get_DMList')
-  async getPrivateChannels(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: string,
-  ) {
-    const { userNickname, userIdx } = JSON.parse(payload);
+  async getPrivateChannels(@ConnectedSocket() client: Socket) {
     const userId = parseInt(client.handshake.query.userId as string);
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
     const channels = await this.chatService.getPrivateChannels(user);

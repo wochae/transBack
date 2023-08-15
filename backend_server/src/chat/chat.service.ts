@@ -511,13 +511,23 @@ export class ChatService {
     const channels: DMChannel[] =
       await this.dmChannelRepository.findDMChannelsByUserIdx(user.userIdx);
 
-    const channelsInfo = channels?.map((channel) => {
-      return {
-        targetNickname: channel.userNickname2,
-        channelIdx: channel.channelIdx,
-        mode: Mode.PRIVATE,
-      };
-    });
+    const channelsInfo = [];
+    for (const channel of channels) {
+      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
+        channel.userIdx1,
+      );
+      const isBlocked = blockList.some(
+        (user) => user.blockedUserIdx === channel.userIdx2,
+      );
+
+      if (!isBlocked) {
+        channelsInfo.push({
+          targetNickname: channel.userNickname2,
+          channelIdx: channel.channelIdx,
+          mode: Mode.PRIVATE,
+        });
+      }
+    }
     return channelsInfo;
   }
 

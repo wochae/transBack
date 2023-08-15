@@ -165,16 +165,6 @@ export class UsersService {
       await queryRunner.release();
     }
     const blockList = inMemory.getBlockListByIdFromIM(user.userIdx);
-    console.log(blockList);
-    // const blockInfoList: BlockInfoDto[] = await Promise.all(
-    //   blockList.map(async (resPromise) => {
-    //     const res = await resPromise;
-    //     return {
-    //       userNickname: res.blockedNickname,
-    //       userIdx: res.blockedUserIdx,
-    //     };
-    //   }),
-    // );
     const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
       return {
         userNickname: res.blockedNickname,
@@ -186,48 +176,15 @@ export class UsersService {
 
   async checkBlockList(
     user: UserObject,
-    inMemoryUsers: InMemoryUsers,
-    target?: UserObject,
-    channelIdx?: number,
+    inMemory: InMemoryUsers,
+    target: UserObject,
   ): Promise<boolean> {
-    if (target) {
-      //  inmemory 에서 가져오기
-      const blockList = inMemoryUsers.getBlockListByIdFromIM(user.userIdx);
-      const check = blockList.find(
-        (res) => res.blockedUserIdx === target.userIdx,
-      );
-      if (check) return true;
-      else return false;
-    } else if (channelIdx) {
-      // 내가 속한 channelIdx 로 direct_message_members 에서 타겟 찾기 -> 블락리스트에 있는지 확인
-      // const target = await this.dmChannelRepository
-      //   .find({
-      //     where: { channelIdx: channelIdx },
-      //   })
-      //   .then();
-      // const blockList = await this.getBlockedList(user);
-      // if (check) return true;
-      // else return false;
-      /*
-        const channel = await this.dmChannelRepository.findOne({
-            where: { channelIdx: channelIdx },
-            relations: ['user1', 'user2'], // Load related user objects
-          });
-
-          if (!channel) {
-            // No channel found with the given channelIdx
-            return false;
-          }
-
-          const targetIdx = user.userIdx === channel.userIdx1 ? channel.userIdx2 : channel.userIdx1;
-
-          const blockList = await this.getBlockedList(user); // Assuming this function gets the block list
-
-          const isBlocked = blockList.some((blockedUser) => blockedUser.userIdx === targetIdx);
-
-          return isBlocked;
-      */
-    }
+    //  inmemory 에서 가져오기
+    // jaekim 이 jeekim 을 차단, jeekim 이 jaekim 에게 문자
+    const blockList = inMemory.getBlockListByIdFromIM(target.userIdx);
+    const check = blockList.find((res) => res.blockedUserIdx === user.userIdx);
+    if (check) return true;
+    else return false;
   }
 
   async findUserByIntra(intra: string): Promise<UserObject> {
