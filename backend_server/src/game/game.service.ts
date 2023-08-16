@@ -30,6 +30,8 @@ import { GameBallEventDto } from './dto/game.ball.event.dto';
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { GameChannel } from 'src/entity/gameChannel.entity';
 import { OnlineStatus } from 'src/entity/users.entity';
+import { GameInviteQueue } from './class/game.invite.queue/game.invite.queue';
+import { GameFriendMatchDto } from './dto/game.friend.match.dto';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -38,6 +40,7 @@ export class GameService {
   private playRoomList: GameRoom[];
   private normalQueue: GameQueue;
   private rankQueue: GameQueue;
+  private inviteQueue: GameInviteQueue;
   private waitingList: GameWaitQueue;
   private onlinePlayerList: GameOnlineMember[];
   private cnt: number;
@@ -172,9 +175,7 @@ export class GameService {
     console.log(playerTuple[1].getType() == GameType.RANK ? true : false);
     console.log(GameType.RANK);
     switch (playerTuple[1].getType()) {
-      // switch (value) {
       case GameType.FRIEND:
-        console.log('Friend is here');
         break;
       case GameType.NORMAL:
         console.log('Normal is here');
@@ -470,14 +471,21 @@ export class GameService {
     const { userIdx, clientDate, paddleInput } = paddleMove;
     const latency = time - clientDate;
     const targetRoom = this.getRoomByUserIdx(userIdx);
-    const targetUser =
-      targetRoom.user1.userIdx === userIdx
-        ? targetRoom.user2
-        : targetRoom.user1;
-    await targetUser.socket.emit(
+    let target: GamePlayer;
+    let nonTarget: GamePlayer;
+    if (targetRoom.user1.userIdx === userIdx) {
+      target = targetRoom.user1;
+      nonTarget = targetRoom.user2;
+    } else {
+      target = targetRoom.user2;
+      nonTarget = targetRoom.user1;
+    }
+    await target.socket.emit(
       'game_move_paddle',
       new GamePaddlePassDto(latency, paddleInput),
     );
+    nonTarget.setLatency(latency);
+
     // play Room 찾기
     // 상대방 찾기
     // 레이턴 계산하기
@@ -502,7 +510,7 @@ export class GameService {
    * @param targetRoom
    * @returns
    */
-  private getRoomIdxWithRoom(targetRoom: GameRoom): number {
+  public getRoomIdxWithRoom(targetRoom: GameRoom): number {
     let index = 0;
 
     for (const room of this.playRoomList) {
@@ -786,5 +794,23 @@ export class GameService {
     this.popOnlineUser(room.user2.userIdx);
     room.user1.socket.disconnect(true);
     room.user2.socket.disconnect(true);
+  }
+
+  public async prepareFriendMatch(matchList: GameFriendMatchDto) {
+    const user1 = this.makeGamePlayer(matchList.userIdx);
+    const user2 = this.makeGamePlayer(matchList.targetUserIdx);
+    if (this.inviteQueue.Enqueue(user1, user2)) {
+      const users = this.inviteQueue.Dequeue(user1, user2);
+      const roomNumber = this.playRoomList.push(
+        new GameRoom(this.makeRoomId()),
+      );
+      const targetRoom = this.getRoomByRoomNumber(roomNumber);
+      targetRoom.setUser(users[0], new GameOptions(GameType.FRIEND, 0, 0));
+      targetRoom.setUser(users[1], new GameOptions(GameType.FRIEND, 0, 0));
+      const msg = 'Friend match preparing is done!';
+      user1.socket.emit('game_invite_finish', msg);
+      user2.socket.emit('game_invite_finish', msg);
+    }
+    return;
   }
 }

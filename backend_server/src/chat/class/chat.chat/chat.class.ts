@@ -102,4 +102,10 @@ export class Chat {
       this.protectedChannels.splice(protectedChannelIdx, 1);
     }
   }
+
+  // haryu 제작
+  getUserTuple(userIdx: number): [UserObject, Socket] {
+    const target = this.getSocketObject(userIdx);
+    return [target.user, target.socket];
+  }
 }

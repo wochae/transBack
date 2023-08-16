@@ -1,9 +1,9 @@
 export class ReturnMsgDto {
-  code: string;
+  code: number;
   msg: string;
 
   constructor(code: number, msg: string) {
-    this.code = code.toString();
+    this.code = code;
     this.msg = msg;
   }
 }
