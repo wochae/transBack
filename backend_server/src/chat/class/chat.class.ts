@@ -96,14 +96,8 @@ export class Chat {
   }
 
   // haryu 제작
-  getUserObject(userIdx: number): UserObject {
+  getUserTuple(userIdx: number): [UserObject, Socket] {
     const target = this.getSocketObject(userIdx);
-    return target.user;
-  }
-
-  // haryu 제작
-  getUserSocket(userIdx: number): Socket {
-    const target = this.getSocketObject(userIdx);
-    return target.socket;
+    return [target.user, target.socket];
   }
 }

@@ -521,21 +521,24 @@ export class ChatGateway
   }
   @SubscribeMessage('chat_invite_ask')
   async inviteFriendToGame(@MessageBody() invitation: GameInvitationDto) {
-    const targetUser = invitation.targetUserIdx;
-    const targetSocket = this.chat.getSocketObject(targetUser);
-    const myObject = this.chat.getSocketObject(invitation.myUserIdx);
-    if (targetSocket == undefined) {
+    const targetTuple = this.chat.getUserTuple(invitation.targetUserIdx);
+    const targetSocket = targetTuple[1];
+    const userTuple = this.chat.getUserTuple(invitation.myUserIdx);
+    const myObject = userTuple[0];
+    if (targetSocket === undefined) {
       return new ReturnMsgDto(400, 'Bad Request, target user is not online');
     }
-    const target = await this.usersService.getUserInfoFromDBById(targetUser);
-    if (target.isOnline == OnlineStatus.ONGAME) {
+    const target = await this.usersService.getUserInfoFromDBById(
+      targetTuple[0].userIdx,
+    );
+    if (target.isOnline === OnlineStatus.ONGAME) {
       return new ReturnMsgDto(400, 'Bad Request, target user is on Game');
-    } else if (target.isOnline == OnlineStatus.ONLINE) {
+    } else if (target.isOnline === OnlineStatus.ONLINE) {
       const invitaionCard = new GameInvitationAskDto(
-        invitation.myUserIdx,
-        myObject.user.nickname,
+        myObject.userIdx,
+        myObject.nickname,
       );
-      targetSocket.socket.emit('chat_invite_answer', invitaionCard);
+      targetSocket.emit('chat_invite_answer', invitaionCard);
     } else {
       return new ReturnMsgDto(400, 'Bad Request, target user is offline');
     }
@@ -544,21 +547,24 @@ export class ChatGateway
 
   @SubscribeMessage('chat_invite_answer')
   acceptFriendToGame(@MessageBody() answer: GameInvitationAnswerDto) {
-    const inviteSocket: Socket = this.chat.getUserSocket(answer.inviteUserIdx);
-    const targetSocket: Socket = this.chat.getUserSocket(answer.targetUserIdx);
-    const inviteUser: UserObject = this.chat.getUserObject(
-      answer.inviteUserIdx,
-    );
-    const targetUser: UserObject = this.chat.getUserObject(
-      answer.targetUserIdx,
-    );
+    const inviteTuple = this.chat.getUserTuple(answer.inviteUserIdx);
+    const targetTuple = this.chat.getUserTuple(answer.targetUserIdx);
+    const inviteSocket = inviteTuple[1];
+    const targetSocket = targetTuple[1];
+    const inviteUser: UserObject = inviteTuple[0];
+    const targetUser: UserObject = targetTuple[0];
     const answerCard = new GameInvitationAnswerPassDto(
       inviteUser,
       targetUser,
       answer.answer,
     );
-    inviteSocket.emit('chat_invite_answer', answerCard);
-    targetSocket.emit('chat_invite_answer', answerCard);
+    if (answer.answer === true) {
+      targetUser.isOnline = OnlineStatus.ONGAME;
+      inviteUser.isOnline = OnlineStatus.ONGAME;
+      //TODO: save 메서드 필요
+    }
+    inviteSocket.emit('chat_receive_answer', answerCard);
+    targetSocket.emit('chat_receive_answer', answerCard);
     return new ReturnMsgDto(200, 'Ok!');
   }
 }
