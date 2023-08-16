@@ -7,24 +7,35 @@ import {
 } from '@nestjs/common';
 import { UserObjectRepository } from './users.repository';
 import { CreateUsersDto } from './dto/create-users.dto';
-import { BlockTargetDto } from './dto/block-target.dto';
+import { BlockInfoDto, BlockTargetDto } from './dto/block-target.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
-import { FollowFriendDto, FriendResDto, } from './dto/friend.dto';
+import { FollowFriendDto, FriendResDto } from './dto/friend.dto';
 import axios from 'axios';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { response } from 'express';
 // import { CreateCertificateDto, IntraInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
-import { CreateCertificateDto, IntraSimpleInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
+import {
+  CreateCertificateDto,
+  IntraSimpleInfoDto,
+  JwtPayloadDto,
+} from 'src/auth/dto/auth.dto';
 import { Socket } from 'socket.io';
 import { CertificateRepository } from './certificate.repository';
 import { OnlineStatus, UserObject } from '../entity/users.entity';
 import { CertificateObject } from '../entity/certificate.entity';
 import { FriendList } from '../entity/friendList.entity';
 import { DataSource } from 'typeorm';
-import { IntraInfoDto, UserEditImgDto, UserEditprofileDto, } from './dto/user.dto';
+import {
+  IntraInfoDto,
+  UserEditImgDto,
+  UserEditprofileDto,
+} from './dto/user.dto';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
+import { DMChannelRepository } from 'src/chat/DM.repository';
+import { BlockList } from 'src/entity/blockList.entity';
+import { InMemoryUsers } from './users.provider';
 
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 @Injectable()
@@ -40,31 +51,44 @@ export class UsersService {
   private logger: Logger = new Logger('UsersService');
 
   async findOneUser(userIdx: number): Promise<UserObject> {
-    console.log("찾는다: " + userIdx );
+    console.log('찾는다: ' + userIdx);
     return this.userObjectRepository.findOneBy({ userIdx });
   }
 
   async updateUserNick(updateUsersDto: UserEditprofileDto) {
     const { userIdx, userNickname } = updateUsersDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
-    console.log("updateOneUser: user : ", user);
-    if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
-    if (user.nickname === userNickname) { // 요청한 닉네임이 현재 닉네임과 다르다면
-      const isNicknameExist = await this.userObjectRepository.findOneBy({ nickname: userNickname });
-      if (!isNicknameExist) { // 닉네임이 존재하지 않는다면
+    console.log('updateOneUser: user : ', user);
+    if (!user) {
+      throw new BadRequestException('유저가 존재하지 않습니다.');
+    }
+    if (user.nickname === userNickname) {
+      // 요청한 닉네임이 현재 닉네임과 다르다면
+      const isNicknameExist = await this.userObjectRepository.findOneBy({
+        nickname: userNickname,
+      });
+      if (!isNicknameExist) {
+        // 닉네임이 존재하지 않는다면
         user.nickname = userNickname;
         await this.userObjectRepository.save(user);
-      } else { return false; } // 닉네임이 이미 존재한다면
-    } else { return new BadRequestException('변경을 실패 했습니다.'); } // 닉네임이 같다면
+      } else {
+        return false;
+      } // 닉네임이 이미 존재한다면
+    } else {
+      return new BadRequestException('변경을 실패 했습니다.');
+    } // 닉네임이 같다면
   }
 
-  async uploadUserImg(UserEditprofileDto : UserEditprofileDto) {
+  async uploadUserImg(UserEditprofileDto: UserEditprofileDto) {
     const { userIdx, imgUri } = UserEditprofileDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
-    if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
+    if (!user) {
+      throw new BadRequestException('유저가 존재하지 않습니다.');
+    }
     const foundImgUri = user.imgUri; // 일단은 그냥 같게 함.
     // await this.findUserImg(userIdx);
-    if (user.imgUri === foundImgUri) { // imgUri를 저장할 경로를 만들고 그 안에 이미지 파일을 생성해야 함.
+    if (user.imgUri === foundImgUri) {
+      // imgUri를 저장할 경로를 만들고 그 안에 이미지 파일을 생성해야 함.
       user.imgUri = imgUri;
       const changedUser = await this.userObjectRepository.save(user);
       return changedUser;
@@ -76,32 +100,91 @@ export class UsersService {
     return await this.certificateRepository.findOneBy({ token: accessToken });
   }
 
-  async saveToken(createCertificateDto: CreateCertificateDto): Promise<CertificateObject> {
+  async saveToken(
+    createCertificateDto: CreateCertificateDto,
+  ): Promise<CertificateObject> {
     try {
-      let beforeSaveToken = await this.certificateRepository.findOneBy({ userIdx: createCertificateDto.userIdx });
+      const beforeSaveToken = await this.certificateRepository.findOneBy({
+        userIdx: createCertificateDto.userIdx,
+      });
       // 없다면
-      if (!beforeSaveToken) { return await this.certificateRepository.save(createCertificateDto);
+      if (!beforeSaveToken) {
+        return await this.certificateRepository.save(createCertificateDto);
       } else {
         // 있다면 다른지
         if (beforeSaveToken.token != createCertificateDto.token) {
-          await this.certificateRepository.update(beforeSaveToken.userIdx, createCertificateDto);
+          await this.certificateRepository.update(
+            beforeSaveToken.userIdx,
+            createCertificateDto,
+          );
           // 다르다면 업데이트
-          return await this.certificateRepository.findOneBy({ userIdx: createCertificateDto.userIdx });
-        } else { return beforeSaveToken; } // 같다면 그대로
+          return await this.certificateRepository.findOneBy({
+            userIdx: createCertificateDto.userIdx,
+          });
+        } else {
+          return beforeSaveToken;
+        } // 같다면 그대로
       }
-    } catch (e) { console.log("토큰 디비에 문제가 있다."); throw new InternalServerErrorException(e);}
-  };
+    } catch (e) {
+      console.log('토큰 디비에 문제가 있다.');
+      throw new InternalServerErrorException(e);
+    }
+  }
 
-
-  async blockTarget(
-    blockTarget: BlockTargetDto,
+  async setBlock(
+    targetNickname: string,
     user: UserObject,
-  ): Promise<string> {
-    return this.blockedListRepository.blockTarget(
-      blockTarget,
-      user,
-      this.userObjectRepository,
-    );
+    inMemory: InMemoryUsers,
+  ): Promise<BlockInfoDto[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      const blockInfo = await this.blockedListRepository.blockTarget(
+        targetNickname,
+        user,
+        this.userObjectRepository,
+      );
+      // check inmemory
+      const checkTarget = await this.blockedListRepository.findOne({
+        where: {
+          userIdx: user.userIdx,
+          blockedNickname: targetNickname,
+        },
+      });
+      if (!checkTarget) {
+        inMemory.removeBlockListByNicknameFromIM(targetNickname);
+      } else {
+        inMemory.setBlockListByIdFromIM(blockInfo);
+      }
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      return;
+    } finally {
+      await queryRunner.release();
+    }
+    const blockList = inMemory.getBlockListByIdFromIM(user.userIdx);
+    const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
+      return {
+        userNickname: res.blockedNickname,
+        userIdx: res.blockedUserIdx,
+      };
+    });
+    return blockInfoList;
+  }
+
+  async checkBlockList(
+    user: UserObject,
+    inMemory: InMemoryUsers,
+    target: UserObject,
+  ): Promise<boolean> {
+    //  inmemory 에서 가져오기
+    // jaekim 이 jeekim 을 차단, jeekim 이 jaekim 에게 문자
+    const blockList = inMemory.getBlockListByIdFromIM(target.userIdx);
+    const check = blockList.find((res) => res.blockedUserIdx === user.userIdx);
+    if (check) return true;
+    else return false;
   }
 
   async findUserByIntra(intra: string): Promise<UserObject> {
@@ -174,16 +257,16 @@ export class UsersService {
           @Column({ default: false })
           check2Auth: boolean;
          */
-          this.logger.log(`user create start`);
-          const user = await this.userObjectRepository.createUser({
-            userIdx: userInfo.id,
-            intra: response.data.login,
-            nickname: response.data.login,
-            imgUri: response.data.image.link,
-            email: response.data.email,
-          });
-          console.log('user create end', user);
-          
+        this.logger.log(`user create start`);
+        const user = await this.userObjectRepository.createUser({
+          userIdx: userInfo.id,
+          intra: response.data.login,
+          nickname: response.data.login,
+          imgUri: response.data.image.link,
+          email: response.data.email,
+        });
+        console.log('user create end', user);
+
         const certi = await this.certificateRepository.insertCertificate(
           userInfo.id,
           accessToken,
@@ -206,11 +289,13 @@ export class UsersService {
         } finally {
           await queryRunner.release();
         }
-        
-        return new IntraSimpleInfoDto(user.userIdx, user.imgUri);;
+
+        return new IntraSimpleInfoDto(user.userIdx, user.imgUri);
       } else {
         // 유저가 존재하는 경우
-        const userCerti = await this.certificateRepository.findOneBy({ userIdx: existedUser.userIdx });
+        const userCerti = await this.certificateRepository.findOneBy({
+          userIdx: existedUser.userIdx,
+        });
         if (!(userCerti.token !== accessToken)) {
           // 존재하는 유저가 있지만 토큰이 다른 경우 -> 토큰 업데이트
           this.logger.log('user is exist but token is different');
@@ -218,7 +303,10 @@ export class UsersService {
           this.logger.log(` 유저가 존재하지 않은 경우 certi insert start`);
           userCerti.token = accessToken;
           await this.certificateRepository.update(userCerti.userIdx, userCerti);
-          return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri);
+          return new IntraSimpleInfoDto(
+            existedUser.userIdx,
+            existedUser.imgUri,
+          );
         } // 존재하는 유저가 있고 토큰이 같은 경우 -> 그대로
         return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri);
         /*
@@ -257,6 +345,10 @@ export class UsersService {
     return this.userObjectRepository.findOne({ where: { userIdx: userId } });
   }
 
+  async getAllBlockedListFromDB() {
+    return await this.blockedListRepository.find();
+  }
+
   async getFriendList(
     intra: string,
   ): Promise<{ friendNicname: string; isOnline: OnlineStatus }[]> {
@@ -267,13 +359,6 @@ export class UsersService {
       user.userIdx,
       this.userObjectRepository,
     );
-  }
-
-  async getBlockedList(intra: string) {
-    const user: UserObject = await this.userObjectRepository.findOne({
-      where: { intra: intra },
-    });
-    return this.blockedListRepository.getBlockedList(user);
   }
 
   async setIsOnline(user: UserObject, isOnline: OnlineStatus) {

@@ -1,4 +1,4 @@
-import { Channel } from '../class/channel.class';
+import { Channel } from '../class/chat.channel/channel.class';
 
 export class chatGetProfileDto {
   constructor(
