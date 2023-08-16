@@ -473,17 +473,16 @@ export class ChatService {
     }
     channel.removeMember(user);
     channel.removeAdmin(user);
-    // const userSocket = this.chat.getSocketObject(user.userIdx);
-    // userSocket.socket.leave(`chat_room_${channel.getChannelIdx}`);
-    // userSocket.socket.emit('chat_goto_lobby', '방을 나왔습니다.');
-
-    const channelInfo = {
-      owner: channel.getOwner?.nickname,
-      channelIdx: channel.getChannelIdx,
-      mode: channel.getMode,
-    };
+    const channelsInfo = this.getPublicAndProtectedChannel().map((channel) => {
+      return {
+        owner: channel.owner,
+        channelIdx: channel.channelIdx,
+        mode: channel.mode,
+      };
+    });
+    console.log(channelsInfo);
     client.leave(`chat_room_${channel.getChannelIdx}`);
-    return channelInfo;
+    return channelsInfo;
   }
 
   exitAnnounce(channel: Channel) {
