@@ -94,4 +94,16 @@ export class Chat {
       this.protectedChannels.splice(protectedChannelIdx, 1);
     }
   }
+
+  // haryu 제작
+  getUserObject(userIdx: number): UserObject {
+    const target = this.getSocketObject(userIdx);
+    return target.user;
+  }
+
+  // haryu 제작
+  getUserSocket(userIdx: number): Socket {
+    const target = this.getSocketObject(userIdx);
+    return target.socket;
+  }
 }

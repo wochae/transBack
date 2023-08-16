@@ -21,7 +21,11 @@ import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import { SendDMDto } from './dto/send-dm.dto';
 import { GameInvitationDto } from './dto/game.invitation.dto';
 import { ReturnMsgDto } from 'src/game/dto/error.message.dto';
-import { GameInvitationAnswerDto } from './dto/game.invitation.answer.dto';
+import {
+  GameInvitationAnswerDto,
+  GameInvitationAnswerPassDto,
+} from './dto/game.invitation.answer.dto';
+import { GameInvitationAskDto } from './dto/game.invitation.ask.dto';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -516,12 +520,45 @@ export class ChatGateway
     // client 방식
   }
   @SubscribeMessage('chat_invite_ask')
-  inviteFriendToGame(@MessageBody() invitation: GameInvitationDto) {
+  async inviteFriendToGame(@MessageBody() invitation: GameInvitationDto) {
+    const targetUser = invitation.targetUserIdx;
+    const targetSocket = this.chat.getSocketObject(targetUser);
+    const myObject = this.chat.getSocketObject(invitation.myUserIdx);
+    if (targetSocket == undefined) {
+      return new ReturnMsgDto(400, 'Bad Request, target user is not online');
+    }
+    const target = await this.usersService.getUserInfoFromDBById(targetUser);
+    if (target.isOnline == OnlineStatus.ONGAME) {
+      return new ReturnMsgDto(400, 'Bad Request, target user is on Game');
+    } else if (target.isOnline == OnlineStatus.ONLINE) {
+      const invitaionCard = new GameInvitationAskDto(
+        invitation.myUserIdx,
+        myObject.user.nickname,
+      );
+      targetSocket.socket.emit('chat_invite_answer', invitaionCard);
+    } else {
+      return new ReturnMsgDto(400, 'Bad Request, target user is offline');
+    }
     return new ReturnMsgDto(200, 'OK!');
   }
 
   @SubscribeMessage('chat_invite_answer')
   acceptFriendToGame(@MessageBody() answer: GameInvitationAnswerDto) {
+    const inviteSocket: Socket = this.chat.getUserSocket(answer.inviteUserIdx);
+    const targetSocket: Socket = this.chat.getUserSocket(answer.targetUserIdx);
+    const inviteUser: UserObject = this.chat.getUserObject(
+      answer.inviteUserIdx,
+    );
+    const targetUser: UserObject = this.chat.getUserObject(
+      answer.targetUserIdx,
+    );
+    const answerCard = new GameInvitationAnswerPassDto(
+      inviteUser,
+      targetUser,
+      answer.answer,
+    );
+    inviteSocket.emit('chat_invite_answer', answerCard);
+    targetSocket.emit('chat_invite_answer', answerCard);
     return new ReturnMsgDto(200, 'Ok!');
   }
 }
