@@ -699,7 +699,8 @@ export class ChatGateway
     const dm: MessageInfo = await this.chatService.getPrivateChannel(
       channelIdx,
     );
-    client.emit('check_dm', dm);
+    console.log(dm);
+    client.emit('chat_get_DM', dm);
   }
 
   // API: MAIN_CHAT_20
