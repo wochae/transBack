@@ -318,6 +318,11 @@ export class ChatService {
           userIdx: member?.userIdx,
           nickname: member?.nickname,
           imgUri: member?.imgUri,
+          admin: channel.getAdmin.map((member) => {
+            return {
+              userNickname: member.nickname,
+            };
+          }),
         };
       }),
       channelIdx: channel.getChannelIdx,
@@ -339,6 +344,11 @@ export class ChatService {
           userIdx: member.userIdx,
           nickname: member.nickname,
           imgUri: member.imgUri,
+          admin: channel.getAdmin.map((member) => {
+            return {
+              userNickname: member.nickname,
+            };
+          }),
         };
       }),
       channelIdx: channel.getChannelIdx,

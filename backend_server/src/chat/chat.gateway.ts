@@ -310,6 +310,11 @@ export class ChatGateway
         userIdx: member.userIdx,
         nickname: member.nickname,
         imgUri: member.imgUri,
+        admin: channel.getAdmin.map((member) => {
+          return {
+            userNickname: member.nickname,
+          };
+        }),
       };
     });
     const newMember = member.find(
