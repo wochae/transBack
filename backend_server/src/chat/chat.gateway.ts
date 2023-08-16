@@ -19,6 +19,13 @@ import { DMChannel, Mode } from '../entity/chat.entity';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import { SendDMDto } from './dto/send-dm.dto';
+import { GameInvitationDto } from './dto/game.invitation.dto';
+import { ReturnMsgDto } from 'src/game/dto/error.message.dto';
+import {
+  GameInvitationAnswerDto,
+  GameInvitationAnswerPassDto,
+} from './dto/game.invitation.answer.dto';
+import { GameInvitationAskDto } from './dto/game.invitation.ask.dto';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -511,5 +518,53 @@ export class ChatGateway
     //   blockList[]
     // }
     // client 방식
+  }
+  @SubscribeMessage('chat_invite_ask')
+  async inviteFriendToGame(@MessageBody() invitation: GameInvitationDto) {
+    const targetTuple = this.chat.getUserTuple(invitation.targetUserIdx);
+    const targetSocket = targetTuple[1];
+    const userTuple = this.chat.getUserTuple(invitation.myUserIdx);
+    const myObject = userTuple[0];
+    if (targetSocket === undefined) {
+      return new ReturnMsgDto(400, 'Bad Request, target user is not online');
+    }
+    const target = await this.usersService.getUserInfoFromDBById(
+      targetTuple[0].userIdx,
+    );
+    if (target.isOnline === OnlineStatus.ONGAME) {
+      return new ReturnMsgDto(400, 'Bad Request, target user is on Game');
+    } else if (target.isOnline === OnlineStatus.ONLINE) {
+      const invitaionCard = new GameInvitationAskDto(
+        myObject.userIdx,
+        myObject.nickname,
+      );
+      targetSocket.emit('chat_invite_answer', invitaionCard);
+    } else {
+      return new ReturnMsgDto(400, 'Bad Request, target user is offline');
+    }
+    return new ReturnMsgDto(200, 'OK!');
+  }
+
+  @SubscribeMessage('chat_invite_answer')
+  acceptFriendToGame(@MessageBody() answer: GameInvitationAnswerDto) {
+    const inviteTuple = this.chat.getUserTuple(answer.inviteUserIdx);
+    const targetTuple = this.chat.getUserTuple(answer.targetUserIdx);
+    const inviteSocket = inviteTuple[1];
+    const targetSocket = targetTuple[1];
+    const inviteUser: UserObject = inviteTuple[0];
+    const targetUser: UserObject = targetTuple[0];
+    const answerCard = new GameInvitationAnswerPassDto(
+      inviteUser,
+      targetUser,
+      answer.answer,
+    );
+    if (answer.answer === true) {
+      targetUser.isOnline = OnlineStatus.ONGAME;
+      inviteUser.isOnline = OnlineStatus.ONGAME;
+      //TODO: save 메서드 필요
+    }
+    inviteSocket.emit('chat_receive_answer', answerCard);
+    targetSocket.emit('chat_receive_answer', answerCard);
+    return new ReturnMsgDto(200, 'Ok!');
   }
 }

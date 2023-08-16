@@ -10,7 +10,6 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { GameService } from './game.service';
-
 import { ReturnMsgDto } from './dto/error.message.dto';
 import { Logger, UseFilters } from '@nestjs/common';
 import { WsExceptionFilter } from 'src/ws.exception.filter';
@@ -24,6 +23,8 @@ import { GameCancleDto } from './dto/game.cancle.dto';
 import { GamePaddleMoveDto } from './dto/game.paddle.move.dto';
 import { GameScoreDto } from './dto/game.score.dto';
 import { GameBallEventDto } from './dto/game.ball.event.dto';
+import { GameFriendMatchDto } from './dto/game.friend.match.dto';
+import { GameType } from './enum/game.type.enum';
 
 @WebSocketGateway({
   namespace: 'game',
@@ -93,16 +94,44 @@ export class GameGateway
     @MessageBody() options: GameOptionDto,
   ): Promise<ReturnMsgDto> {
     // await this.logger.log(`options is here : ${options.userIdx}`);
-    const condition = this.gameService.sizeWaitPlayer();
-    const after = this.gameService.setWaitPlayer(
-      options.userIdx,
-      new GameOptions(options.gameType, options.speed, options.mapNumber),
+    const optionObject = new GameOptions(
+      options.gameType,
+      options.speed,
+      options.mapNumber,
     );
-    // this.gameService.checkStatus('game option start');
-    if (after !== condition) {
-      client.emit('game_option', options);
+    if (options.gameType !== GameType.FRIEND) {
+      const condition = this.gameService.sizeWaitPlayer();
+      const after = this.gameService.setWaitPlayer(
+        options.userIdx,
+        optionObject,
+      );
+      // this.gameService.checkStatus('game option start');
+      if (after !== condition) {
+        client.emit('game_option', options);
+        return new ReturnMsgDto(200, 'OK!');
+      } else return new ReturnMsgDto(501, 'setting error');
+    } else {
+      const userId = options.userIdx;
+      const room = this.gameService.getRoomByUserIdx(userId);
+      if (room.setOptions(optionObject)) {
+        const roomIdx = this.gameService.getRoomIdxWithRoom(room);
+        this.logger.log(`룸 작성 성공`);
+        this.gameService.getReadyFirst(roomIdx, this.server);
+        this.gameService.getReadySecond(roomIdx, this.server);
+        try {
+          await this.gameService.setRoomToDB(roomIdx);
+        } catch (exception) {
+          console.log(exception);
+        }
+        return new ReturnMsgDto(200, 'OK!');
+        // True -> 설정 완료
+      }
+      // false -> 설정 미완
+      // 방 찾기
+      // 옵션 설정
+      // 성공시 다음으로 이동
       return new ReturnMsgDto(200, 'OK!');
-    } else return new ReturnMsgDto(501, 'setting error');
+    }
   }
 
   @SubscribeMessage('game_queue_regist')
@@ -221,10 +250,8 @@ export class GameGateway
   async sendPaddleToTarget(
     @MessageBody() paddleMove: GamePaddleMoveDto,
   ): Promise<ReturnMsgDto> {
-    const selfLatency = await this.gameService.movePaddle(
-      paddleMove,
-      Date.now(),
-    );
+    const time = Date.now();
+    const selfLatency = await this.gameService.movePaddle(paddleMove, time);
     // 누군지 파악하기
     // 해당 룸 상대방 소켓으로 전달하기
     return new ReturnMsgDto(selfLatency, 'check your latency');
@@ -249,6 +276,14 @@ export class GameGateway
   //   endMatch(): ReturnMsgDto {
   //     return new ReturnMsgDto(200, 'OK!');
   //   }
+
+  @SubscribeMessage('game_invite_final')
+  prePareGameFormRiend(
+    @MessageBody() matchList: GameFriendMatchDto,
+  ): ReturnMsgDto {
+    this.gameService.prepareFriendMatch(matchList);
+    return new ReturnMsgDto(200, 'OK!');
+  }
 
   @SubscribeMessage('game_switch_to_chat')
   exitGame(@ConnectedSocket() client: Socket): ReturnMsgDto {

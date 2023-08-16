@@ -3,7 +3,11 @@ import { GamePlayer } from '../game.player/game.player';
 import { GameOptions } from '../game.options/game.options';
 import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameRecord } from 'src/entity/gameRecord.entity';
-import { RecordResult, RecordType } from 'src/game/enum/game.type.enum';
+import {
+  GameType,
+  RecordResult,
+  RecordType,
+} from 'src/game/enum/game.type.enum';
 import { GameScoreDto } from 'src/game/dto/game.score.dto';
 import { GameBallEventDto } from 'src/game/dto/game.ball.event.dto';
 
@@ -32,12 +36,16 @@ export class GameRoom {
     this.ballList.push(new GameBall(null));
   }
 
-  public async setUser(
-    userData: GamePlayer,
-    option: GameOptions,
-  ): Promise<boolean> {
+  public setUser(userData: GamePlayer, option: GameOptions): boolean {
     if (this.count == 0) this.user1 = userData;
     else this.user2 = userData;
+    this.option = option;
+    this.count++;
+    return this.count === 2 ? true : false;
+  }
+
+  public setOptions(option: GameOptions) {
+    if (option.getType() == GameType.FRIEND && this.count === 2) this.count = 0;
     this.option = option;
     this.count++;
     return this.count === 2 ? true : false;
