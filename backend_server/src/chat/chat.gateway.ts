@@ -185,6 +185,7 @@ export class ChatGateway
     }
     // TODO: game 기록도 인메모리에서 관리하기로 했었나?? 전적 데이터 추가 필요
     client.emit('user_profile', user_profile);
+    return 200;
   }
 
   // API: MAIN_CHAT_0
@@ -210,6 +211,7 @@ export class ChatGateway
     } else {
       client.emit('check_dm', check_dm);
     }
+    return 200;
   }
 
   // API: MAIN_CHAT_1.
@@ -259,7 +261,7 @@ export class ChatGateway
     this.server
       .to(`chat_room_${newChannelAndMsg.channelIdx}`)
       .emit('create_dm', newChannelAndMsg);
-    return '성공';
+    return 200;
   }
 
   // API: MAIN_CHAT_2
@@ -400,6 +402,7 @@ export class ChatGateway
       // 예상하지 못한 타입일 경우 처리
       console.log('Unexpected type of channel');
     }
+    return 200;
   }
 
   // API: MAIN_CHAT_5
@@ -421,6 +424,7 @@ export class ChatGateway
     );
     client.join(`chat_room_${channelInfo.channelIdx}`);
     this.server.emit('BR_chat_create_room', channelInfo);
+    return 200;
   }
 
   // API: MAIN_CHAT_6
@@ -466,7 +470,7 @@ export class ChatGateway
     this.server
       .to(`chat_room_${channelIdx}`)
       .emit('chat_room_admin', adminInfo);
-    return '권한 부여 완료';
+    return 200;
   }
 
   // API: MAIN_CHAT_7
@@ -497,6 +501,7 @@ export class ChatGateway
     console.log(channelInfo);
     // broadcast 방식
     this.server.emit('BR_chat_room_password', channelInfo);
+    return 200;
   }
 
   // API: MAIN_CHAT_9
@@ -519,13 +524,15 @@ export class ChatGateway
     if (isEmpty) {
       const channels = this.chatService.removeEmptyChannel(channel);
       this.server.emit('BR_chat_room_delete', channels);
-      return '채널이 삭제되었습니다. 로비로 이동합니다.';
+      // return '채널이 삭제되었습니다. 로비로 이동합니다.';
+      return 200;
     }
 
     // API: MAIN_CHAT_8
     const announce = this.chatService.exitAnnounce(channel);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_room_exit', announce);
-    return '로비로 이동합니다.';
+    // return '로비로 이동합니다.';
+    return 200;
   }
 
   // API: MAIN_CHAT_12
@@ -569,7 +576,8 @@ export class ChatGateway
       this.server.to(`chat_room_${channelIdx}`).emit('chat_mute', muteInfo);
     }, 10000);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_mute', muteInfo);
-    return '뮤트 처리 되었습니다.';
+    // return '뮤트 처리 되었습니다.';
+    return 200;
   }
 
   // API: MAIN_CHAT_13
@@ -616,7 +624,7 @@ export class ChatGateway
       .to(`chat_room_${channelIdx}`)
       .emit('chat_room_exit', channelInfo);
     // console.log(channel);
-    return;
+    return 200;
   }
 
   // API: MAIN_CHAT_14
@@ -659,7 +667,8 @@ export class ChatGateway
     const banInfo = this.chatService.setBan(channel, target);
     console.log('after ban : ', channel);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_room_admin', banInfo);
-    return 'ban 처리 되었습니다.';
+    // return 'ban 처리 되었습니다.';
+    return 200;
   }
 
   // API: MAIN_CHAT_15
@@ -680,6 +689,7 @@ export class ChatGateway
       this.inMemoryUsers,
     );
     client.emit('chat_block', blockInfo);
+    return 200;
   }
 
   // API: MAIN_CHAT_16
@@ -687,7 +697,7 @@ export class ChatGateway
   getPublicAndProtectedChannel(@ConnectedSocket() client: Socket) {
     const channels = this.chatService.getPublicAndProtectedChannel();
     client.emit('chat_get_roomList', channels);
-    return;
+    return 200;
   }
 
   // API: MAIN_CHAT_17
@@ -697,7 +707,7 @@ export class ChatGateway
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
     const channels = await this.chatService.getPrivateChannels(user);
     client.emit('chat_get_DMList', channels);
-    return;
+    return 200;
   }
 
   // API: MAIN_CHAT_18
@@ -713,6 +723,7 @@ export class ChatGateway
     );
     console.log(dm);
     client.emit('chat_get_DM', dm);
+    return 200;
   }
 
   // API: MAIN_CHAT_20
@@ -727,8 +738,9 @@ export class ChatGateway
     const channel = this.chat.getProtectedChannel(channelIdx);
     const grant = this.chatService.getGrant(channel, user);
     client.emit('chat_get_grant', grant);
-    return;
+    return 200;
   }
+
   @SubscribeMessage('chat_invite_ask')
   async inviteFriendToGame(@MessageBody() invitation: GameInvitationDto) {
     const targetTuple = this.chat.getUserTuple(invitation.targetUserIdx);
