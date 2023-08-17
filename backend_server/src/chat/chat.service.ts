@@ -382,7 +382,7 @@ export class ChatService {
       grant: grant,
       admin: channel.getAdmin.map((member) => {
         return {
-          userNickname: member.nickname,
+          nickname: member.nickname,
         };
       }),
     };
