@@ -478,12 +478,21 @@ export class ChatService {
 
   goToLobby(client: Socket, channel: Channel, user: UserObject) {
     const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
-    if (isOwner) {
-      channel.setOwner = channel.getMember[0];
-      channel.removeOwner();
-    }
+    const isAdmin: boolean = channel.getAdmin.some(
+      (member) => member.userIdx === user.userIdx,
+    );
+    console.log('Bfter Leaving member: ', channel);
+    // 멤버 삭제
     channel.removeMember(user);
-    channel.removeAdmin(user);
+    if (isAdmin) {
+      channel.removeAdmin(user);
+    }
+    if (isOwner) {
+      channel.removeOwner();
+      channel.setOwner = channel.getMember[0];
+      channel.setAdmin = channel.getMember[0];
+    }
+    console.log('After Leaving member: ', channel);
     const channelsInfo = this.getPublicAndProtectedChannel().map((channel) => {
       return {
         owner: channel.owner,
