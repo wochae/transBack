@@ -759,9 +759,11 @@ export class ChatGateway
     if (targetSocket === undefined) {
       return new ReturnMsgDto(400, 'Bad Request, target user is not online');
     }
-    const target = await this.usersService.getUserInfoFromDBById(
-      targetTuple[0].userIdx,
-    );
+    // in memory 로 바꿀까?
+    const target = this.inMemoryUsers.getUserByIdFromIM(targetTuple[0].userIdx);
+    // const target = await this.usersService.getUserInfoFromDBById(
+    //   targetTuple[0].userIdx,
+    // );
     if (target.isOnline === OnlineStatus.ONGAME) {
       return new ReturnMsgDto(400, 'Bad Request, target user is on Game');
     } else if (target.isOnline === OnlineStatus.ONLINE) {
@@ -790,9 +792,12 @@ export class ChatGateway
       answer.answer,
     );
     if (answer.answer === true) {
-      targetUser.isOnline = OnlineStatus.ONGAME;
-      inviteUser.isOnline = OnlineStatus.ONGAME;
+      // 이건 inmemory 에 저장함
+      // targetUser.isOnline = OnlineStatus.ONGAME;
+      // inviteUser.isOnline = OnlineStatus.ONGAME;
       //TODO: save 메서드 필요
+      this.usersService.setIsOnline(targetUser, OnlineStatus.ONGAME);
+      this.usersService.setIsOnline(inviteUser, OnlineStatus.ONGAME);
     }
     inviteSocket.emit('chat_receive_answer', answerCard);
     targetSocket.emit('chat_receive_answer', answerCard);
