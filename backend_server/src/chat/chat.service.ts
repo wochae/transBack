@@ -318,11 +318,11 @@ export class ChatService {
           userIdx: member?.userIdx,
           nickname: member?.nickname,
           imgUri: member?.imgUri,
-          admin: channel.getAdmin.map((member) => {
-            return {
-              userNickname: member.nickname,
-            };
-          }),
+        };
+      }),
+      admin: channel.getAdmin?.map((member) => {
+        return {
+          nickname: member.nickname,
         };
       }),
       channelIdx: channel.getChannelIdx,
@@ -339,16 +339,17 @@ export class ChatService {
       channel.setMember = user;
     }
     const channelInfo = {
-      member: channel.getMember.map((member) => {
+      member: channel.getMember?.map((member) => {
+        console.log(member);
         return {
           userIdx: member.userIdx,
           nickname: member.nickname,
           imgUri: member.imgUri,
-          admin: channel.getAdmin.map((member) => {
-            return {
-              userNickname: member.nickname,
-            };
-          }),
+        };
+      }),
+      admin: channel.getAdmin?.map((member) => {
+        return {
+          nickname: member.nickname,
         };
       }),
       channelIdx: channel.getChannelIdx,
@@ -531,7 +532,7 @@ export class ChatService {
   getPublicAndProtectedChannel() {
     const channels = this.chat.getProtectedChannels?.map((channel) => {
       return {
-        owner: channel.getOwner.nickname,
+        owner: channel.getOwner?.nickname,
         channelIdx: channel.getChannelIdx,
         mode: channel.getMode,
       };

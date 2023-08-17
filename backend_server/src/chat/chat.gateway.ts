@@ -72,8 +72,8 @@ export class ChatGateway
       });
     });
     // FIXME: 테스트용  코드
-    // client.join('chat_room_10');
-    // client.join('chat_room_11');
+    client.join('chat_room_10');
+    client.join('chat_room_11');
 
     // TODO: 소켓 객체가 아닌 소켓 ID 만 저장하면 되지 않을까?
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
@@ -123,8 +123,8 @@ export class ChatGateway
     // TODO: intra 를 class 로 만들어서 DTO 처리?
     @MessageBody() payload: any,
   ) {
-    const { intra } = payload;
-    // const { intra } = JSON.parse(payload);
+    // const { intra } = payload;
+    const { intra } = JSON.parse(payload);
 
     // API: MAIN_ENTER_0
     // TODO: 정리가 필요할듯
@@ -283,11 +283,6 @@ export class ChatGateway
     const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
       userIdx,
     );
-    // ban 체크
-    // if (channel.getBan?.some((member) => member.userIdx === userIdx)) {
-    //   this.logger.log(`[ 💬 ] ${user.nickname} 은 차단된 유저입니다.`);
-    //   return `${user.nickname} 은 차단된 유저입니다.`;
-    // }
     if (channel instanceof Channel) {
       if (channel.getPassword === '') {
         this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
@@ -302,34 +297,45 @@ export class ChatGateway
         channel = await this.chatService.enterProtectedRoom(user, channel);
       }
     }
-    console.log('MAIN_CHAT_2 : ', channel);
     client.join(`chat_room_${channel.channelIdx}`);
     client.emit('chat_enter', channel);
 
     // API: MAIN_CHAT_3
-    const member = channel.member.map((member) => {
+    console.log('MAIN_CHAT_2 : ', channel.admin);
+    const member = await channel.member?.map((member) => {
       return {
         userIdx: member.userIdx,
         nickname: member.nickname,
         imgUri: member.imgUri,
-        admin: channel.getAdmin.map((member) => {
-          return {
-            userNickname: member.nickname,
-          };
-        }),
       };
     });
-    const newMember = member.find(
-      (member) => member.userIdx === userIdx,
-    ).nickname;
-    const memberInfo = {
-      member: member,
-      newMember: newMember,
-    };
-    // FIXME: 새로 들어온 멤버도 같이 보내기
-    this.server
-      .to(`chat_room_${channel.channelIdx}`)
-      .emit('chat_enter_noti', memberInfo);
+    const admin = await channel.admin?.map((member) => {
+      return {
+        nickname: member.nickname,
+      };
+    });
+    if (member) {
+      const newMember = await member.find(
+        (member) => member.userIdx === userIdx,
+      );
+      if (newMember) {
+        const memberInfo = {
+          member: member,
+          admin: admin,
+          newMember: newMember.nickname,
+        };
+        console.log('MAIN_CHAT_3 memberInfo: ', memberInfo);
+        // FIXME: 새로 들어온 멤버도 같이 보내기
+        this.server
+          .to(`chat_room_${channel.channelIdx}`)
+          .emit('chat_enter_noti', memberInfo);
+      } else {
+        console.log('MAIN_CHAT_3', '멤버가 없습니다.');
+      }
+    } else {
+      console.log('MAIN_CHAT_3', '멤버가 정의되지 않았습니다.');
+      return '멤버가 정의되지 않았습니다.';
+    }
     return 200;
   }
 
