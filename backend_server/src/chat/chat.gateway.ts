@@ -523,7 +523,7 @@ export class ChatGateway
       return '요청자가 대화방에 없습니다.';
     }
     const channelInfo = this.chatService.goToLobby(client, channel, user);
-    client.emit('chat_room_exit', channelInfo);
+    client.emit('chat_goto_lobby', channelInfo);
 
     // API: MAIN_CHAT_10
     const isEmpty = this.chatService.checkEmptyChannel(channel);
