@@ -46,37 +46,24 @@ export class UsersService {
     private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
     private certificateRepository: CertificateRepository,
-  ) {}
+  ) { }
 
   private logger: Logger = new Logger('UsersService');
 
   async findOneUser(userIdx: number): Promise<UserObject> {
-    console.log('찾는다: ' + userIdx);
     return this.userObjectRepository.findOneBy({ userIdx });
   }
 
   async updateUserNick(updateUsersDto: UserEditprofileDto) {
-    const { userIdx, userNickname } = updateUsersDto;
+    const { userIdx, userNickname, imgUri } = updateUsersDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
-    console.log('updateOneUser: user : ', user);
-    if (!user) {
-      throw new BadRequestException('유저가 존재하지 않습니다.');
-    }
-    if (user.nickname === userNickname) {
-      // 요청한 닉네임이 현재 닉네임과 다르다면
-      const isNicknameExist = await this.userObjectRepository.findOneBy({
-        nickname: userNickname,
-      });
-      if (!isNicknameExist) {
-        // 닉네임이 존재하지 않는다면
-        user.nickname = userNickname;
-        await this.userObjectRepository.save(user);
-      } else {
-        return false;
-      } // 닉네임이 이미 존재한다면
-    } else {
-      return new BadRequestException('변경을 실패 했습니다.');
-    } // 닉네임이 같다면
+    if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
+    // 존재하는 닉네임인지 확인
+    const isNicknameExist = await this.userObjectRepository.findOneBy({ nickname: userNickname });
+    if (!isNicknameExist) { // 닉네임이 존재하지 않는다면
+      user.nickname = userNickname;
+      return await this.userObjectRepository.save(user);
+    } else { return false; } // 닉네임이 이미 존재한다면
   }
 
   async uploadUserImg(UserEditprofileDto: UserEditprofileDto) {
@@ -125,12 +112,9 @@ export class UsersService {
           return beforeSaveToken;
         } // 같다면 그대로
       }
-    } catch (e) {
-      console.log('토큰 디비에 문제가 있다.');
-      throw new InternalServerErrorException(e);
-    }
-  }
-
+    } catch (e) { console.log("토큰 디비에 문제가 있다."); throw new InternalServerErrorException(e); }
+  };
+  
   async setBlock(
     targetNickname: string,
     user: UserObject,
@@ -197,6 +181,17 @@ export class UsersService {
   ): Promise<FriendList[]> {
     return this.friendListRepository.insertFriend(
       insertFriendDto,
+      user,
+      this.userObjectRepository,
+    );
+  }
+
+  async deleteFriend(
+    deleteFriendDto: FollowFriendDto,
+    user: UserObject,
+  ): Promise<FriendList[]> {
+    return this.friendListRepository.deleteFriend(
+      deleteFriendDto,
       user,
       this.userObjectRepository,
     );
@@ -289,8 +284,8 @@ export class UsersService {
         } finally {
           await queryRunner.release();
         }
-
         return new IntraSimpleInfoDto(user.userIdx, user.imgUri);
+
       } else {
         // 유저가 존재하는 경우
         const userCerti = await this.certificateRepository.findOneBy({

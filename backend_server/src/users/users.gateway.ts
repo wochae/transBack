@@ -45,17 +45,29 @@ export class UsersGateway
     console.log(`[ Users ] Client disconnected: ${client.id}`);
   }
   @SubscribeMessage('add_friend')
-  async handleAddFriend(
+    async handleAddFriend(
+      @ConnectedSocket() client: Socket,
+      @MessageBody() req: FollowFriendDto,
+  ) {
+    const userId: number = parseInt(client.handshake.query.userId as string,10); // 이거 이렇게 추출하는거 맞는가? chat에 이 상태에서 수정했던 것 같은데.
+      const { targetNickname, targetIdx } = req;
+      // logic
+      const myUser = await this.usersService.findOneUser(userId);
+      const res = await this.usersService.addFriend(req, myUser);
+      client.emit('add_friend', res);
+  }
+
+  @SubscribeMessage('delete_friend')
+  async handleDeleteFriend(
     @ConnectedSocket() client: Socket,
     @MessageBody() req: FollowFriendDto,
   ) {
     const { targetNickname, targetIdx } = req;
     // logic
     const targetUser = await this.usersService.findOneUser(targetIdx);
-    const res = await this.usersService.addFriend(req, targetUser);
+    const res = await this.usersService.deleteFriend(req, targetUser);
+    console.log(res);
 
-    client.emit('add_friend', res);
-  }
-
-  // @SubscribeMessage('delete_friends')
+    client.emit('delete_friends', res);
+    }
 }
