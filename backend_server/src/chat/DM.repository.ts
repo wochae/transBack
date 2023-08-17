@@ -19,8 +19,6 @@ export class DMChannelRepository extends Repository<DMChannel> {
       userNickname1: client.nickname,
       userNickname2: target.nickname,
       channelIdx: channelIdx,
-      user1: client,
-      user2: target,
     });
 
     const channel2 = await this.create({
@@ -29,15 +27,10 @@ export class DMChannelRepository extends Repository<DMChannel> {
       userNickname1: target.nickname,
       userNickname2: client.nickname,
       channelIdx: channelIdx,
-      user1: target,
-      user2: client,
     });
 
     list.push(channel1);
     list.push(channel2);
-
-    await this.save(list);
-
     return list;
   }
 
@@ -85,14 +78,14 @@ export class DirectMessageRepository extends Repository<DirectMessage> {
       msg: msg,
       msgDate: new Date(),
     });
-    await this.save(dmMessage);
-
     return dmMessage;
   }
 
   async findMessageList(channelIdx: number): Promise<DirectMessage[]> {
     const dmMessageList: DirectMessage[] = await this.createQueryBuilder('dm')
       .where('dm.channelIdx = :channelIdx', { channelIdx })
+      .orderBy('dm.msgDate', 'DESC')
+      .take(20)
       .getMany();
     return dmMessageList;
   }

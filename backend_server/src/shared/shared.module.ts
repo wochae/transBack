@@ -5,7 +5,7 @@ import { UsersModule } from 'src/users/users.module';
 import { UsersService } from 'src/users/users.service';
 
 @Module({
-  imports: [forwardRef(() => AuthModule),UsersModule],
+  imports: [forwardRef(() => AuthModule), UsersModule],
   providers: [AuthGuard, UsersService],
   exports: [AuthGuard, UsersModule],
 })

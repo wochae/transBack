@@ -4,16 +4,16 @@ import { UserObject } from 'src/entity/users.entity';
 import { UserObjectRepository } from './users.repository';
 import { BlockList } from '../entity/blockList.entity';
 import { BlockTargetDto } from './dto/block-target.dto';
+import { time } from 'console';
 
 //
 @CustomRepository(BlockList)
 export class BlockListRepository extends Repository<BlockList> {
   async blockTarget(
-    blockTargetDto: BlockTargetDto,
+    targetNickname: string,
     user: UserObject,
     userList: UserObjectRepository,
-  ): Promise<string> {
-    const { targetNickname } = blockTargetDto;
+  ): Promise<BlockList> {
     const data = await userList.findOne({
       where: { nickname: targetNickname },
     });
@@ -21,15 +21,20 @@ export class BlockListRepository extends Repository<BlockList> {
       throw new Error(`There is a no name, ${targetNickname}`);
     }
 
-    const target = this.create({
-      userIdx: user.userIdx,
-      blockedUserIdx: data.userIdx,
-      blockedNickname: data.nickname,
+    const check = await this.findOne({
+      where: { userIdx: user.userIdx, blockedUserIdx: data.userIdx },
     });
-
-    await this.save(target);
-
-    return data.nickname;
+    if (check) {
+      await this.remove(check);
+    } else if (!check) {
+      const target = this.create({
+        userIdx: user.userIdx,
+        blockedUserIdx: data.userIdx,
+        blockedNickname: data.nickname,
+      });
+      await this.save(target);
+      return target;
+    }
   }
 
   async getBlockedList(user: UserObject) {

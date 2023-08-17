@@ -8,8 +8,8 @@ import {
   PrimaryGeneratedColumn,
   OneToOne,
   ManyToOne,
-  ManyToMany,
   JoinColumn,
+  ManyToMany,
 } from 'typeorm';
 
 export enum Mode {
@@ -57,10 +57,10 @@ export class DMChannel extends BaseEntity {
 
 @Entity('direct_message')
 export class DirectMessage extends BaseEntity {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'int' })
   idx: number;
 
-  @Column({ type: 'int', unsigned: true })
+  @Column()
   channelIdx: number;
 
   @Column({ type: 'varchar' })
@@ -76,5 +76,3 @@ export class DirectMessage extends BaseEntity {
   @JoinColumn({ name: 'channelIdx', referencedColumnName: 'channelIdx' })
   targetMessage: DMChannel;
 }
-
-// @ManyToOne(() => TargetEntity, targetEntity => targetEntity.relatedColumn)

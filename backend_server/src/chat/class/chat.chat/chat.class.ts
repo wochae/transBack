@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io';
-import { Channel } from './channel.class';
+import { Channel } from '../chat.channel/channel.class';
 import { UserObject } from 'src/entity/users.entity';
 
 interface SocketObject {
@@ -10,7 +10,7 @@ interface SocketObject {
 export interface MessageInteface {
   sender: string;
   msg: string;
-  // msgDate: Date;
+  msgDate: Date;
 }
 
 export interface MessageInfo {
@@ -38,6 +38,14 @@ export class Chat {
   get getProtectedChannels(): Channel[] {
     return this.protectedChannels;
   }
+  getProtectedChannel(channelIdx: number): Channel {
+    for (const channel of this.protectedChannels) {
+      if (channel.getChannelIdx === channelIdx) {
+        return channel;
+      }
+    }
+  }
+
   get getSocketList(): SocketObject[] {
     return this.socektList;
   }
@@ -93,5 +101,11 @@ export class Chat {
     if (protectedChannelIdx !== -1) {
       this.protectedChannels.splice(protectedChannelIdx, 1);
     }
+  }
+
+  // haryu 제작
+  getUserTuple(userIdx: number): [UserObject, Socket] {
+    const target = this.getSocketObject(userIdx);
+    return [target.user, target.socket];
   }
 }
