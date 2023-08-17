@@ -91,8 +91,6 @@ export class ChatGateway
       // TODO: room 나가기, 소켓 리스트 지우기 등.
       // FIXME: in memory 도 isOnline 관리해야함.
       await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
-      // FIXME: 지워야함.
-      console.log('user.isOnline : ', user.isOnline);
       await this.chat.removeSocketObject(
         this.chat.setSocketObject(client, user),
       );
