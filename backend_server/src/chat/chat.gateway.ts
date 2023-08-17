@@ -89,7 +89,10 @@ export class ChatGateway
     if (user) {
       // TODO: disconnect 도 BR??
       // TODO: room 나가기, 소켓 리스트 지우기 등.
+      // FIXME: in memory 도 isOnline 관리해야함.
       await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
+      // FIXME: 지워야함.
+      console.log('user.isOnline : ', user.isOnline);
       await this.chat.removeSocketObject(
         this.chat.setSocketObject(client, user),
       );
@@ -159,7 +162,9 @@ export class ChatGateway
     client.emit('main_enter', main_enter);
 
     // API: MAIN_ENTER_1
+    // FIXME: setIsOnline 위치 고려 및 in memory 확인 및 넣기
     await this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
+    console.log('user.isOnline : ', user.isOnline);
     const BR_main_enter = {
       targetNickname: user.nickname,
       targetIdx: user.userIdx,

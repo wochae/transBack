@@ -362,7 +362,7 @@ export class UsersService {
   }
 
   async setIsOnline(user: UserObject, isOnline: OnlineStatus) {
-    // user.isOnline = isOnline;
+    user.isOnline = isOnline;
     return this.userObjectRepository.setIsOnline(user, isOnline);
   }
 
