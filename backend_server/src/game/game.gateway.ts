@@ -179,6 +179,7 @@ export class GameGateway
       // 옵션 설정
       // 성공시 다음으로 이동
       return this.messanger.setResponseMsgWithLogger(200, 'OK!', 'game_option');
+      //   return this.messanger.setResponseMsg(200, 'OK!', 'game_option');
     }
   }
 
