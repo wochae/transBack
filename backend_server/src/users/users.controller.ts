@@ -15,6 +15,7 @@ import {
   Req,
   Put,
   Param,
+  Patch,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { UsersService } from './users.service';
@@ -23,6 +24,7 @@ import { plainToClass } from 'class-transformer';
 import { UserObject } from '../entity/users.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { UserEditprofileDto, ProfileResDto } from './dto/user.dto';
+import { SendEmailDto, TFAuthDto } from './dto/tfa.dto';
 
 @UseGuards(AuthGuard)
 @Controller("users")
@@ -73,5 +75,28 @@ export class UsersController {
     }
   }
 
+  @Post('second')
+  async sendEmail(@Req() req, @Res() res, @Body() body: any) {
+    try {
+      console.log("sendEmail");
+      console.log(body);
+      const sendEmailDto: SendEmailDto = {userIdx: body.userIdx, email: body.email};
+      await this.usersService.reqTFA(sendEmailDto);
+    } catch (err) {
+      this.logger.error(err);
+      return { message: err.message };
+    }
+    return res.status(HttpStatus.OK).json({ message: '인증번호가 전송되었습니다.' });
+  }
 
+  @Get('second')
+  async getTFA(@Req() req, @Res() res, @Body() body : any) {
+    return this.usersService.getTFA(body.userIdx);
+  }
+
+  @Patch('second')
+  async patchTFA(@Req() req, @Res() res, @Body() body: any) {
+    const tfaAuthDto : TFAuthDto = { code : body.code }
+    return this.usersService.patchTFA(body.userIdx, tfaAuthDto);
+  }
 }

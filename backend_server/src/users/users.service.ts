@@ -4,6 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { UserObjectRepository } from './users.repository';
 import { CreateUsersDto } from './dto/create-users.dto';
@@ -13,7 +14,6 @@ import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
 import { FollowFriendDto, FriendResDto } from './dto/friend.dto';
 import axios from 'axios';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { response } from 'express';
 // import { CreateCertificateDto, IntraInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import {
@@ -36,7 +36,11 @@ import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 import { DMChannelRepository } from 'src/chat/DM.repository';
 import { BlockList } from 'src/entity/blockList.entity';
 import { InMemoryUsers } from './users.provider';
+import { MailerService } from '@nestjs-modules/mailer';
+import * as config from 'config';
+import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 
+const mailConfig = config.get('mail');
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 @Injectable()
 export class UsersService {
@@ -46,6 +50,7 @@ export class UsersService {
     private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
     private certificateRepository: CertificateRepository,
+    private readonly mailerService: MailerService,
   ) { }
 
   private logger: Logger = new Logger('UsersService');
@@ -114,7 +119,7 @@ export class UsersService {
       }
     } catch (e) { console.log("토큰 디비에 문제가 있다."); throw new InternalServerErrorException(e); }
   };
-  
+
   async setBlock(
     targetNickname: string,
     user: UserObject,
@@ -368,4 +373,62 @@ export class UsersService {
   // async getUserId(client: Socket): Promise<number> {
   //   return parseInt(client.handshake.query.userId as string, 10);
   // }
+  private mailCodeList: Map<number, number> = new Map();
+
+  async reqTFA(sendEmailDto: SendEmailDto) {
+    const { userIdx, email } = sendEmailDto;
+    // 난수를 생성한다. 6자리 숫자
+    const authCode = Math.floor(Math.random() * 900000 + 100000);
+    this.mailCodeList.set(userIdx, authCode);
+    console.log('authCode :', authCode);
+    // 3분 후 만료된다.
+    setTimeout(() => {
+      this.mailCodeList.delete(userIdx);
+    }, 3 * 60000);
+    await this.mailerService
+      .sendMail({
+        to: email,
+        from: 'no-reply <no-reply@gaepofighters.com>',
+        subject: '[gaepofighters] 2차 인증 코드',
+        text: `인증 코드: ${authCode}`,
+        html: `<b>인증 코드: ${authCode}</b>`,
+      })
+      .then((success) => {
+        console.log('Mail sent: ' + success.response);
+        return success;
+      })
+      .catch((err) => {
+        console.log('Error occured: ' + err);
+        throw new BadRequestException();
+      });
+  }
+
+  async getTFA(userIdx : number): Promise<boolean> {
+    const authenticated = await this.certificateRepository.findOneBy({userIdx});
+    if (!authenticated) throw new NotFoundException('Not Found User.');
+    return authenticated.check2Auth;
+  }
+  async patchTFA(
+    userIdx: number,
+    patchAuthDto: TFAuthDto,
+  ): Promise<TFAUserDto> {
+    const auth = await this.certificateRepository.findOneBy({userIdx});
+    const { code } = patchAuthDto;
+
+    console.log(this.mailCodeList, code);
+
+    if (code !== undefined || auth.check2Auth === false) {
+      if (this.mailCodeList.get(userIdx) !== code || code === undefined)
+        throw new BadRequestException(
+          '인증코드가 일치하지 않거나 만료되었습니다.',
+        );
+      this.mailCodeList.delete(userIdx);
+      if (auth.check2Auth === true) return { authenticated: true };
+    }
+
+    auth.check2Auth = !auth.check2Auth;
+    await this.certificateRepository.save(auth);
+
+    return { authenticated: auth.check2Auth };
+  }
 }
