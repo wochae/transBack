@@ -2,11 +2,10 @@ import { IsBoolean, IsInt, IsOptional } from 'class-validator';
 
 export class TFAUserDto {
   @IsBoolean()
-  authenticated?: boolean;
+  checkTFA?: boolean;
 }
 
 export class TFAuthDto {
-
   @IsInt()
   @IsOptional()
   code?: number;

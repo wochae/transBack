@@ -49,11 +49,13 @@ export class UsersGateway
       @ConnectedSocket() client: Socket,
       @MessageBody() req: FollowFriendDto,
   ) {
-    const userId: number = parseInt(client.handshake.query.userId as string,10); // 이거 이렇게 추출하는거 맞는가? chat에 이 상태에서 수정했던 것 같은데.
-      const { targetNickname, targetIdx } = req;
+      const { myIdx, targetNickname, targetIdx } = req;
+      console.log('req', req);
+      
       // logic
-      const myUser = await this.usersService.findOneUser(userId);
+      const myUser = await this.usersService.findOneUser(myIdx);
       const res = await this.usersService.addFriend(req, myUser);
+      console.log('res', res);
       client.emit('add_friend', res);
   }
 
@@ -62,12 +64,10 @@ export class UsersGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() req: FollowFriendDto,
   ) {
-    const { targetNickname, targetIdx } = req;
-    // logic
-    const targetUser = await this.usersService.findOneUser(targetIdx);
-    const res = await this.usersService.deleteFriend(req, targetUser);
-    console.log(res);
-
-    client.emit('delete_friends', res);
+      const { myIdx, targetNickname, targetIdx } = req;
+      // logic
+      const myUser = await this.usersService.findOneUser(myIdx);
+      const res = await this.usersService.deleteFriend(req, myUser);
+      client.emit('delete_friends', res);
     }
 }

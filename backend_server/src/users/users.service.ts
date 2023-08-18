@@ -403,32 +403,28 @@ export class UsersService {
       });
   }
 
-  async getTFA(userIdx : number): Promise<boolean> {
-    const authenticated = await this.certificateRepository.findOneBy({userIdx});
+  async getTFA(userIdx: number): Promise<TFAUserDto> {
+    const authenticated = await this.certificateRepository.findOneBy({ userIdx });
     if (!authenticated) throw new NotFoundException('Not Found User.');
-    return authenticated.check2Auth;
+    return { checkTFA: authenticated.check2Auth };
   }
+  // tfa 를 사용하는지 안 하는지, 그리고 한다고 하면 그 때 2차 인증에 대해서 인증이 된 유저인지 확인이 필요함. check2Auth (2차 인증 사용 여부), checkTFA (2차 인증 사용 유저가 인증을 성공했을 때)
   async patchTFA(
     userIdx: number,
     patchAuthDto: TFAuthDto,
   ): Promise<TFAUserDto> {
-    const auth = await this.certificateRepository.findOneBy({userIdx});
+    const auth = await this.certificateRepository.findOneBy({ userIdx });
     const { code } = patchAuthDto;
-
     console.log(this.mailCodeList, code);
 
     if (code !== undefined || auth.check2Auth === false) {
       if (this.mailCodeList.get(userIdx) !== code || code === undefined)
-        throw new BadRequestException(
-          '인증코드가 일치하지 않거나 만료되었습니다.',
-        );
+        throw new BadRequestException('Invalid or Expired.');
       this.mailCodeList.delete(userIdx);
-      if (auth.check2Auth === true) return { authenticated: true };
+      if (auth.check2Auth === true) return { checkTFA: true };
     }
-
     auth.check2Auth = !auth.check2Auth;
-    await this.certificateRepository.save(auth);
-
-    return { authenticated: auth.check2Auth };
+    const certi = await this.certificateRepository.save(auth);
+    return { checkTFA: certi.check2Auth };
   }
 }

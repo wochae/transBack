@@ -24,15 +24,16 @@ import { plainToClass } from 'class-transformer';
 import { UserObject } from '../entity/users.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { UserEditprofileDto, ProfileResDto } from './dto/user.dto';
-import { SendEmailDto, TFAuthDto } from './dto/tfa.dto';
+import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 
-@UseGuards(AuthGuard)
+
 @Controller("users")
 export class UsersController {
   constructor(
     private usersService: UsersService,
   ) { }
   private logger: Logger = new Logger('UserController');
+  @UseGuards(AuthGuard)
   @Get("profile")
   async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) { // body 를 안 쓰긴 함.
     const { id: userIdx, email } = req.jwtPayload;
@@ -74,6 +75,17 @@ export class UsersController {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
     }
   }
+/**
+ * 리팩토링이 절실한 코드 userIdx 를 파라미터로 받거나 바디로 받거나 통일이 되어 있지 않음
+ * @param req 
+ * @param res 
+ * @param body 
+ * @returns 
+ */
+
+
+  @Get(':userIdx/second')
+  async getTFA(@Param('userIdx') userIdx: number) { return this.usersService.getTFA(userIdx); }
 
   @Post('second')
   async sendEmail(@Req() req, @Res() res, @Body() body: any) {
@@ -89,14 +101,11 @@ export class UsersController {
     return res.status(HttpStatus.OK).json({ message: '인증번호가 전송되었습니다.' });
   }
 
-  @Get('second')
-  async getTFA(@Req() req, @Res() res, @Body() body : any) {
-    return this.usersService.getTFA(body.userIdx);
-  }
 
   @Patch('second')
-  async patchTFA(@Req() req, @Res() res, @Body() body: any) {
+  async patchTFA(@Req() req, @Res() res:Response, @Body() body: any) {
     const tfaAuthDto : TFAuthDto = { code : body.code }
-    return this.usersService.patchTFA(body.userIdx, tfaAuthDto);
+    const result = await this.usersService.patchTFA(body.userIdx, tfaAuthDto);
+    return res.status(HttpStatus.OK).json({ message: '유저 정보가 업데이트 되었습니다.', result });
   }
 }
