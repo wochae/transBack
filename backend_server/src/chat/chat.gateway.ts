@@ -330,8 +330,8 @@ export class ChatGateway
     @MessageBody() payload: any,
   ) {
     // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
-    const { userNickname, userIdx, channelIdx, password } = JSON.parse(payload);
-    // const { userNickname, userIdx, channelIdx, password } = payload;
+    // const { userNickname, userIdx, channelIdx, password } = JSON.parse(payload);
+    const { userNickname, userIdx, channelIdx, password } = payload;
     let channel: any = await this.chatService.findChannelByRoomId(channelIdx);
     const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
       userIdx,
