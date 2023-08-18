@@ -446,8 +446,8 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    // const { channelIdx, senderIdx, msg, targetIdx } = payload;
-    const { channelIdx, senderIdx, msg, targetIdx } = JSON.parse(payload);
+    const { channelIdx, senderIdx, msg, targetIdx } = payload;
+    // const { channelIdx, senderIdx, msg, targetIdx } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
     const target: UserObject = this.inMemoryUsers.getUserByIdFromIM(targetIdx);
@@ -516,9 +516,8 @@ export class ChatGateway
   @SubscribeMessage('BR_chat_create_room')
   async createPrivateAndPublicChannel(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: any, // chatCreateRoomReqDto
+    @MessageBody() payload: any,
   ) {
-    console.log('payload : ', payload);
     const { password = '' } = JSON.parse(payload);
     // const { password = null } = payload;
     const userId: number = parseInt(client.handshake.query.userId as string);
