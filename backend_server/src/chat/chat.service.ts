@@ -21,6 +21,7 @@ import { InMemoryUsers } from 'src/users/users.provider';
 import { Socket } from 'socket.io';
 import { Message } from './class/chat.message/message.class';
 import { InjectRepository } from '@nestjs/typeorm';
+import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
 @Injectable()
 export class ChatService {
@@ -32,7 +33,8 @@ export class ChatService {
     // TODO: gateway에서도 InmemoryUsers 를 사용하는데, service 로 옮기자
     private inMemoryUsers: InMemoryUsers,
   ) {}
-  private logger: Logger = new Logger('ChatService');
+
+  private messanger: LoggerWithRes = new LoggerWithRes('ChatService');
 
   /********************* check Room Member & client *********************/
   // async checkAlreadyInRoom(clientData: any) {
@@ -156,7 +158,12 @@ export class ChatService {
       targetIdx,
     );
     if (!dmChannel) {
-      console.log('채널이 없습니다.');
+      this.messanger.logWithMessage(
+        'checkDM',
+        'dmChannel',
+        'null',
+        'No DM Channel',
+      );
       return false;
     }
     const dmMessageList = await Promise.all(
