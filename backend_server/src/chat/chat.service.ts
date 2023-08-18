@@ -479,8 +479,7 @@ export class ChatService {
     const isAdmin: boolean = channel.getAdmin.some(
       (member) => member.userIdx === user.userIdx,
     );
-    console.log('Bfter Leaving member: ', channel);
-    // 멤버 삭제
+
     channel.removeMember(user);
     if (isAdmin) {
       channel.removeAdmin(user);
@@ -490,7 +489,6 @@ export class ChatService {
       channel.setOwner = channel.getMember[0];
       channel.setAdmin = channel.getMember[0];
     }
-    console.log('After Leaving member: ', channel);
     const channelsInfo = this.getPublicAndProtectedChannel().map((channel) => {
       return {
         owner: channel.owner,
@@ -498,7 +496,6 @@ export class ChatService {
         mode: channel.mode,
       };
     });
-    console.log(channelsInfo);
     client.leave(`chat_room_${channel.getChannelIdx}`);
     return channelsInfo;
   }

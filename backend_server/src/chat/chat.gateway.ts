@@ -690,32 +690,50 @@ export class ChatGateway
   // API: MAIN_CHAT_9
   @SubscribeMessage('chat_goto_lobby')
   goToLobby(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
-    // const { channelIdx, userIdx } = JSON.parse(payload);
-    const { channelIdx, userIdx } = payload;
+    const { channelIdx, userIdx } = JSON.parse(payload);
+    // const { channelIdx, userIdx } = payload;
     const channel = this.chat.getProtectedChannel(channelIdx);
     const user: UserObject = channel.getMember.find((member) => {
       return member.userIdx === userIdx;
     });
-    if (!user) {
-      return '요청자가 대화방에 없습니다.';
+    if (user === undefined) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'chat_goto_lobby',
+        'user',
+      );
     }
     const channelInfo = this.chatService.goToLobby(client, channel, user);
     client.emit('chat_goto_lobby', channelInfo);
+    this.messanger.logWithMessage(
+      'chat_goto_lobby',
+      'user',
+      user.nickname,
+      'Done Go To Lobby',
+    );
 
     // API: MAIN_CHAT_10
     const isEmpty = this.chatService.checkEmptyChannel(channel);
     if (isEmpty) {
       const channels = this.chatService.removeEmptyChannel(channel);
       this.server.emit('BR_chat_room_delete', channels);
-      // return '채널이 삭제되었습니다. 로비로 이동합니다.';
-      return 200;
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'Done delete channel',
+        'BR_chat_room_delete',
+      );
     }
 
     // API: MAIN_CHAT_8
     const announce = this.chatService.exitAnnounce(channel);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_room_exit', announce);
-    // return '로비로 이동합니다.';
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done exit room',
+      'chat_room_exit',
+    );
   }
 
   // API: MAIN_CHAT_12
