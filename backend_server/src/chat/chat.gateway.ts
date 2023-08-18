@@ -518,19 +518,31 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    const { password = '' } = JSON.parse(payload);
-    // const { password = null } = payload;
+    // const { password = '' } = JSON.parse(payload);
+    const { password = null } = payload;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    const user = await this.inMemoryUsers.inMemoryUsers.find((user) => {
-      return user.userIdx === userId;
-    });
+    const user = this.inMemoryUsers.getUserByIdFromIM(userId);
+    if (!user) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'BR_chat_create_room',
+        userId,
+      );
+    }
+
     const channelInfo = await this.chatService.createPublicAndProtected(
       password,
       user,
     );
     client.join(`chat_room_${channelInfo.channelIdx}`);
     this.server.emit('BR_chat_create_room', channelInfo);
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Create Public & Private Room',
+      'BR_chat_create_room',
+    );
   }
 
   // API: MAIN_CHAT_6

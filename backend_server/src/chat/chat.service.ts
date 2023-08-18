@@ -227,7 +227,7 @@ export class ChatService {
 
   async createPublicAndProtected(password: string, user: UserObject) {
     const channelIdx = await this.setNewChannelIdx();
-    // TODO: 함수로 빼기?
+    // FIXME: 함수로 빼기
     const channel = new Channel();
     channel.setChannelIdx = channelIdx;
     channel.setRoomId = channelIdx;
@@ -253,7 +253,6 @@ export class ChatService {
     const maxChannelIdxInIM = await this.chat.getMaxChannelIdxInIM();
     const maxChannelIdxInDB =
       await this.dmChannelRepository.getMaxChannelIdxInDB();
-    // FIXME: chat 클래스에 있는 정적 변수는 지워도 되지 않을까?
     const channelIdx = Math.max(maxChannelIdxInIM, maxChannelIdxInDB) + 1;
     return channelIdx;
   }
