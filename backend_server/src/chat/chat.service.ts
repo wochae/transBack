@@ -469,11 +469,6 @@ export class ChatService {
       channel.setMode = Mode.PROTECTED;
     }
     const channels = this.getPublicAndProtectedChannel();
-    // const channelInfo = {
-    //   channelIdx: channel.getChannelIdx,
-    //   mode: channel.getMode,
-    // };
-    // return channelInfo;
     return channels;
   }
 

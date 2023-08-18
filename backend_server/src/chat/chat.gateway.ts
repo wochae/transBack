@@ -331,8 +331,8 @@ export class ChatGateway
     @MessageBody() payload: any,
   ) {
     // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
-    // const { userNickname, userIdx, channelIdx, password } = JSON.parse(payload);
-    const { userNickname, userIdx, channelIdx, password } = payload;
+    const { userNickname, userIdx, channelIdx, password } = JSON.parse(payload);
+    // const { userNickname, userIdx, channelIdx, password } = payload;
     let channel: any = await this.chatService.findChannelByRoomId(channelIdx);
     const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
       userIdx,
@@ -556,7 +556,7 @@ export class ChatGateway
     const userId: number = parseInt(client.handshake.query.userId as string);
     // error 발생
     console.log(this.chat.getProtectedChannels);
-    const channel = await this.chat.getProtectedChannel(channelIdx);
+    const channel = this.chat.getProtectedChannel(channelIdx);
     // console.log(channel);
     // FIXME: 함수로 빼기
     // 채널 유효성 검사
@@ -637,28 +637,54 @@ export class ChatGateway
     @MessageBody() payload: any,
   ) {
     const { channelIdx, userIdx, changePassword } = JSON.parse(payload);
-    const ownerId: number = parseInt(client.handshake.query.userId as string);
+    // const { channelIdx, userIdx, changePassword } = payload;
+    const userId: number = parseInt(client.handshake.query.userId as string);
     const channel = this.chat.getProtectedChannel(channelIdx);
 
-    // owner 유효성 검사
-    const owner: UserObject = channel.getMember.find((member) => {
-      return member.userIdx === ownerId;
-    });
-    if (owner === undefined) {
-      return '요청자가 대화방에 없습니다.';
+    // FIXME: 함수로 빼기
+    // 채널 유효성 검사
+    if (!channel) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'BR_chat_room_password',
+        'channel',
+      );
     }
-    const isOwner: boolean = channel.getOwner.userIdx === owner.userIdx;
+
+    // owner 유효성 검사
+    const user: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === userId;
+    });
+    if (user === undefined) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'BR_chat_room_password',
+        'user',
+      );
+    }
+    const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
     if (!isOwner) {
-      return '요청자가 owner 가 아닙니다.';
+      return this.messanger.logWithWarn(
+        'BR_chat_room_password',
+        'user',
+        user.nickname,
+        'Not Owner',
+      );
     }
     const channelInfo = this.chatService.changePassword(
       channel,
       changePassword,
     );
-    console.log(channelInfo);
-    // broadcast 방식
+
     this.server.emit('BR_chat_room_password', channelInfo);
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Change Password',
+      'BR_chat_room_password',
+    );
   }
 
   // API: MAIN_CHAT_9
