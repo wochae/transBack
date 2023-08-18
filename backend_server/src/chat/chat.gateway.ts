@@ -221,14 +221,13 @@ export class ChatGateway
   }
 
   // API: MAIN_CHAT_0
-  // FIXME: msgDate 같이 반환, DM 이 없는 경우 return 으로 false
   @SubscribeMessage('check_dm')
   async handleCheckDM(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    // const { targetIdx } = payload;
-    const { targetIdx } = JSON.parse(payload);
+    const { targetIdx } = payload;
+    // const { targetIdx } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     const check_dm: MessageInfo | boolean = await this.chatService.checkDM(
       userId,
@@ -236,11 +235,16 @@ export class ChatGateway
     );
     if (check_dm === false) {
       client.emit('check_dm', []);
-      return check_dm;
+      // FIXME: emit 으로 처리하는지, return false 로 처리하는지 질문
+      return false;
     } else {
       client.emit('check_dm', check_dm);
     }
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Check DM',
+      'check_dm',
+    );
   }
 
   // API: MAIN_CHAT_1.
