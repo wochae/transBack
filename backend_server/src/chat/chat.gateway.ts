@@ -64,8 +64,8 @@ export class ChatGateway
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
         'Not Found',
-        userId,
         'handleConnection',
+        userId,
       );
     }
     //
@@ -95,8 +95,8 @@ export class ChatGateway
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
         'Not Found',
-        userId,
         'handleDisconnection',
+        userId,
       );
     }
     //
@@ -251,30 +251,50 @@ export class ChatGateway
   @SubscribeMessage('create_dm')
   async createDM(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: string,
+    @MessageBody() payload: any,
   ) {
-    // const { targetNickname, targetIdx, msg } = payload;
-    const { targetNickname, targetIdx, msg } = JSON.parse(payload);
+    const { targetNickname, targetIdx, msg } = payload;
+    // const { targetNickname, targetIdx, msg } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
+    // FIXME: 왜 DB 에서 가져오지? 인메모리에서 가져오면 안되나?
     const user: UserObject = await this.usersService.getUserInfoFromDB(
       this.inMemoryUsers.getUserByIdFromIM(userId).nickname,
     );
     // 오프라인일 수도 있기 때문에 db 에서 가져옴
+    // FIXME: targetNickname 과 targetIdx 가 같은 유저인지 확인하는 함수 추가 필요
     const targetUser: UserObject = await this.usersService.getUserInfoFromDB(
       targetNickname,
     );
-    if (!user || !targetUser) {
-      this.logger.log(`[ ❗️ Client ] Not Found`);
+    // FIXME: 함수로 빼기
+    if (!user) {
       client.disconnect();
-      return;
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'create_dm',
+        userId,
+      );
     }
-    // DM 존재 여부 파악한다. 근데 이미 이전 단계에서 검사하기 때문에 필요없을 듯...? 하지만 동시에 생성될 수도 있다..?
+    if (!targetUser) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        targetNickname,
+        'create_dm',
+      );
+    }
+    //
+    // 동시에 생성될 수도 있기 때문에 필요
     if (await this.chatService.checkDM(user.userIdx, targetUser.userIdx)) {
-      console.log('이미 존재하는 DM 채널입니다.');
-      return;
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Already Exist',
+        'create_dm',
+      );
     }
+    // FIXME: 함수로 빼기
     const message: SendDMDto = { msg: msg };
-    // TODO: Block 검사
     const checkBlock = await this.usersService.checkBlockList(
       user,
       this.inMemoryUsers,
@@ -288,13 +308,20 @@ export class ChatGateway
       checkBlock,
     );
     if (!newChannelAndMsg) {
-      console.log('DM 채널 생성에 실패했습니다.');
-      return '실패';
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Fail to Create DM',
+        'create_dm',
+      );
     }
     this.server
       .to(`chat_room_${newChannelAndMsg.channelIdx}`)
       .emit('create_dm', newChannelAndMsg);
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Create DM',
+      'create_dm',
+    );
   }
 
   // API: MAIN_CHAT_2
@@ -302,7 +329,6 @@ export class ChatGateway
   async enterProtectedAndPublicRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
-    // 반환형 선언하기
   ) {
     // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
     const { userNickname, userIdx, channelIdx, password } = JSON.parse(payload);

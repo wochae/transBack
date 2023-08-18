@@ -55,8 +55,8 @@ export class LoggerWithRes {
   public setResponseErrorMsgWithLogger(
     code: number,
     msg: string,
-    key: string | number,
     apiName: string,
+    key?: string | number,
   ): ReturnMsgDto {
     this.code = code;
     this.msg = msg;
