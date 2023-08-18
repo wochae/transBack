@@ -33,7 +33,7 @@ import {
 @WebSocketGateway({
   namespace: 'game',
   cors: {
-    origin: ['http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
   },
 })
 @UseFilters(new WsExceptionFilter())
@@ -74,10 +74,12 @@ export class GameGateway
     const date = Date.now();
     // this.logger.log(`시작 일시 : ${date}`);
     // this.logger.log(userId + ' is connected');
+    this.messanger.logWithMessage('handleConnection', '', '', `${userId} is connected`);
     const user = await this.usersService.getUserObjectFromDB(userId);
     // this.logger.log(user.nickname);
     const OnUser = new GameOnlineMember(user, client);
     // this.logger.log(OnUser.user.nickname);
+    this.messanger.logWithMessage('handleConnection', '', '', `${OnUser.user.nickname} is connected`);
     this.gameService.pushOnlineUser(OnUser).then((data) => {
       if (data === -1) {
         client.disconnect(true);

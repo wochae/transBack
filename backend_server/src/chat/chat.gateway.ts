@@ -30,7 +30,7 @@ import { GameInvitationAskDto } from './dto/game.invitation.ask.dto';
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
   },
 })
 export class ChatGateway
