@@ -264,8 +264,6 @@ export class ChatService {
     const channel = this.chat.getProtectedChannels.find(
       (channel) => channel.getChannelIdx === channelIdx,
     );
-    console.log(channel.getMember);
-
     const msgInfo = new Message(channelIdx, senderIdx, msg);
     msgInfo.setMsgDate = new Date();
     if (channel) {

@@ -316,6 +316,7 @@ export class ChatGateway
     this.server
       .to(`chat_room_${newChannelAndMsg.channelIdx}`)
       .emit('create_dm', newChannelAndMsg);
+    //
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done Create DM',
@@ -387,6 +388,7 @@ export class ChatGateway
       'Done Chat Enter',
       'chat_enter',
     );
+    //
 
     // API: MAIN_CHAT_3
     // FIXME: 함수로 빼기
@@ -430,6 +432,7 @@ export class ChatGateway
         'chat_enter_noti',
       );
     }
+    //
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done Enter Noti',
@@ -448,33 +451,23 @@ export class ChatGateway
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
     const target: UserObject = this.inMemoryUsers.getUserByIdFromIM(targetIdx);
-    // FIXME: 테스트용 코드 ------------------------------------------------------
-    // const testChannel: Channel | DMChannel =
-    //   await this.chatService.findChannelByRoomId(channelIdx);
-    // if (testChannel instanceof Channel) {
-    //   testChannel.setMember = await this.usersService.getUserInfoFromDBById(
-    //     senderIdx,
-    //   );
-    // }
-    // ------------------------------------------------------------------------
-    this.logger.log(
-      `[ 💬 Socket API CALL ] 'chat_send_msg' _ nickname: ${client.handshake.auth}`,
-    );
     const channel: Channel | DMChannel =
       await this.chatService.findChannelByRoomId(channelIdx);
-
+    // FIXME: userId, user, target, channel 유효성 검사 함수 추가 필요
+    // FIXME: service 로 빼기
     if (channel instanceof Channel) {
       const msgInfo = await this.chatService.saveMessageInIM(
         channelIdx,
         senderIdx,
         msg,
       );
-
-      // TODO: userId 로 Mute 검사
       const checkMute = this.chatService.checkMuteList(channel, user);
       if (checkMute) {
-        console.log('뮤트된 유저입니다.');
-        return '뮤트되었습니다.';
+        return this.messanger.setResponseMsgWithLogger(
+          200,
+          'Muted User',
+          'chat_send_msg',
+        );
       }
       await this.server
         .to(`chat_room_${channelIdx}`)
@@ -491,22 +484,32 @@ export class ChatGateway
             msgDate: msgInfo.msgDate,
           };
         });
-      // TODO: target 로 Block 검사
       const checkBlock = await this.usersService.checkBlockList(
         user,
         this.inMemoryUsers,
         target,
       );
       if (checkBlock) {
-        console.log('차단된 유저입니다.');
-        return '차단되었습니다.';
+        return this.messanger.setResponseMsgWithLogger(
+          200,
+          'Blocked User',
+          'chat_send_msg',
+        );
       }
       this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else {
-      // 예상하지 못한 타입일 경우 처리
-      console.log('Unexpected type of channel');
+      return this.messanger.setResponseErrorMsgWithLogger(
+        500,
+        'Unexpected type of channel',
+        'chat_send_msg',
+      );
     }
-    return 200;
+    //
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Send Message',
+      'chat_send_msg',
+    );
   }
 
   // API: MAIN_CHAT_5
