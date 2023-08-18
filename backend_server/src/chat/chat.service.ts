@@ -313,7 +313,6 @@ export class ChatService {
 
   /******************* Save Message Funcions *******************/
   async enterPublicRoom(user: UserObject, channel: Channel) {
-    // 이미 참여한 채널인지 확인한다.
     if (
       !channel.getMember?.some((member) => member?.userIdx === user?.userIdx)
     ) {

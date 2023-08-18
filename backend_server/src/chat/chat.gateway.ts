@@ -276,7 +276,6 @@ export class ChatGateway
       );
     }
     if (!targetUser) {
-      client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
         'Not Found',
@@ -333,34 +332,64 @@ export class ChatGateway
     // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
     const { userNickname, userIdx, channelIdx, password } = JSON.parse(payload);
     // const { userNickname, userIdx, channelIdx, password } = payload;
-    // const jsonData = payload;
-    this.logger.log(
-      `[ 💬 Socket API CALL ] 'chat_enter' _ nickname: ${userNickname}`,
-    );
-    console.log('payload : ', payload);
     let channel: any = await this.chatService.findChannelByRoomId(channelIdx);
     const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
       userIdx,
     );
+    // FIXME: 함수로 빼기
+    if (!user) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'chat_enter',
+        userNickname,
+      );
+    }
+    if (!channel) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'chat_enter',
+        'channel',
+      );
+    }
+    // FIXME: service 로직으로 빼기
     if (channel instanceof Channel) {
       if (channel.getPassword === '') {
-        this.logger.log(`[ 💬 ] 이 채널은 공개방입니다.`);
+        this.messanger.logWithMessage(
+          'enterProtectedAndPublicRoom',
+          'channel',
+          'Public Channel',
+        );
         channel = await this.chatService.enterPublicRoom(user, channel);
       } else {
-        this.logger.log(`[ 💬 ] 이 채널은 비번방입니다.`);
+        this.messanger.logWithMessage(
+          'enterProtectedAndPublicRoom',
+          'channel',
+          'Protected Channel',
+        );
         if (channel.getPassword !== password) {
-          this.logger.log(`[ 💬 ] 비밀번호가 틀렸습니다.`);
-          // FIXME: 에러 코드로 보내기
-          return false;
+          return this.messanger.setResponseErrorMsgWithLogger(
+            400,
+            'Fail to Enter Protected Channel',
+            'chat_enter',
+          );
         }
         channel = await this.chatService.enterProtectedRoom(user, channel);
       }
     }
+    //
     client.join(`chat_room_${channel.channelIdx}`);
     client.emit('chat_enter', channel);
+    this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Chat Enter',
+      'chat_enter',
+    );
 
     // API: MAIN_CHAT_3
-    console.log('MAIN_CHAT_2 : ', channel.admin);
+    // FIXME: 함수로 빼기
     const member = await channel.member?.map((member) => {
       return {
         userIdx: member.userIdx,
@@ -373,6 +402,7 @@ export class ChatGateway
         nickname: member.nickname,
       };
     });
+    // FIXME: 함수로 빼기
     if (member) {
       const newMember = await member.find(
         (member) => member.userIdx === userIdx,
@@ -383,19 +413,28 @@ export class ChatGateway
           admin: admin,
           newMember: newMember.nickname,
         };
-        console.log('MAIN_CHAT_3 memberInfo: ', memberInfo);
-        // FIXME: 새로 들어온 멤버도 같이 보내기
         this.server
           .to(`chat_room_${channel.channelIdx}`)
           .emit('chat_enter_noti', memberInfo);
       } else {
-        console.log('MAIN_CHAT_3', '멤버가 없습니다.');
+        return this.messanger.setResponseErrorMsgWithLogger(
+          400,
+          'newMember Not Found',
+          'chat_enter_noti',
+        );
       }
     } else {
-      console.log('MAIN_CHAT_3', '멤버가 정의되지 않았습니다.');
-      return '멤버가 정의되지 않았습니다.';
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'member Not Found',
+        'chat_enter_noti',
+      );
     }
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Enter Noti',
+      'chat_enter_noti',
+    );
   }
 
   // API: MAIN_CHAT_4
