@@ -10,6 +10,7 @@ import { Channel } from './class/chat.channel/channel.class';
 import { Mode } from '../entity/chat.entity';
 import { SharedModule } from 'src/shared/shared.module';
 import { ChatController } from './chat.controller';
+import { GameModule } from 'src/game/game.module';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함
@@ -18,7 +19,7 @@ import { ChatController } from './chat.controller';
       // DMChannelRepository,
       DirectMessageRepository,
     ]),
-    SharedModule,
+    GameModule,
   ],
   providers: [ChatGateway, ChatService, Chat, InMemoryUsers],
   controllers: [ChatController],
