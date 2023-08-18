@@ -26,8 +26,9 @@ export class LoggerWithRes {
     this.logger = new Logger(pos);
     this.logger.log(`pos keyword is changed to '${this.pos}'`);
   }
+
   /**
-   * return값을 전달하면서 response 를 로깅해줍니다.
+   * 성공 return값을 전달하면서 response 를 로깅해줍니다.
    * @param code 반환 코드
    * @param msg 반환 코드에 대한 세부 메시지
    * @param apiName 로깅하는 위치의 특정 api
@@ -41,6 +42,24 @@ export class LoggerWithRes {
     this.code = code;
     this.msg = msg;
     this.logger.log(`Response : ${apiName} = ${code} - ${msg}`);
+    return { code: this.code, msg: this.msg };
+  }
+
+  /**
+   * 실패 return값을 전달하면서 response 를 로깅해줍니다.
+   * @param code 반환 코드
+   * @param msg 반환 코드에 대한 세부 메시지
+   * @param apiName 로깅하는 위치의 특정 api
+   * @returns
+   */
+  public setResponseErrorMsgWithLogger(
+    code: number,
+    msg: string,
+    apiName: string,
+  ): ReturnMsgDto {
+    this.code = code;
+    this.msg = msg;
+    this.logger.error(`Response : ${apiName} = ${code} - ${msg}`);
     return { code: this.code, msg: this.msg };
   }
 
