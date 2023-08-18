@@ -55,11 +55,12 @@ export class LoggerWithRes {
   public setResponseErrorMsgWithLogger(
     code: number,
     msg: string,
+    key: string | number,
     apiName: string,
   ): ReturnMsgDto {
     this.code = code;
     this.msg = msg;
-    this.logger.error(`Response : ${apiName} = ${code} - ${msg}`);
+    this.logger.error(`Response : ${apiName} = ${code} - ${key} ${msg}`);
     return { code: this.code, msg: this.msg };
   }
 

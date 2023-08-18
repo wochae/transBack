@@ -57,17 +57,19 @@ export class ChatGateway
   handleConnection(client: Socket) {
     const userId: number = parseInt(client.handshake.query.userId as string);
     // TODO: client.handshake.query.userId & intra 가 db 에 있는 userIdx & intra 와 일치한지 확인하는 함수 추가
-    const user = this.inMemoryUsers.inMemoryUsers.find((user) => {
-      return user.userIdx === userId;
-    });
+    // FIXME: 함수로 빼기
+    const user = this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
       client.disconnect();
-      return this.messanger.setResponseMsgWithLogger(
+      return this.messanger.setResponseErrorMsgWithLogger(
         400,
         'Not Found',
+        userId,
         'handleConnection',
       );
     }
+    //
+    // FIXME: 함수로 빼기
     const dmChannelList: Promise<DMChannel[]> =
       this.chatService.findPrivateChannelByUserIdx(user.userIdx);
     dmChannelList.then((channels) => {
@@ -75,7 +77,8 @@ export class ChatGateway
         client.join(`chat_room_${channel.channelIdx}`);
       });
     });
-    // FIXME: 테스트용  코드
+    //
+    // FIXME: 테스트용 코드 지우기
     client.join('chat_room_10');
     client.join('chat_room_11');
     //
@@ -85,32 +88,41 @@ export class ChatGateway
 
   async handleDisconnect(client: Socket) {
     const userId: number = parseInt(client.handshake.query.userId as string);
+    // FIXME: 함수로 빼기
     const user = this.inMemoryUsers.getUserByIdFromIM(userId);
-    if (user) {
-      await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
-      await this.chat.removeSocketObject(
-        this.chat.setSocketObject(client, user),
-      );
-      const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
-      const channelForLeave: Channel[] = notDmChannelList.filter((channel) =>
-        channel.getMember.includes(user),
-      );
-      await channelForLeave.forEach((channel) => {
-        client.leave(`chat_room_${channel.getChannelIdx}`);
-      });
-      const dmChannelList: Promise<DMChannel[]> =
-        this.chatService.findPrivateChannelByUserIdx(user.userIdx);
-      await dmChannelList.then((channels) => {
-        channels.forEach((channel) => {
-          client.leave(`chat_room_${channel.channelIdx}`);
-        });
-      });
-      return this.messanger.setResponseMsgWithLogger(
-        200,
-        'Disconnect Done',
-        'handleDisconnect',
+    if (!user) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        userId,
+        'handleDisconnection',
       );
     }
+    //
+    // FIXME: 함수로 빼기
+    this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
+    const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
+    const channelForLeave: Channel[] = notDmChannelList.filter((channel) =>
+      channel.getMember.includes(user),
+    );
+    channelForLeave.forEach((channel) => {
+      client.leave(`chat_room_${channel.getChannelIdx}`);
+    });
+    const dmChannelList: Promise<DMChannel[]> =
+      this.chatService.findPrivateChannelByUserIdx(user.userIdx);
+    dmChannelList.then((channels) => {
+      channels.forEach((channel) => {
+        client.leave(`chat_room_${channel.channelIdx}`);
+      });
+    });
+    //
+    await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Disconnect Done',
+      'handleDisconnect',
+    );
   }
 
   /***************************** SOCKET API  *****************************/
@@ -119,7 +131,6 @@ export class ChatGateway
   @SubscribeMessage('main_enter')
   async enterMainPage(
     @ConnectedSocket() client: Socket,
-    // TODO: intra 를 class 로 만들어서 DTO 처리?
     @MessageBody() payload: any,
   ) {
     // const { intra } = payload;
@@ -186,17 +197,27 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    const { targetNickname, targetIdx } = JSON.parse(payload);
-    // const { targetNickname, targetIdx } = payload;
-    const user_profile = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
-
-    if (!user_profile || user_profile.nickname !== targetNickname) {
-      this.logger.log(`[ ❗️ Client ] ${targetNickname} Not Found`);
+    // const { targetNickname, targetIdx } = JSON.parse(payload);
+    const { targetNickname, targetIdx } = payload;
+    // FIXME: 함수로 빼기
+    const user = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+    if (!user || user.nickname !== targetNickname) {
       client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        targetNickname,
+        'user_profile',
+      );
     }
-    // TODO: game 기록도 인메모리에서 관리하기로 했었나?? 전적 데이터 추가 필요
-    client.emit('user_profile', user_profile);
-    return 200;
+    //
+    // FIXME: game 기록도 인메모리에서 관리하기로 했었나?? 전적 데이터 추가 필요
+    client.emit('user_profile', user);
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Get Profile',
+      'user_profile',
+    );
   }
 
   // API: MAIN_CHAT_0
