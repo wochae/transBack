@@ -551,20 +551,45 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    const { channelIdx, userIdx, grant } = JSON.parse(payload);
-    const ownerId: number = parseInt(client.handshake.query.userId as string);
-    const channel = this.chat.getProtectedChannel(channelIdx);
+    const { channelIdx, userIdx, grant } = payload;
+    // const { channelIdx, userIdx, grant } = JSON.parse(payload);
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    // error 발생
+    console.log(this.chat.getProtectedChannels);
+    const channel = await this.chat.getProtectedChannel(channelIdx);
+    // console.log(channel);
+    // FIXME: 함수로 빼기
+    // 채널 유효성 검사
+    if (!channel) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'chat_room_admin',
+        'channel',
+      );
+    }
 
     // owner 유효성 검사
-    const owner: UserObject = channel.getMember.find((member) => {
-      return member.userIdx === ownerId;
+    const user: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === userId;
     });
-    if (owner === undefined) {
-      return '요청자가 대화방에 없습니다.';
+    if (user === undefined) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'chat_room_admin',
+        'user',
+      );
     }
-    const isOwner: boolean = channel.getOwner.userIdx === owner.userIdx;
+    const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
     if (!isOwner) {
-      return '요청자가 owner 가 아닙니다.';
+      return this.messanger.logWithWarn(
+        'chat_room_admin',
+        'user',
+        user.nickname,
+        'Not Owner',
+      );
     }
 
     // 대상 유효성 검사
@@ -572,7 +597,12 @@ export class ChatGateway
       return member.userIdx === userIdx;
     });
     if (target === undefined) {
-      return '대상이 채널에 없습니다.';
+      return this.messanger.logWithWarn(
+        'chat_room_admin',
+        'target',
+        target.nickname,
+        'Not Found Target',
+      );
     }
 
     // 대상 권한 검사
@@ -580,15 +610,24 @@ export class ChatGateway
       (admin) => admin.userIdx === target.userIdx,
     );
     if (grant === checkGrant) {
-      return '이미 권한이 부여되어있습니다.';
+      return this.messanger.logWithMessage(
+        'chat_room_admin',
+        'target',
+        target.nickname,
+        'Already Granted',
+      );
     }
-
+    //
     // 대상 권한 부여 및 emit
     const adminInfo = this.chatService.setAdmin(channel, target, grant);
     this.server
       .to(`chat_room_${channelIdx}`)
       .emit('chat_room_admin', adminInfo);
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Set Admin',
+      'chat_room_admin',
+    );
   }
 
   // API: MAIN_CHAT_7
