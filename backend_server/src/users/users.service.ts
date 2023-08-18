@@ -289,7 +289,7 @@ export class UsersService {
         } finally {
           await queryRunner.release();
         }
-        return new IntraSimpleInfoDto(user.userIdx, user.imgUri);
+        return new IntraSimpleInfoDto(user.userIdx, user.imgUri, certi.check2Auth);
 
       } else {
         // 유저가 존재하는 경우
@@ -306,9 +306,10 @@ export class UsersService {
           return new IntraSimpleInfoDto(
             existedUser.userIdx,
             existedUser.imgUri,
+            userCerti.check2Auth
           );
         } // 존재하는 유저가 있고 토큰이 같은 경우 -> 그대로
-        return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri);
+        return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri, userCerti.check2Auth);
         /*
             token: string;
             check2Auth: boolean;
