@@ -120,6 +120,10 @@ export class GameService {
     for (let index = 0; index < this.onlinePlayerList.length; index++) {
       if (this.onlinePlayerList[index].user.userIdx == userIdx) return index;
     }
+
+    // find 메서드 사용방식은 하나를 발견할 때 용이.
+    // filter 방식은 여러개를 한번에 반환할 때 유리
+    // for of 방식은 원하는 조건에 따라 더 복잡한 로직 구현시 유리
     return -1;
   }
 
@@ -131,7 +135,7 @@ export class GameService {
   private makeGamePlayer(userIdx: number): GamePlayer | null {
     const index = this.findPlayerFromList(userIdx);
     if (index == -1) {
-      //TODO: error handling
+      return null;
     }
     const user = this.onlinePlayerList[index];
     // console.log(`makeGamePlayer : ${user.user.nickname}`);
@@ -409,6 +413,7 @@ export class GameService {
   public setWaitPlayer(userIdx: number, options: GameOptions): number {
     // console.log('here?');
     const player = this.makeGamePlayer(userIdx);
+    if (player === null) return -1;
     // console.log(`setWaitPlayer Test ${player.userObject.nickname}`);
     return this.waitingList.pushPlayer(player, options);
   }
@@ -421,9 +426,9 @@ export class GameService {
   public async pushOnlineUser(player: GameOnlineMember): Promise<number> {
     const index = this.findPlayerFromList(player.user.userIdx);
 
-    if (index != -1) return -1;
+    if (index !== -1) return -1;
 
-    if (player.user.isOnline == OnlineStatus.OFFLINE)
+    if (player.user.isOnline === OnlineStatus.OFFLINE)
       player.user.isOnline = OnlineStatus.ONGAME;
     await this.userObjectRepository.save(player.user);
     this.onlinePlayerList.push(player);
@@ -805,8 +810,24 @@ export class GameService {
         new GameRoom(this.makeRoomId()),
       );
       const targetRoom = this.getRoomByRoomNumber(roomNumber);
-      targetRoom.setUser(users[0], new GameOptions(GameType.FRIEND, 0, 0));
-      targetRoom.setUser(users[1], new GameOptions(GameType.FRIEND, 0, 0));
+      targetRoom.setUser(
+        users[0],
+        new GameOptions({
+          gameType: GameType.FRIEND,
+          userIdx: 0,
+          speed: 0,
+          mapNumber: 0,
+        }),
+      );
+      targetRoom.setUser(
+        users[1],
+        new GameOptions({
+          gameType: GameType.FRIEND,
+          userIdx: 0,
+          speed: 0,
+          mapNumber: 0,
+        }),
+      );
       const msg = 'Friend match preparing is done!';
       user1.socket.emit('game_invite_finish', msg);
       user2.socket.emit('game_invite_finish', msg);
