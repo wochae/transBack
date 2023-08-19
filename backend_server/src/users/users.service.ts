@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -39,6 +41,7 @@ import { InMemoryUsers } from './users.provider';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as config from 'config';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
+import * as fs from 'fs/promises'; // fs.promises를 사용하여 비동기적인 파일 처리
 
 const mailConfig = config.get('mail');
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
@@ -70,22 +73,39 @@ export class UsersService {
       return await this.userObjectRepository.save(user);
     } else { return false; } // 닉네임이 이미 존재한다면
   }
-
-  async uploadUserImg(UserEditprofileDto: UserEditprofileDto) {
-    const { userIdx, imgUri } = UserEditprofileDto;
-    const user = await this.userObjectRepository.findOneBy({ userIdx });
-    if (!user) {
-      throw new BadRequestException('유저가 존재하지 않습니다.');
+  /*
+  filepath: string, filename: string, imgData: any
+  */
+  async updateUser(userEditImgDto: UserEditImgDto): Promise<any> {
+    const { userIdx, userNickname, imgData } = userEditImgDto;
+    const user = await this.findOneUser(userIdx);
+    await this.updateImgFile(`public/img`, `${userIdx}`, imgData); // 이미지 파일 비동기 저장
+    if (userNickname !== '') {
+      user.nickname = userNickname;
     }
-    const foundImgUri = user.imgUri; // 일단은 그냥 같게 함.
-    // await this.findUserImg(userIdx);
-    if (user.imgUri === foundImgUri) {
-      // imgUri를 저장할 경로를 만들고 그 안에 이미지 파일을 생성해야 함.
-      user.imgUri = imgUri;
-      const changedUser = await this.userObjectRepository.save(user);
-      return changedUser;
-    } else {
-      return new BadRequestException('변경을 실패 했습니다.');
+    try {
+      await this.updateUserNick({ userIdx, userNickname: userNickname, imgUri: user.imgUri });
+    } catch (err) {
+      throw new HttpException('update user error', HttpStatus.FORBIDDEN);
+    }
+    return user;
+  }
+  async updateImgFile(filepath: string, filename: string, imgData: any) {
+    if (imgData === '') return;
+
+    // imgUri를 저장할 경로를 만들고 그 안에 이미지 파일을 생성해야 함.
+
+    const base64 = imgData.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64, 'base64');
+    const fileExtension = 'png'; // 이미지 데이터의 확장자 동적으로 결정
+
+    const filePath = `${filepath}/${filename}.${fileExtension}`;
+
+    try {
+      await fs.writeFile(filePath, buffer); // 비동기적으로 파일 저장
+    } catch (error) {
+      console.error('Error saving image:', error);
+      throw new Error('Failed to save image');
     }
   }
   async getTokenInfo(accessToken: string) {
