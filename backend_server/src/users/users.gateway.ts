@@ -45,17 +45,29 @@ export class UsersGateway
     console.log(`[ Users ] Client disconnected: ${client.id}`);
   }
   @SubscribeMessage('add_friend')
-  async handleAddFriend(
+    async handleAddFriend(
+      @ConnectedSocket() client: Socket,
+      @MessageBody() req: FollowFriendDto,
+  ) {
+      const { myIdx, targetNickname, targetIdx } = req;
+      console.log('req', req);
+      
+      // logic
+      const myUser = await this.usersService.findOneUser(myIdx);
+      const res = await this.usersService.addFriend(req, myUser);
+      console.log('res', res);
+      client.emit('add_friend', res);
+  }
+
+  @SubscribeMessage('delete_friend')
+  async handleDeleteFriend(
     @ConnectedSocket() client: Socket,
     @MessageBody() req: FollowFriendDto,
   ) {
-    const { targetNickname, targetIdx } = req;
-    // logic
-    const targetUser = await this.usersService.findOneUser(targetIdx);
-    const res = await this.usersService.addFriend(req, targetUser);
-
-    client.emit('add_friend', res);
-  }
-
-  // @SubscribeMessage('delete_friends')
+      const { myIdx, targetNickname, targetIdx } = req;
+      // logic
+      const myUser = await this.usersService.findOneUser(myIdx);
+      const res = await this.usersService.deleteFriend(req, myUser);
+      client.emit('delete_friends', res);
+    }
 }
