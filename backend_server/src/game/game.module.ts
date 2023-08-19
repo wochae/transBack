@@ -6,6 +6,7 @@ import { GameChannelRepository } from './game.channel.repository';
 import { TypeOrmExModule } from 'src/typeorm-ex.module';
 // import { UsersModule } from 'src/users/users.module';
 import { SharedModule } from 'src/shared/shared.module';
+import { GamePlayService } from './game.play/game.play.service';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { SharedModule } from 'src/shared/shared.module';
     ]),
     SharedModule,
   ],
-  providers: [GameGateway, GameService],
+  providers: [GameGateway, GameService, GamePlayService],
   exports: [GameModule, SharedModule],
 })
 export class GameModule {}
