@@ -32,6 +32,8 @@ import { GameChannel } from 'src/entity/gameChannel.entity';
 import { OnlineStatus } from 'src/entity/users.entity';
 import { GameInviteQueue } from './class/game.invite.queue/game.invite.queue';
 import { GameFriendMatchDto } from './dto/game.friend.match.dto';
+import { LessThanOrEqual } from 'typeorm';
+import { UserProfileGameDto } from './dto/game.record.dto';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -813,4 +815,64 @@ export class GameService {
     }
     return;
   }
+
+
+
+  // PROFILE_INFINITY
+  async getGameRecordsByInfinity(userIdx: number, page: number) {
+    const skip = (page - 1) * 1; // items per page fixed
+    const records = await this.gameRecordRepository.find({
+      where: { userIdx },
+      order: { matchDate: 'DESC' },
+      skip,
+      take: 5,
+    });
+
+    return records;
+  }
+  // async getGameRecordsByInfinity(userIdx: number, matchDate: Date) {
+  //   const user = await this.userObjectRepository.findOneBy({userIdx});
+  //   const records = user.userRecordList.find({
+  //     where: [{ userIdx: userIdx, matchDate: LessThanOrEqual(matchDate)}],
+  //     order: { matchDate: 'DESC' },
+  //     take: 5,
+  //   });
+
+  //   return records;
+  // }
+
+  /*
+  
+  UserProfileGameRecordDto {
+    userInfo : UserRecordInfoDto;
+    gameList : GameRecord[];
+  }
+  
+  GameRecord {
+    idx: number;
+    gameIdx: number;
+    userIdx: number;
+    matchUserNickname: string;
+    matchUserIdx: number;
+    type: RecordType;
+    result: RecordResult;
+    score: string;
+    matchDate: Date;
+  }
+  
+  
+  UserRecordInfoDto {
+    userNickname : string;
+    win: number;
+    lose: number;
+  }
+  
+  UserProfileGameDto {
+    matchUserIdx : number;
+    matchUserNickname : string;
+    score: string;
+    type : RecordType;
+    result : RecordResult;
+  }
+   */
 }
