@@ -430,7 +430,7 @@ export class ChatService {
     const banInfo = {
       targetNickname: user.nickname,
       targetIdx: user.userIdx,
-      leftMember: channel.getBan.map((member) => {
+      leftMember: channel.getMember.map((member) => {
         return {
           userNickname: member.nickname,
           userIdx: member.userIdx,
