@@ -23,7 +23,7 @@ import { AuthService, } from 'src/auth/auth.service';
 import { plainToClass } from 'class-transformer';
 import { UserObject } from '../entity/users.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { UserEditprofileDto, ProfileResDto } from './dto/user.dto';
+import { UserEditprofileDto, ProfileResDto, UserEditImgDto } from './dto/user.dto';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 
 
@@ -56,14 +56,28 @@ export class UsersController {
     }
   }
 
-  @Put('profile/:userNickname')
-  async updateUserProfile(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: any) {
+  @Put('private/:userNickname')
+  async updateUserProfileImg(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: UserEditImgDto) {
     try {
-      const changedNickname = body.changedNickname;
+      const changedUser: UserEditImgDto = body;
+      const result = await this.usersService.updateUser(changedUser);
+      if (result) {
+        console.log("success :", result)
+        return res.status(HttpStatus.OK).json({ message: '유저 정보가 업데이트 되었습니다.', result });
+      }
+      else
+        return res.status(HttpStatus.OK).json({ message: '이미 존재하는 유저 닉네임입니다.' });
+    } catch (err) {
+      this.logger.error(err);
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
+    }
+  }
 
-      const user = await this.usersService.findOneUser(req.jwtPayload.id);
-      const changedUser: UserEditprofileDto = { userIdx: user.userIdx , userNickname: changedNickname, imgUri: user.imgUri};
-      const result = await this.usersService.updateUserNick(changedUser);
+  @Patch('profile/:userNickname')
+  async updateUserProfileNick(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: UserEditImgDto) {
+    try {
+      const changedUser: UserEditImgDto = body;
+      const result = await this.usersService.updateUser(changedUser);
       if (result) {
         console.log("success :", result)
         return res.status(HttpStatus.OK).json({ message: '유저 정보가 업데이트 되었습니다.', result });

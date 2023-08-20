@@ -9,7 +9,6 @@ import {
 } from 'typeorm';
 import { FriendList } from './friendList.entity';
 import { BlockList } from './blockList.entity';
-import { CertificateObject } from './certificate.entity';
 import { DMChannel } from 'src/entity/chat.entity';
 import { GameRecord } from './gameRecord.entity';
 import { GameChannel } from 'src/entity/gameChannel.entity';
@@ -55,8 +54,11 @@ export class UserObject extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   lose: number;
 
-  @OneToOne(() => CertificateObject, (userIdx) => userIdx.userIdx, {}) // eager 옵션 오류 발생
-  certificate: CertificateObject;
+  @Column({ type: 'varchar', default: "user@student.42seoul.kr"})
+  email: string;
+
+  @Column({ type: 'boolean', default: false })
+  check2Auth: boolean;
 
   @OneToMany(() => FriendList, (idx) => idx.userIdx, {
     onDelete: 'CASCADE',

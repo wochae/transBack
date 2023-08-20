@@ -17,7 +17,8 @@ export class UserEditprofileDto {
 
 export class UserEditImgDto {
   userIdx: number;
-  userNickName : string;
+  userNickname : string;
+  imgData: any
 }
 export class IntraInfoDto {
   constructor(userIdx: number, intra: string, imgUri: string, accessToken: string, email: string,
