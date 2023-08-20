@@ -108,7 +108,7 @@ export class GameService {
   private deleteUserFromQueue(userIdx: number, queue: GameQueue) {
     for (let i = 0; i < queue.size(); i++) {
       if (queue.queueData[i][0].userIdx === userIdx) {
-        queue.queueData.splice(i);
+        queue.queueData.splice(i, 1);
       }
     }
   }
@@ -445,7 +445,7 @@ export class GameService {
 
     this.onlinePlayerList[index].user.isOnline = OnlineStatus.OFFLINE;
     await this.userObjectRepository.save(this.onlinePlayerList[index].user);
-    this.onlinePlayerList.splice(index);
+    this.onlinePlayerList.splice(index, 1);
 
     return this.onlinePlayerList.length;
   }
@@ -457,7 +457,16 @@ export class GameService {
   public async deleteUserFromAllList(userIdx: number) {
     this.deleteUserFromQueue(userIdx, this.normalQueue);
     this.deleteUserFromQueue(userIdx, this.rankQueue);
+    this.deleteRoom(userIdx);
     await this.popOnlineUser(userIdx);
+  }
+
+  public deleteRoom(userIdx: number) {
+    const room = this.getRoomByUserIdx(userIdx);
+    const index = this.getRoomIdxWithRoom(room);
+    if (index === -1) return;
+    this.playRoomList.splice(index, 1);
+    return;
   }
 
   /**
@@ -575,7 +584,7 @@ export class GameService {
     await server.to(room.roomId).emit('game_get_score', finishData);
     user1.socket.leave(room.roomId);
     user2.socket.leave(room.roomId);
-    this.playRoomList.splice(targetIdx);
+    this.playRoomList.splice(targetIdx, 1);
     this.popOnlineUser(user1.userIdx);
     this.popOnlineUser(user2.userIdx);
     user1.socket.disconnect(true);
@@ -791,7 +800,7 @@ export class GameService {
     this.deleteUserFromAllList(room.user2.userIdx);
     room.user1.socket.leave(room.roomId);
     room.user2.socket.leave(room.roomId);
-    this.playRoomList.splice(this.getRoomIdxWithRoom(room));
+    this.playRoomList.splice(this.getRoomIdxWithRoom(room), 1);
     this.popOnlineUser(room.user1.userIdx);
     this.popOnlineUser(room.user2.userIdx);
     room.user1.socket.disconnect(true);

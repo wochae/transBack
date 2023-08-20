@@ -205,10 +205,10 @@ export class GameGateway
     @MessageBody() regiData: GameRegiDto,
   ): Promise<ReturnMsgDto> {
     const { userIdx, queueDate } = regiData;
-    // this.gameService.checkStatus('game queue regist #1\n');
+    this.gameService.checkStatus('game queue regist #1\n');
     // this.logger.log('여기까지 데이터 들어옴 : ', userIdx, queueDate);
     const roomNumber = await this.gameService.putInQueue(userIdx);
-    // this.gameService.checkStatus('\ngame queue regist #2');
+    this.gameService.checkStatus('\ngame queue regist #2');
     if (roomNumber == -1)
       return this.messanger.setResponseMsgWithLogger(
         400,

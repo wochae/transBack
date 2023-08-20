@@ -34,7 +34,7 @@ export class GameInviteQueue {
         this.queueData[i].userIdx === user1.userIdx ||
         this.queueData[i].userIdx === user2.userIdx
       ) {
-        this.queueData.splice(i);
+        this.queueData.splice(i, 1);
         i = 0;
       }
     }
@@ -46,10 +46,10 @@ export class GameInviteQueue {
     for (let index = 0; index < this.queueData.length; index++) {
       if (this.queueData[index].userIdx == user1.userIdx) {
         data.push(user1);
-        this.queueData.splice(index);
+        this.queueData.splice(index, 1);
       } else if (this.queueData[index].userIdx == user2.userIdx) {
         data.push(user2);
-        this.queueData.splice(index);
+        this.queueData.splice(index,1);
       }
       if (data.length == 2) break;
     }
