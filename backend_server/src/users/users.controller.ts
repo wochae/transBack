@@ -57,11 +57,9 @@ export class UsersController {
   }
 
   @Put('private/:userNickname')
-  async updateUserProfileImg(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: any) {
+  async updateUserProfileImg(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: UserEditImgDto) {
     try {
-      const imgUri = body.imgUri;
-      const user = await this.usersService.findOneUser(req.jwtPayload.id);
-      const changedUser: UserEditImgDto = { userIdx: user.userIdx , userNickname: userNickname, imgData: imgUri};
+      const changedUser: UserEditImgDto = body;
       const result = await this.usersService.updateUser(changedUser);
       if (result) {
         console.log("success :", result)
@@ -76,13 +74,10 @@ export class UsersController {
   }
 
   @Patch('profile/:userNickname')
-  async updateUserProfileNick(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: any) {
+  async updateUserProfileNick(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: UserEditImgDto) {
     try {
-      const changedNickname = body.changedNickname;
-
-      const user = await this.usersService.findOneUser(req.jwtPayload.id);
-      const changedUser: UserEditprofileDto = { userIdx: user.userIdx , userNickname: changedNickname, imgUri: user.imgUri};
-      const result = await this.usersService.updateUserNick(changedUser);
+      const changedUser: UserEditImgDto = body;
+      const result = await this.usersService.updateUser(changedUser);
       if (result) {
         console.log("success :", result)
         return res.status(HttpStatus.OK).json({ message: '유저 정보가 업데이트 되었습니다.', result });

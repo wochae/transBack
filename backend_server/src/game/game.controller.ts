@@ -17,6 +17,7 @@ export class GameController {
     @Query('userIdx') userIdx: number,
     @Query('page') page: number,
   ) {
+    console.log('getRecord', userIdx, page)
     const user = await this.usersService.findOneUser(userIdx);
     const records = await this.gameService.getGameRecordsByInfinity(userIdx, page);
     const userProfileGameRecordDto: UserProfileGameRecordDto = {

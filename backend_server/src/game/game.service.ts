@@ -820,12 +820,12 @@ export class GameService {
 
   // PROFILE_INFINITY
   async getGameRecordsByInfinity(userIdx: number, page: number) {
-    const skip = (page - 1) * 5; // items per page fixed
+    const skip = (page - 1) * 3; // items per page fixed
     const records = await this.gameRecordRepository.find({
       where: { userIdx },
       order: { matchDate: 'DESC' },
       skip,
-      take: 5,
+      take: 3,
     });
 
     return records;
