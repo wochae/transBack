@@ -23,7 +23,7 @@ import { AuthService, } from 'src/auth/auth.service';
 import { plainToClass } from 'class-transformer';
 import { UserObject } from '../entity/users.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { UserEditprofileDto, ProfileResDto, UserEditImgDto } from './dto/user.dto';
+import { UserEditprofileDto, ProfileResDto } from './dto/user.dto';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 
 
@@ -56,10 +56,10 @@ export class UsersController {
     }
   }
 
-  @Put('private/:userNickname')
-  async updateUserProfileImg(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: UserEditImgDto) {
+  @Put('profile/:userNickname')
+  async updateUserProfileImg(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: UserEditprofileDto) {
     try {
-      const changedUser: UserEditImgDto = body;
+      const changedUser: UserEditprofileDto = body;
       const result = await this.usersService.updateUser(changedUser);
       if (result) {
         console.log("success :", result)
@@ -74,9 +74,9 @@ export class UsersController {
   }
 
   @Patch('profile/:userNickname')
-  async updateUserProfileNick(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: UserEditImgDto) {
+  async updateUserProfileNick(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: UserEditprofileDto) {
     try {
-      const changedUser: UserEditImgDto = body;
+      const changedUser: UserEditprofileDto = body;
       const result = await this.usersService.updateUser(changedUser);
       if (result) {
         console.log("success :", result)
@@ -89,14 +89,6 @@ export class UsersController {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
     }
   }
-/**
- * 리팩토링이 절실한 코드 userIdx 를 파라미터로 받거나 바디로 받거나 통일이 되어 있지 않음
- * @param req 
- * @param res 
- * @param body 
- * @returns 
- */
-
 
   @Get(':userIdx/second')
   async getTFA(@Param('userIdx') userIdx: number) { return this.usersService.getTFA(userIdx); }
@@ -114,7 +106,6 @@ export class UsersController {
     }
     return res.status(HttpStatus.OK).json({ message: '인증번호가 전송되었습니다.' });
   }
-
 
   @Patch('second')
   async patchTFA(@Req() req, @Res() res:Response, @Body() body: any) {

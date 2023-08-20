@@ -30,7 +30,6 @@ import { FriendList } from '../entity/friendList.entity';
 import { DataSource } from 'typeorm';
 import {
   IntraInfoDto,
-  UserEditImgDto,
   UserEditprofileDto,
 } from './dto/user.dto';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
@@ -56,7 +55,6 @@ export class UsersService {
     private readonly mailerService: MailerService,
   ) { }
 
-  private logger: Logger = new Logger('UsersService');
   private messanger: LoggerWithRes = new LoggerWithRes('UsersService');
 
   async findOneUser(userIdx: number): Promise<UserObject> {
@@ -64,7 +62,7 @@ export class UsersService {
   }
 
   async updateUserNick(updateUsersDto: UserEditprofileDto) {
-    const { userIdx, userNickname, imgUri } = updateUsersDto;
+    const { userIdx, userNickname, imgData } = updateUsersDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
     if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
     // 존재하는 닉네임인지 확인
@@ -97,7 +95,7 @@ export class UsersService {
   /*
   filepath: string, filename: string, imgData: any
   */
-  async updateUser(userEditImgDto: UserEditImgDto): Promise<any> {
+  async updateUser(userEditImgDto: UserEditprofileDto): Promise<any> {
     const { userIdx, userNickname, imgData } = userEditImgDto;
     const user = await this.findOneUser(userIdx);
     await this.updateImgFile(`public/img`, `${userIdx}`, imgData); // 이미지 파일 비동기 저장
@@ -105,18 +103,13 @@ export class UsersService {
       user.nickname = userNickname;
     }
     try {
-      await this.updateUserNick({ userIdx, userNickname: userNickname, imgUri: user.imgUri });
+      await this.updateUserNick({ userIdx, userNickname: userNickname, imgData: user.imgUri });
     } catch (err) {
       throw new HttpException('update user error', HttpStatus.FORBIDDEN);
     }
     return user;
   }
   
-
-  // async getTokenInfo(accessToken: string) {
-  //   return await this.certificateRepository.findOneBy({ token: accessToken });
-  // }
-
   async saveToken(
     createCertificateDto: CreateCertificateDto,
   ): Promise<CertificateObject> {
@@ -227,21 +220,6 @@ export class UsersService {
     );
   }
 
-  // private async getIntraInfo(accessToken: string) {
-  //   try {
-  //     const response = await axios.get(intraApiMyInfoUri, {
-  //       headers: {
-  //         Authorization: `Bearer ${accessToken}`,
-  //       },
-  //     });
-
-  //     return response;
-  //   } catch (error) {
-  //     console.error('Error getting Intra info - ', error);
-  //     throw new Error('Failed to fetch Intra information.');
-  //   }
-  // }
-
   async createUser(intraInfo: IntraInfoDto): Promise<UserObject> {
     const { userIdx, intra, imgUri, email } = intraInfo;
 
@@ -261,59 +239,11 @@ export class UsersService {
     user = await this.userObjectRepository.save(user);
     return user;
   }
-        /*
-          userIdx: number;
-          token: string;
-          email: string
-          check2Auth: boolean;
-         */
   
   async validateUser(intraInfo: IntraInfoDto): Promise<IntraSimpleInfoDto> {
     let user = await this.createUser(intraInfo);
     return new IntraSimpleInfoDto(user.userIdx, user.imgUri, false);
   }
-  // private async createUserAndCertificate(userInfo: any): Promise<IntraSimpleInfoDto> {
-  //   const { id, login, image, email } = userInfo;
-
-  //   const existingUser = await this.userObjectRepository.findOneBy(id);
-
-  //   if (!existingUser) {
-  //     const user = this.userObjectRepository.create({
-  //       userIdx: id,
-  //       intra: login,
-  //       nickname: login,
-  //       imgUri: image.link,
-  //     });
-
-      // const certi = await this.createCertificate(id, accessToken, email);
-      // user.certificate = certi;
-
-  //     const createdUser = await this.userObjectRepository.save(user);
-      
-  //     return new IntraSimpleInfoDto(createdUser.userIdx, createdUser.imgUri, );
-  //   } else {
-  //     const userCerti = await this.certificateRepository.findOneBy(id);
-
-  //     if (!userCerti || userCerti.token !== accessToken) { // 토큰이 없거나 다르다면 업데이트
-  //       userCerti.token = accessToken;
-  //       await this.certificateRepository.save(userCerti);
-  //     }
-
-  //     return new IntraSimpleInfoDto(existingUser.userIdx, existingUser.imgUri, userCerti.check2Auth);
-  //   }
-  // }
-
-  // private async createCertificate(userIdx: number, token: string, email: string): Promise<CertificateObject> {
-  //   const createCertificateDto: CreateCertificateDto = {
-  //     userIdx: userIdx,
-  //     token: token,
-  //     email: email,
-  //     check2Auth: false, 
-  //   };
-
-  //   return this.certificateRepository.insertCertificate(createCertificateDto);
-  // }
-
 
   async getAllUsersFromDB(): Promise<UserObject[]> {
     return this.userObjectRepository.find();
@@ -390,7 +320,8 @@ export class UsersService {
     if (!authenticated) throw new NotFoundException('Not Found User.');
     return { checkTFA: authenticated.check2Auth };
   }
-  // tfa 를 사용하는지 안 하는지, 그리고 한다고 하면 그 때 2차 인증에 대해서 인증이 된 유저인지 확인이 필요함. check2Auth (2차 인증 사용 여부), checkTFA (2차 인증 사용 유저가 인증을 성공했을 때)
+  // tfa 를 사용하는지 안 하는지, 그리고 한다고 하면 그 때 2차 인증에 대해서 인증이 된 유저인지 확인이 필요함. 
+  // check2Auth (2차 인증 사용 여부), checkTFA (2차 인증 사용 유저가 인증을 성공했을 때)
   async patchTFA(
     userIdx: number,
     patchAuthDto: TFAuthDto,
@@ -409,5 +340,4 @@ export class UsersService {
     const certi = await this.certificateRepository.save(auth);
     return { checkTFA: certi.check2Auth };
   }
-
 }

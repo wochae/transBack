@@ -12,29 +12,32 @@ export class UserDto {
 export class UserEditprofileDto {
   userIdx : number;
   userNickname: string;
-  imgUri: string;
-}
-
-export class UserEditImgDto {
-  userIdx: number;
-  userNickname : string;
   imgData: any
 }
+
+// export class UserEditImgDto {
+//   userIdx: number;
+//   userNickname : string;
+//   imgData: any
+// }
 export class IntraInfoDto {
-  constructor(userIdx: number, intra: string, imgUri: string, accessToken: string, email: string,
+  constructor(userIdx: number, intra: string, imgUri: string, token: string, email: string, check2Auth: boolean
   ) {
     this.userIdx = userIdx;
     this.intra = intra;
     this.imgUri = imgUri;
-    this.accessToken = accessToken;
+    this.token = token;
     this.email = email;
+    this.check2Auth = check2Auth;
+
   }
   userIdx: number;
   intra: string;
   imgUri: string;
-  accessToken: string;
+  token: string;
   email: string;
-}
+  check2Auth: boolean;
+};
 
 
 /* response body

@@ -29,13 +29,13 @@ export class LoginController {
   constructor(
     private readonly loginService: LoginService,
     private readonly usersService: UsersService,
-    ) { }
+  ) { }
 
   private logger: Logger = new Logger('LoginController');
-  
+
   @Post('login/auth')
-  async codeCallback(@Headers('token') authHeader: any, @Req() req:Request, @Res() res: Response, @Body() query: any) {
-    
+  async codeCallback(@Headers('token') authHeader: any, @Req() req: Request, @Res() res: Response, @Body() query: any) {
+
     this.logger.log(`codeCallback code : ${query.code}`);
     console.log("authHeader", authHeader);
     if (!authHeader) {
@@ -45,48 +45,28 @@ export class LoginController {
       authHeader = authHeader.startsWith('Bearer') ? authHeader.split(' ')[1] : req.headers.token;
       console.log('codeCallback token : ', authHeader);
     }
-    interface Data {
-      token: string;
-      user: {
-        userIdx: number,
-        intra: string,
-        imgUri: string,
-        email: string,
-      };
-    }
-    let userData : Data;
+
     let intraInfo: IntraInfoDto;
     let intraSimpleInfoDto: IntraSimpleInfoDto;
     intraInfo = await this.loginService.getIntraInfo(query.code);
-    console.log(`codeCallback intraInfo : `,intraInfo);
-    const user = await this.usersService.findOneUser(intraInfo.userIdx);
-
-    if (!user)
+    console.log(`codeCallback intraInfo : `, intraInfo);
+    // const user = await this.usersService.findOneUser(intraInfo.userIdx);
+    // if (!user)
       intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
-    else
-      intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.imgUri, false);
-    const payload = { id : intraInfo.userIdx, email : intraInfo.email };
+    // else
+    //   intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.imgUri, user.check2Auth);
+    console.log(`codeCallback intraSimpleInfoDto : `, intraSimpleInfoDto);
+    const payload = { id: intraInfo.userIdx, email: intraInfo.email };
     const jwt = await this.loginService.issueToken(payload);
-    
-    console.log(`codeCallback intraSimpleInfoDto : `,intraSimpleInfoDto);
-    
-    userData = { 
-      token:(jwt).toString(), 
-      user: { 
-        userIdx: intraInfo.userIdx, 
-        intra: intraInfo.intra, 
-        imgUri: intraInfo.imgUri, 
-        email: intraInfo.email
-      }
-    };
-    
-    res.cookie('authorization', (await jwt).toString(), { httpOnly: true, path: '*'});
-    
-    console.log(`codeCallback userData : `,userData);
-    
+    intraInfo.token = (jwt).toString()
+
+    res.cookie('authorization', (await jwt).toString(), { httpOnly: true, path: '*' });
+
+    console.log(`codeCallback intraInfo : `, intraInfo);
+
     console.log("success");
-    
-    return res.status(200).json(userData);
+
+    return res.status(200).json(intraInfo);
   }
 
   @Post('logout')
