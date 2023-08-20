@@ -813,42 +813,67 @@ export class ChatGateway
     @MessageBody() payload: string,
   ) {
     const { channelIdx, targetNciname, targetIdx } = JSON.parse(payload);
-    const requestId: number = parseInt(client.handshake.query.userId as string);
+    const userId: number = parseInt(client.handshake.query.userId as string);
     const channel = this.chat.getProtectedChannel(channelIdx);
 
     // console.log(channel);
     // owner 유효성 검사
-    const requester: UserObject = channel.getMember.find((member) => {
-      return member.userIdx === requestId;
+    const user: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === userId;
     });
-    if (requester === undefined) {
-      return '요청자가 대화방에 없습니다.';
+    if (user === undefined) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'chat_kick',
+        'user',
+      );
     }
-    const clientIsAdmin: boolean = channel.getAdmin.some(
-      (admin) => admin.userIdx === requester.userIdx,
+    const userIsAdmin: boolean = channel.getAdmin.some(
+      (admin) => admin.userIdx === user.userIdx,
     );
-    if (!clientIsAdmin) {
-      return '요청자가 적절한 권한자가 아닙니다.';
+    if (!userIsAdmin) {
+      return this.messanger.logWithWarn(
+        'chat_kick',
+        'user',
+        user.nickname,
+        'Not Admin',
+      );
     }
     // 대상 유효성 검사
     const target = channel.getMember.find((member) => {
       return member.userIdx === targetIdx;
     });
     if (target === undefined) {
-      return '대상이 채널에 없습니다.';
+      return this.messanger.logWithWarn(
+        'chat_kick',
+        'target',
+        user.nickname,
+        'Not Found Target',
+      );
     }
     // 대상 권한 검사
     const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
       return admin.userIdx === target.userIdx;
     });
     if (targetIsAdmin) {
-      return '대상을 퇴장할 수 없습니다.';
+      return this.messanger.logWithMessage(
+        'chat_kick',
+        'target',
+        user.nickname,
+        'Is Admin',
+      );
     }
     // 대상이 나간걸 감지 후 emit
     const channelInfo = this.chatService.kickMember(channel, target);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_kick', channelInfo);
     // console.log(channel);
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done kick',
+      'chat_kick',
+    );
   }
 
   // API: MAIN_CHAT_14
