@@ -8,6 +8,7 @@ import {
 import { FriendList } from '../../entity/friendList.entity';
 
 export class FollowFriendDto {
+  myIdx : number;
   @IsNotEmpty()
   @IsString()
   @MaxLength(100)
@@ -18,7 +19,7 @@ export class FollowFriendDto {
 }
 
 export class FriendResDto {
-  friendList: FriendList[]; // 이거 하나의 객체인데 왜 이름이 리스트 ㅋㅋ
+  friendList: FriendList[];
 }
 
 export class FriendDto {

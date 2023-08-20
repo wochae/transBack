@@ -17,7 +17,7 @@ import { GamePlayService } from './game.play/game.play.service';
     ]),
     SharedModule,
   ],
-  providers: [GameGateway, GameService, GamePlayService],
+  providers: [GameGateway, GameService],
   exports: [GameModule, SharedModule],
 })
 export class GameModule {}

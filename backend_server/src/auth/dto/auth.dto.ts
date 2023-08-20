@@ -1,10 +1,12 @@
 export class IntraSimpleInfoDto {
-  constructor(userIdx: number, imgUri: string) {
+  constructor(userIdx: number, imgUri: string, check2Auth: boolean) {
     this.userIdx = userIdx;
     this.imgUri = imgUri;
+    this.check2Auth = check2Auth;
   }
     userIdx : number;
     imgUri: string;
+    check2Auth: boolean;
   }
 export class JwtPayloadDto {
   id: number;

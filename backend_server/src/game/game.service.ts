@@ -32,11 +32,13 @@ import { GameChannel } from 'src/entity/gameChannel.entity';
 import { OnlineStatus } from 'src/entity/users.entity';
 import { GameInviteQueue } from './class/game.invite.queue/game.invite.queue';
 import { GameFriendMatchDto } from './dto/game.friend.match.dto';
+import { GamePlayService } from './game.play/game.play.service';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
 @Injectable()
 export class GameService {
+  private tables: GamePlayService[];
   private playRoomList: GameRoom[];
   private normalQueue: GameQueue;
   private rankQueue: GameQueue;
@@ -56,6 +58,7 @@ export class GameService {
     this.normalQueue = new GameQueue();
     this.rankQueue = new GameQueue();
     this.cnt = 0;
+    this.tables = [];
   }
   /**
    * 전체 비즈니스 로직 인스턴스를 점검하는 함수
