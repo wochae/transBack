@@ -948,16 +948,20 @@ export class ChatGateway
     // FIXME: targetnickname 과 targetIdx 가 서로 맞는지 비교
     // FIXME: targetIdx 가 본인인지 확인
     const { targetNickname, targetIdx } = JSON.parse(payload);
-    const requestId: number = parseInt(client.handshake.query.userId as string);
+    const userId: number = parseInt(client.handshake.query.userId as string);
 
-    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(requestId);
+    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
     const blockInfo = await this.usersService.setBlock(
       targetNickname,
       user,
       this.inMemoryUsers,
     );
     client.emit('chat_block', blockInfo);
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done block',
+      'chat_block',
+    );
   }
 
   // API: MAIN_CHAT_16
@@ -965,7 +969,11 @@ export class ChatGateway
   getPublicAndProtectedChannel(@ConnectedSocket() client: Socket) {
     const channels = this.chatService.getPublicAndProtectedChannel();
     client.emit('chat_get_roomList', channels);
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done get RoomList',
+      'chat_get_roomList',
+    );
   }
 
   // API: MAIN_CHAT_17
@@ -975,7 +983,11 @@ export class ChatGateway
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
     const channels = await this.chatService.getPrivateChannels(user);
     client.emit('chat_get_DMList', channels);
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done get DMList',
+      'chat_get_DMList',
+    );
   }
 
   // API: MAIN_CHAT_18
