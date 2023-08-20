@@ -32,6 +32,8 @@ import { GameChannel } from 'src/entity/gameChannel.entity';
 import { OnlineStatus } from 'src/entity/users.entity';
 import { GameInviteQueue } from './class/game.invite.queue/game.invite.queue';
 import { GameFriendMatchDto } from './dto/game.friend.match.dto';
+import { LessThanOrEqual } from 'typeorm';
+import { UserProfileGameDto } from './dto/game.record.dto';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -812,5 +814,20 @@ export class GameService {
       user2.socket.emit('game_invite_finish', msg);
     }
     return;
+  }
+
+
+
+  // PROFILE_INFINITY
+  async getGameRecordsByInfinity(userIdx: number, page: number) {
+    const skip = (page - 1) * 3; // items per page fixed
+    const records = await this.gameRecordRepository.find({
+      where: { userIdx },
+      order: { matchDate: 'DESC' },
+      skip,
+      take: 3,
+    });
+
+    return records;
   }
 }
