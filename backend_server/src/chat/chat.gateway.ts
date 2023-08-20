@@ -54,11 +54,11 @@ export class ChatGateway
     this.messanger.logWithMessage('afterInit', 'ChatGateway', 'Initialized!');
   }
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
     const userId: number = parseInt(client.handshake.query.userId as string);
     // TODO: client.handshake.query.userId & intra 가 db 에 있는 userIdx & intra 와 일치한지 확인하는 함수 추가
     // FIXME: 함수로 빼기
-    const user = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -197,8 +197,8 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    // const { targetNickname, targetIdx } = JSON.parse(payload);
-    const { targetNickname, targetIdx } = payload;
+    const { targetNickname, targetIdx } = JSON.parse(payload);
+    // const { targetNickname, targetIdx } = payload;
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
     if (!user || user.nickname !== targetNickname) {
@@ -226,8 +226,8 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    const { targetIdx } = payload;
-    // const { targetIdx } = JSON.parse(payload);
+    // const { targetIdx } = payload;
+    const { targetIdx } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     const check_dm: MessageInfo | boolean = await this.chatService.checkDM(
       userId,
@@ -253,8 +253,8 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    const { targetNickname, targetIdx, msg } = payload;
-    // const { targetNickname, targetIdx, msg } = JSON.parse(payload);
+    // const { targetNickname, targetIdx, msg } = payload;
+    const { targetNickname, targetIdx, msg } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     // FIXME: 왜 DB 에서 가져오지? 인메모리에서 가져오면 안되나?
     const user: UserObject = await this.usersService.getUserInfoFromDB(
@@ -358,7 +358,7 @@ export class ChatGateway
     // channel 의 Ban List 에 있는지 확인
     const checkBan = this.chatService.checkBanList(channel, user);
     if (checkBan) {
-      return this.messanger.setResponseErrorMsgWithLogger(
+      return this.messanger.setResponseMsgWithLogger(
         201,
         'Banned User',
         'chat_enter',
@@ -366,7 +366,7 @@ export class ChatGateway
     }
     // FIXME: service 로직으로 빼기
     if (channel instanceof Channel) {
-      if (channel.getPassword === '') {
+      if (channel.getMode === Mode.PUBLIC) {
         this.messanger.logWithMessage(
           'enterProtectedAndPublicRoom',
           'channel',
@@ -455,8 +455,8 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    const { channelIdx, senderIdx, msg, targetIdx } = payload;
-    // const { channelIdx, senderIdx, msg, targetIdx } = JSON.parse(payload);
+    // const { channelIdx, senderIdx, msg, targetIdx } = payload;
+    const { channelIdx, senderIdx, msg, targetIdx } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
     const target: UserObject = this.inMemoryUsers.getUserByIdFromIM(targetIdx);
@@ -527,8 +527,8 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    // const { password = '' } = JSON.parse(payload);
-    const { password = null } = payload;
+    const { password = '' } = JSON.parse(payload);
+    // const { password = '' } = payload;
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user = this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
@@ -560,8 +560,8 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    const { channelIdx, userIdx, grant } = payload;
-    // const { channelIdx, userIdx, grant } = JSON.parse(payload);
+    // const { channelIdx, userIdx, grant } = payload;
+    const { channelIdx, userIdx, grant } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     // error 발생
     console.log(this.chat.getProtectedChannels);
@@ -747,7 +747,8 @@ export class ChatGateway
 
   // API: MAIN_CHAT_12
   @SubscribeMessage('chat_mute')
-  setMute(@ConnectedSocket() client: Socket, @MessageBody() payload: string) {
+  setMute(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+    // const { channelIdx, targetNickname, targetIdx } = payload;
     const { channelIdx, targetNickname, targetIdx } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     const channel: Channel = this.chat.getProtectedChannel(channelIdx);
@@ -817,10 +818,8 @@ export class ChatGateway
 
   // API: MAIN_CHAT_13
   @SubscribeMessage('chat_kick')
-  kickMember(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: string,
-  ) {
+  kickMember(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+    // const { channelIdx, targetNciname, targetIdx } = payload;
     const { channelIdx, targetNciname, targetIdx } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     const channel = this.chat.getProtectedChannel(channelIdx);
@@ -886,12 +885,12 @@ export class ChatGateway
 
   // API: MAIN_CHAT_14
   @SubscribeMessage('chat_ban')
-  banMember(@ConnectedSocket() client: Socket, @MessageBody() payload: string) {
+  banMember(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+    // const { channelIdx, targetNickname, targetIdx } = payload;
     const { channelIdx, targetNickname, targetIdx } = JSON.parse(payload);
     const userId: number = parseInt(client.handshake.query.userId as string);
     const channel = this.chat.getProtectedChannel(channelIdx);
 
-    console.log(channel);
     // owner 유효성 검사
     const user: UserObject = channel.getMember.find((member) => {
       return member.userIdx === userId;
@@ -952,11 +951,12 @@ export class ChatGateway
   @SubscribeMessage('chat_block')
   async blockMember(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: string,
+    @MessageBody() payload: any,
   ) {
     // FIXME: targetnickname 과 targetIdx 가 서로 맞는지 비교
     // FIXME: targetIdx 가 본인인지 확인
     const { targetNickname, targetIdx } = JSON.parse(payload);
+    // const { targetNickname, targetIdx } = payload;
     const userId: number = parseInt(client.handshake.query.userId as string);
 
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
@@ -1005,7 +1005,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    // const { targetIdx } = payload;
+    // const { channelIdx } = payload;
     const { channelIdx } = JSON.parse(payload);
     const dm: MessageInfo = await this.chatService.getPrivateChannel(
       channelIdx,
