@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -15,7 +17,6 @@ import { FriendListRepository } from './friendList.repository';
 import { FollowFriendDto, FriendResDto } from './dto/friend.dto';
 import axios from 'axios';
 import { response } from 'express';
-// import { CreateCertificateDto, IntraInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import {
   CreateCertificateDto,
   IntraSimpleInfoDto,
@@ -29,7 +30,6 @@ import { FriendList } from '../entity/friendList.entity';
 import { DataSource } from 'typeorm';
 import {
   IntraInfoDto,
-  UserEditImgDto,
   UserEditprofileDto,
 } from './dto/user.dto';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
@@ -39,6 +39,8 @@ import { InMemoryUsers } from './users.provider';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as config from 'config';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
+import * as fs from 'fs/promises'; // fs.promises를 사용하여 비동기적인 파일 처리
+import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
 const mailConfig = config.get('mail');
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
@@ -53,14 +55,14 @@ export class UsersService {
     private readonly mailerService: MailerService,
   ) { }
 
-  private logger: Logger = new Logger('UsersService');
+  private messanger: LoggerWithRes = new LoggerWithRes('UsersService');
 
   async findOneUser(userIdx: number): Promise<UserObject> {
     return this.userObjectRepository.findOneBy({ userIdx });
   }
 
   async updateUserNick(updateUsersDto: UserEditprofileDto) {
-    const { userIdx, userNickname, imgUri } = updateUsersDto;
+    const { userIdx, userNickname, imgData } = updateUsersDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
     if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
     // 존재하는 닉네임인지 확인
@@ -71,27 +73,43 @@ export class UsersService {
     } else { return false; } // 닉네임이 이미 존재한다면
   }
 
-  async uploadUserImg(UserEditprofileDto: UserEditprofileDto) {
-    const { userIdx, imgUri } = UserEditprofileDto;
-    const user = await this.userObjectRepository.findOneBy({ userIdx });
-    if (!user) {
-      throw new BadRequestException('유저가 존재하지 않습니다.');
+  async updateImgFile(filepath: string, filename: string, imgData: any) {
+    if (imgData === '') return;
+
+    // imgUri를 저장할 경로를 만들고 그 안에 이미지 파일을 생성해야 함.
+
+    const base64 = imgData.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64, 'base64');
+    const fileExtension = 'png'; // 이미지 데이터의 확장자 동적으로 결정
+
+    const filePath = `${filepath}/${filename}.${fileExtension}`;
+
+    try {
+      await fs.writeFile(filePath, buffer); // 비동기적으로 파일 저장
+    } catch (error) {
+      console.error('Error saving image:', error);
+      throw new Error('Failed to save image');
     }
-    const foundImgUri = user.imgUri; // 일단은 그냥 같게 함.
-    // await this.findUserImg(userIdx);
-    if (user.imgUri === foundImgUri) {
-      // imgUri를 저장할 경로를 만들고 그 안에 이미지 파일을 생성해야 함.
-      user.imgUri = imgUri;
-      const changedUser = await this.userObjectRepository.save(user);
-      return changedUser;
-    } else {
-      return new BadRequestException('변경을 실패 했습니다.');
-    }
-  }
-  async getTokenInfo(accessToken: string) {
-    return await this.certificateRepository.findOneBy({ token: accessToken });
   }
 
+  /*
+  filepath: string, filename: string, imgData: any
+  */
+  async updateUser(userEditImgDto: UserEditprofileDto): Promise<any> {
+    const { userIdx, userNickname, imgData } = userEditImgDto;
+    const user = await this.findOneUser(userIdx);
+    await this.updateImgFile(`public/img`, `${userIdx}`, imgData); // 이미지 파일 비동기 저장
+    if (userNickname !== '') {
+      user.nickname = userNickname;
+    }
+    try {
+      await this.updateUserNick({ userIdx, userNickname: userNickname, imgData: user.imgUri });
+    } catch (err) {
+      throw new HttpException('update user error', HttpStatus.FORBIDDEN);
+    }
+    return user;
+  }
+  
   async saveToken(
     createCertificateDto: CreateCertificateDto,
   ): Promise<CertificateObject> {
@@ -202,8 +220,8 @@ export class UsersService {
     );
   }
 
-  async createUser(createUsersDto: CreateUsersDto): Promise<UserObject> {
-    const { userIdx, intra, imgUri } = createUsersDto;
+  async createUser(intraInfo: IntraInfoDto): Promise<UserObject> {
+    const { userIdx, intra, imgUri, email } = intraInfo;
 
     let user = this.userObjectRepository.create({
       userIdx: userIdx,
@@ -215,123 +233,16 @@ export class UsersService {
       available: true,
       win: 0,
       lose: 0,
+      email: email,
+      check2Auth: false
     });
     user = await this.userObjectRepository.save(user);
     return user;
   }
-  async validateUser(accessToken: string): Promise<IntraSimpleInfoDto> {
-    const queryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    this.logger.log('validateUser start with token : ', accessToken);
-    try {
-      const response = await axios.get(intraApiMyInfoUri, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      console.log(`getIntraInfo: response.data.id : ${response.data.id}`);
-      const userInfo = response.data;
-
-      this.logger.log(
-        `getIntraInfo: userInfo : ${userInfo.id}, ${userInfo.image.versions.small}`,
-      );
-      if (!userInfo.id) {
-        throw this.logger.error('인트라 정보 불러오기 실패했습니다.');
-      }
-      const existedUser: UserObject = await this.findOneUser(userInfo.id);
-      console.log(`existedUser, userIdx :  `, existedUser);
-      if (!existedUser) {
-        this.logger.log('No user');
-        /*
-          @PrimaryColumn()
-          userIdx: number;
-
-          @Column()
-          token: string;
-
-          @Column()
-          email: string
-
-          @Column({ default: false })
-          check2Auth: boolean;
-         */
-        this.logger.log(`user create start`);
-        const user = await this.userObjectRepository.createUser({
-          userIdx: userInfo.id,
-          intra: response.data.login,
-          nickname: response.data.login,
-          imgUri: response.data.image.link,
-          email: response.data.email,
-        });
-        console.log('user create end', user);
-
-        const certi = await this.certificateRepository.insertCertificate(
-          userInfo.id,
-          accessToken,
-          userInfo.email,
-          false,
-        );
-
-        console.log('certificate insert : ', certi);
-
-        user.certificate = certi;
-
-        try {
-          await queryRunner.manager.save(certi);
-          await queryRunner.manager.save(user);
-
-          await queryRunner.commitTransaction();
-        } catch (err) {
-          await queryRunner.rollbackTransaction();
-          console.log(err);
-        } finally {
-          await queryRunner.release();
-        }
-        return new IntraSimpleInfoDto(user.userIdx, user.imgUri, certi.check2Auth);
-
-      } else {
-        // 유저가 존재하는 경우
-        const userCerti = await this.certificateRepository.findOneBy({
-          userIdx: existedUser.userIdx,
-        });
-        if (!(userCerti.token !== accessToken)) {
-          // 존재하는 유저가 있지만 토큰이 다른 경우 -> 토큰 업데이트
-          this.logger.log('user is exist but token is different');
-
-          this.logger.log(` 유저가 존재하지 않은 경우 certi insert start`);
-          userCerti.token = accessToken;
-          await this.certificateRepository.update(userCerti.userIdx, userCerti);
-          return new IntraSimpleInfoDto(
-            existedUser.userIdx,
-            existedUser.imgUri,
-            userCerti.check2Auth
-          );
-        } // 존재하는 유저가 있고 토큰이 같은 경우 -> 그대로
-        return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri, userCerti.check2Auth);
-        /*
-            token: string;
-            check2Auth: boolean;
-            email: string;
-            userIdx: number;
-         */
-      }
-    } catch (error) {
-      // 에러 핸들링
-      console.error('Error making about cerification - ', error);
-    }
-  }
-
-  async createCertificate(
-    createCertificateDto: CreateCertificateDto,
-  ): Promise<CertificateObject> {
-    return this.certificateRepository.insertCertificate(
-      createCertificateDto.userIdx,
-      createCertificateDto.token,
-      createCertificateDto.email,
-      createCertificateDto.check2Auth,
-    );
+  
+  async validateUser(intraInfo: IntraInfoDto): Promise<IntraSimpleInfoDto> {
+    let user = await this.createUser(intraInfo);
+    return new IntraSimpleInfoDto(user.userIdx, user.imgUri, false);
   }
 
   async getAllUsersFromDB(): Promise<UserObject[]> {
@@ -409,7 +320,8 @@ export class UsersService {
     if (!authenticated) throw new NotFoundException('Not Found User.');
     return { checkTFA: authenticated.check2Auth };
   }
-  // tfa 를 사용하는지 안 하는지, 그리고 한다고 하면 그 때 2차 인증에 대해서 인증이 된 유저인지 확인이 필요함. check2Auth (2차 인증 사용 여부), checkTFA (2차 인증 사용 유저가 인증을 성공했을 때)
+  // tfa 를 사용하는지 안 하는지, 그리고 한다고 하면 그 때 2차 인증에 대해서 인증이 된 유저인지 확인이 필요함. 
+  // check2Auth (2차 인증 사용 여부), checkTFA (2차 인증 사용 유저가 인증을 성공했을 때)
   async patchTFA(
     userIdx: number,
     patchAuthDto: TFAuthDto,

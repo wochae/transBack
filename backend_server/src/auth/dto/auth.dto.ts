@@ -14,14 +14,14 @@ export class JwtPayloadDto {
 };
 
 export class CreateCertificateDto {
-  constructor(token: string, check2Auth: boolean, email: string, userIdx: number) {
+  constructor(userIdx: number, token: string, check2Auth: boolean, email: string) {
+    this.userIdx = userIdx;
     this.token = token;
     this.check2Auth = check2Auth;
     this.email = email;
-    this.userIdx = userIdx;
   }
+  userIdx: number;
   token: string;
   check2Auth: boolean;
   email: string;
-  userIdx: number;
 };
