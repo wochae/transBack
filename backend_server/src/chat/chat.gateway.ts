@@ -355,6 +355,15 @@ export class ChatGateway
         'channel',
       );
     }
+    // channel 의 Ban List 에 있는지 확인
+    const checkBan = this.chatService.checkBanList(channel, user);
+    if (checkBan) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        201,
+        'Banned User',
+        'chat_enter',
+      );
+    }
     // FIXME: service 로직으로 빼기
     if (channel instanceof Channel) {
       if (channel.getPassword === '') {

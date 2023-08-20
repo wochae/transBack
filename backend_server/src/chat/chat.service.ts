@@ -424,7 +424,12 @@ export class ChatService {
     if (!ban) {
       channel.setBan = user;
     } else {
-      return 'Already Banned.';
+      return this.messanger.logWithMessage(
+        'setBan',
+        'target',
+        user.nickname,
+        'Already Banned',
+      );
     }
     console.log('ban', channel.getBan);
     const banInfo = {
@@ -459,6 +464,13 @@ export class ChatService {
       }),
     };
     return channelInfo;
+  }
+
+  checkBanList(channel: Channel, user: UserObject) {
+    const ban = channel.getBan.some(
+      (member) => member.userIdx === user.userIdx,
+    );
+    return ban;
   }
 
   changePassword(channel: Channel, password: string) {
