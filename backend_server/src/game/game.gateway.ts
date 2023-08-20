@@ -163,9 +163,18 @@ export class GameGateway
           'game_option',
         );
     } else {
+      this.messanger.logWithMessage('game_option', '', '', 'Friend Battle!');
       const userId = options.userIdx;
       const room = this.gameService.getRoomByUserIdx(userId);
+      this.messanger.logWithMessage(
+        'game_option',
+        'room',
+        `${room.roomId}`,
+        'Friend set Room!',
+      );
       if (room.setOptions(optionObject)) {
+        this.messanger.logWithMessage('game_option', '', '', 'get in here?');
+
         const roomIdx = this.gameService.getRoomIdxWithRoom(room);
         // this.logger.log(`룸 작성 성공`);
         this.gameService.getReadyFirst(roomIdx, this.server);
