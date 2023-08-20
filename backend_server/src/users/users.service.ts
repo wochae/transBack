@@ -4,6 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { UserObjectRepository } from './users.repository';
 import { CreateUsersDto } from './dto/create-users.dto';
@@ -13,7 +14,6 @@ import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
 import { FollowFriendDto, FriendResDto } from './dto/friend.dto';
 import axios from 'axios';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { response } from 'express';
 // import { CreateCertificateDto, IntraInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import {
@@ -36,7 +36,11 @@ import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 import { DMChannelRepository } from 'src/chat/DM.repository';
 import { BlockList } from 'src/entity/blockList.entity';
 import { InMemoryUsers } from './users.provider';
+import { MailerService } from '@nestjs-modules/mailer';
+import * as config from 'config';
+import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 
+const mailConfig = config.get('mail');
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 @Injectable()
 export class UsersService {
@@ -46,37 +50,25 @@ export class UsersService {
     private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
     private certificateRepository: CertificateRepository,
-  ) {}
+    private readonly mailerService: MailerService,
+  ) { }
 
   private logger: Logger = new Logger('UsersService');
 
   async findOneUser(userIdx: number): Promise<UserObject> {
-    console.log('찾는다: ' + userIdx);
     return this.userObjectRepository.findOneBy({ userIdx });
   }
 
   async updateUserNick(updateUsersDto: UserEditprofileDto) {
-    const { userIdx, userNickname } = updateUsersDto;
+    const { userIdx, userNickname, imgUri } = updateUsersDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
-    console.log('updateOneUser: user : ', user);
-    if (!user) {
-      throw new BadRequestException('유저가 존재하지 않습니다.');
-    }
-    if (user.nickname === userNickname) {
-      // 요청한 닉네임이 현재 닉네임과 다르다면
-      const isNicknameExist = await this.userObjectRepository.findOneBy({
-        nickname: userNickname,
-      });
-      if (!isNicknameExist) {
-        // 닉네임이 존재하지 않는다면
-        user.nickname = userNickname;
-        await this.userObjectRepository.save(user);
-      } else {
-        return false;
-      } // 닉네임이 이미 존재한다면
-    } else {
-      return new BadRequestException('변경을 실패 했습니다.');
-    } // 닉네임이 같다면
+    if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
+    // 존재하는 닉네임인지 확인
+    const isNicknameExist = await this.userObjectRepository.findOneBy({ nickname: userNickname });
+    if (!isNicknameExist) { // 닉네임이 존재하지 않는다면
+      user.nickname = userNickname;
+      return await this.userObjectRepository.save(user);
+    } else { return false; } // 닉네임이 이미 존재한다면
   }
 
   async uploadUserImg(UserEditprofileDto: UserEditprofileDto) {
@@ -125,11 +117,8 @@ export class UsersService {
           return beforeSaveToken;
         } // 같다면 그대로
       }
-    } catch (e) {
-      console.log('토큰 디비에 문제가 있다.');
-      throw new InternalServerErrorException(e);
-    }
-  }
+    } catch (e) { console.log("토큰 디비에 문제가 있다."); throw new InternalServerErrorException(e); }
+  };
 
   async setBlock(
     targetNickname: string,
@@ -197,6 +186,17 @@ export class UsersService {
   ): Promise<FriendList[]> {
     return this.friendListRepository.insertFriend(
       insertFriendDto,
+      user,
+      this.userObjectRepository,
+    );
+  }
+
+  async deleteFriend(
+    deleteFriendDto: FollowFriendDto,
+    user: UserObject,
+  ): Promise<FriendList[]> {
+    return this.friendListRepository.deleteFriend(
+      deleteFriendDto,
       user,
       this.userObjectRepository,
     );
@@ -289,8 +289,8 @@ export class UsersService {
         } finally {
           await queryRunner.release();
         }
+        return new IntraSimpleInfoDto(user.userIdx, user.imgUri, certi.check2Auth);
 
-        return new IntraSimpleInfoDto(user.userIdx, user.imgUri);
       } else {
         // 유저가 존재하는 경우
         const userCerti = await this.certificateRepository.findOneBy({
@@ -306,9 +306,10 @@ export class UsersService {
           return new IntraSimpleInfoDto(
             existedUser.userIdx,
             existedUser.imgUri,
+            userCerti.check2Auth
           );
         } // 존재하는 유저가 있고 토큰이 같은 경우 -> 그대로
-        return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri);
+        return new IntraSimpleInfoDto(existedUser.userIdx, existedUser.imgUri, userCerti.check2Auth);
         /*
             token: string;
             check2Auth: boolean;
@@ -373,4 +374,58 @@ export class UsersService {
   // async getUserId(client: Socket): Promise<number> {
   //   return parseInt(client.handshake.query.userId as string, 10);
   // }
+  private mailCodeList: Map<number, number> = new Map();
+
+  async reqTFA(sendEmailDto: SendEmailDto) {
+    const { userIdx, email } = sendEmailDto;
+    // 난수를 생성한다. 6자리 숫자
+    const authCode = Math.floor(Math.random() * 900000 + 100000);
+    this.mailCodeList.set(userIdx, authCode);
+    console.log('authCode :', authCode);
+    // 3분 후 만료된다.
+    setTimeout(() => {
+      this.mailCodeList.delete(userIdx);
+    }, 3 * 60000);
+    await this.mailerService
+      .sendMail({
+        to: email,
+        from: 'no-reply <no-reply@gaepofighters.com>',
+        subject: '[gaepofighters] 2차 인증 코드',
+        text: `인증 코드: ${authCode}`,
+        html: `<b>인증 코드: ${authCode}</b>`,
+      })
+      .then((success) => {
+        console.log('Mail sent: ' + success.response);
+        return success;
+      })
+      .catch((err) => {
+        console.log('Error occured: ' + err);
+        throw new BadRequestException();
+      });
+  }
+
+  async getTFA(userIdx: number): Promise<TFAUserDto> {
+    const authenticated = await this.certificateRepository.findOneBy({ userIdx });
+    if (!authenticated) throw new NotFoundException('Not Found User.');
+    return { checkTFA: authenticated.check2Auth };
+  }
+  // tfa 를 사용하는지 안 하는지, 그리고 한다고 하면 그 때 2차 인증에 대해서 인증이 된 유저인지 확인이 필요함. check2Auth (2차 인증 사용 여부), checkTFA (2차 인증 사용 유저가 인증을 성공했을 때)
+  async patchTFA(
+    userIdx: number,
+    patchAuthDto: TFAuthDto,
+  ): Promise<TFAUserDto> {
+    const auth = await this.certificateRepository.findOneBy({ userIdx });
+    const { code } = patchAuthDto;
+    console.log(this.mailCodeList, code);
+
+    if (code !== undefined || auth.check2Auth === false) {
+      if (this.mailCodeList.get(userIdx) !== code || code === undefined)
+        throw new BadRequestException('Invalid or Expired.');
+      this.mailCodeList.delete(userIdx);
+      if (auth.check2Auth === true) return { checkTFA: true };
+    }
+    auth.check2Auth = !auth.check2Auth;
+    const certi = await this.certificateRepository.save(auth);
+    return { checkTFA: certi.check2Auth };
+  }
 }

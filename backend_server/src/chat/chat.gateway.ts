@@ -31,7 +31,7 @@ import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.respo
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
   },
 })
 export class ChatGateway

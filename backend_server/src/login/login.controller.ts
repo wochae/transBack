@@ -77,7 +77,8 @@ export class LoginController {
         userIdx: number,
         intra: string,
         imgUri: string,
-        email: string 
+        email: string,
+        check2Auth: boolean
       };
     }
     const userData : Data = { 
@@ -86,7 +87,8 @@ export class LoginController {
         userIdx: userSimpleDto.userIdx, 
         intra: intraInfo.intra, 
         imgUri: userSimpleDto.imgUri, 
-        email: intraInfo.email
+        email: intraInfo.email,
+        check2Auth : userSimpleDto.check2Auth
       }
     };
     

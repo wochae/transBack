@@ -38,6 +38,24 @@ export class FriendListRepository extends Repository<FriendList> {
     return this.findBy({ userIdx: user.userIdx });
   }
 
+  async deleteFriend(
+    deleteFriendDto: FollowFriendDto,
+    user: UserObject,
+    userList: UserObjectRepository,
+  ): Promise<FriendList[]> {
+    const { targetNickname } = deleteFriendDto;
+    const friend = await userList.findOne({
+      where: { nickname: targetNickname },
+    });
+    if (!friend) {
+      throw new Error(`There is no name, ${targetNickname}`);
+    }
+
+    await this.delete({ userIdx: user.userIdx, friendIdx: friend.userIdx });
+
+    return this.findBy({ userIdx: user.userIdx });
+  }
+
   async getFriendList(
     userIdx: number,
     userList: UserObjectRepository,
