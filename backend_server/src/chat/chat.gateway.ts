@@ -103,7 +103,7 @@ export class ChatGateway
     // FIXME: 함수로 빼기
     this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
     const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
-    const channelForLeave: Channel[] = notDmChannelList.filter((channel) =>
+    const channelForLeave: Channel[] = notDmChannelList?.filter((channel) =>
       channel.getMember.includes(user),
     );
     channelForLeave.forEach((channel) => {
@@ -159,7 +159,7 @@ export class ChatGateway
     const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
       user.userIdx,
     );
-    const channelList = this.chat.getProtectedChannels.map(
+    const channelList = await this.chat.getProtectedChannels?.map(
       ({ getOwner: owner, getChannelIdx: channelIdx, getMode: mode }) => ({
         owner: owner.nickname,
         channelIdx,
