@@ -74,12 +74,22 @@ export class GameGateway
     const date = Date.now();
     // this.logger.log(`시작 일시 : ${date}`);
     // this.logger.log(userId + ' is connected');
-    this.messanger.logWithMessage('handleConnection', '', '', `${userId} is connected`);
+    this.messanger.logWithMessage(
+      'handleConnection',
+      '',
+      '',
+      `${userId} is connected`,
+    );
     const user = await this.usersService.getUserObjectFromDB(userId);
     // this.logger.log(user.nickname);
     const OnUser = new GameOnlineMember(user, client);
     // this.logger.log(OnUser.user.nickname);
-    this.messanger.logWithMessage('handleConnection', '', '', `${OnUser.user.nickname} is connected`);
+    this.messanger.logWithMessage(
+      'handleConnection',
+      '',
+      '',
+      `${OnUser.user.nickname} is connected`,
+    );
     this.gameService.pushOnlineUser(OnUser).then((data) => {
       if (data === -1) {
         client.disconnect(true);
@@ -131,11 +141,7 @@ export class GameGateway
     @MessageBody() options: GameOptionDto,
   ): Promise<ReturnMsgDto> {
     // await this.logger.log(`options is here : ${options.userIdx}`);
-    const optionObject = new GameOptions(
-      options.gameType,
-      options.speed,
-      options.mapNumber,
-    );
+    const optionObject = new GameOptions(options);
     if (options.gameType !== GameType.FRIEND) {
       const condition = this.gameService.sizeWaitPlayer();
       const after = this.gameService.setWaitPlayer(
@@ -157,9 +163,18 @@ export class GameGateway
           'game_option',
         );
     } else {
+      this.messanger.logWithMessage('game_option', '', '', 'Friend Battle!');
       const userId = options.userIdx;
       const room = this.gameService.getRoomByUserIdx(userId);
+      this.messanger.logWithMessage(
+        'game_option',
+        'room',
+        `${room.roomId}`,
+        'Friend set Room!',
+      );
       if (room.setOptions(optionObject)) {
+        this.messanger.logWithMessage('game_option', '', '', 'get in here?');
+
         const roomIdx = this.gameService.getRoomIdxWithRoom(room);
         // this.logger.log(`룸 작성 성공`);
         this.gameService.getReadyFirst(roomIdx, this.server);
@@ -369,7 +384,7 @@ export class GameGateway
   //     return new ReturnMsgDto(200, 'OK!');
   //   }
 
-  @SubscribeMessage('game_invite_final')
+  @SubscribeMessage('game_invite_finish')
   prePareGameFormRiend(
     @MessageBody() matchList: GameFriendMatchDto,
   ): ReturnMsgDto {

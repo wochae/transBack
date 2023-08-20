@@ -32,6 +32,7 @@ import { GameChannel } from 'src/entity/gameChannel.entity';
 import { OnlineStatus } from 'src/entity/users.entity';
 import { GameInviteQueue } from './class/game.invite.queue/game.invite.queue';
 import { GameFriendMatchDto } from './dto/game.friend.match.dto';
+import { GameOptionDto } from './dto/game.option.dto';
 
 type WaitPlayerTuple = [GamePlayer, GameOptions];
 
@@ -55,6 +56,7 @@ export class GameService {
     this.waitingList = new GameWaitQueue();
     this.normalQueue = new GameQueue();
     this.rankQueue = new GameQueue();
+    this.inviteQueue = new GameInviteQueue();
     this.cnt = 0;
   }
   /**
@@ -801,12 +803,14 @@ export class GameService {
     const user2 = this.makeGamePlayer(matchList.targetUserIdx);
     if (this.inviteQueue.Enqueue(user1, user2)) {
       const users = this.inviteQueue.Dequeue(user1, user2);
-      const roomNumber = this.playRoomList.push(
-        new GameRoom(this.makeRoomId()),
-      );
-      const targetRoom = this.getRoomByRoomNumber(roomNumber);
-      targetRoom.setUser(users[0], new GameOptions(GameType.FRIEND, 0, 0));
-      targetRoom.setUser(users[1], new GameOptions(GameType.FRIEND, 0, 0));
+      const room = new GameRoom(this.makeRoomId());
+      const roomNumber = this.playRoomList.push(room);
+      console.log(`${user1.userIdx}, ${user2.userIdx}`);
+      const optionDto = new GameOptionDto(GameType.FRIEND, user1.userIdx, 0, 0);
+      const options = new GameOptions(optionDto);
+      console.log(`방 이름은? : ${room.roomId}`);
+      room.setUser(user1, options);
+      room.setUser(user2, options);
       const msg = 'Friend match preparing is done!';
       user1.socket.emit('game_invite_finish', msg);
       user2.socket.emit('game_invite_finish', msg);

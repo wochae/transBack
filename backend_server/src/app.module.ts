@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { LoginModule } from './login/login.module';
 import { InMemoryUsers } from './users/users.provider';
 import { SharedModule } from './shared/shared.module';
+import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import * as config from 'config';
@@ -21,7 +22,7 @@ const mailConfig = config.get('mail');
     UsersModule,
     SharedModule,
     LoginModule,
-    
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot(typeORMConfig),
     GameModule,
     ChatModule,
@@ -48,11 +49,8 @@ const mailConfig = config.get('mail');
         },
       }),
     }),
-    
-    
   ],
   controllers: [AppController],
   providers: [AppService, InMemoryUsers],
 })
-export class AppModule {
-}
+export class AppModule {}
