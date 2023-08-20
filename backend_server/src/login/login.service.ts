@@ -30,8 +30,6 @@ export class LoginService {
   ) {}
   private logger: Logger = new Logger('LoginService');
 
-
-
   async getAccessToken(code: string): Promise<any> {
     this.logger.log(`getAccessToken : code= ${code}`);
     const body = {
@@ -44,9 +42,6 @@ export class LoginService {
     console.log( "body : ",body);
     try {
       const response = await axios.post(intraApiTokenUri, body);
-      // console.log("trying get response from axios post : ",response) // 이건 200 성공으로 모든 정보가 담긴 response
-      // this.logger.log(`getToken: response.data : ${response.data}`) // [object Object]
-      // this.logger.log(`getToken: response.data.message : ${response.data.message}`) // undefined
       this.logger.log(`getAccessToken: response.data.access_token : ${response.data.access_token}`)
       return response.data.access_token;
     } catch (error) {
@@ -58,76 +53,34 @@ export class LoginService {
 
   async getIntraInfo(code: string): Promise<IntraInfoDto> {
 
-    console.log("getIntraInfo: code : ",code)
-    const tokens = await this.getAccessToken(code);
-    console.log("tokens",tokens);
+    const token = await this.getAccessToken(code);
     try {
       const response = await axios.get(intraApiMyInfoUri, {
         headers: {
-          Authorization: `Bearer ${tokens}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      this.logger.log(`getIntraInfo: response.data.access_token : ${response.data.access_token}`);
-      this.logger.log(`getIntraInfo: but tokens : ${tokens}`);
       
       const userInfo = response.data;
-      // console.log(`getIntraInfo: userInfo : `,userInfo); // too many
-      // console.log('userInfo : Logging :',userInfo);
-      // 이제 userInfo를 사용하여 원하는 작업을 수행할 수 있습니다.
-      this.logger.log(`getIntraInfo: userInfo : ${userInfo.id}, ${userInfo.image.versions.small}`);
     
     return {
       userIdx: userInfo.id,
       intra: userInfo.login,
       imgUri: userInfo.image.versions.small,
-      accessToken : tokens,
+      token : token,
       email: userInfo.email,
+      check2Auth: false,
     };
     } catch (error) {
       // 에러 핸들링
       console.error('Error making GET request:', error);
     }
-    // httpService.get() 메서드 안에서 headers: Authorization 이 존재하는지 확인하는 코드가 필요함
-    
-    
   }
-
-  
-  
 
   async issueToken(payload: JwtPayloadDto) {
     const paytoken = jwt.sign(payload, jwtSecret);
     
     this.logger.log('paytoken', paytoken);
     return paytoken;
-  }
-  
-  
-  
-
-
-  async getUserInfo(intraInfo: IntraInfoDto): Promise<JwtPayloadDto> {
-    this.logger.log('getUserInfo start');
-    /* 
-    userIdx: number;
-    intra: string;
-    imgUri: string;
-    accessToken: string;
-    email: string; 
-    */
-    const { userIdx, intra, imgUri, accessToken, email } = intraInfo;
-    let user: UserObject | CreateUsersDto = await this.usersService.findOneUser(userIdx);
-    if (user === null || user === undefined) {
-      /*
-        token: string;
-        check2Auth: boolean;
-        email: string;
-        userIdx: number; 
-       */
-      
-      this.logger.log('createUser called with : ', user);
-      
-    } else {return { id: userIdx, email: email };}
-    
   }
 }
