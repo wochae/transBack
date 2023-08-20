@@ -21,6 +21,7 @@ import { InMemoryUsers } from 'src/users/users.provider';
 import { Socket } from 'socket.io';
 import { Message } from './class/chat.message/message.class';
 import { InjectRepository } from '@nestjs/typeorm';
+import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
 @Injectable()
 export class ChatService {
@@ -32,7 +33,8 @@ export class ChatService {
     // TODO: gateway에서도 InmemoryUsers 를 사용하는데, service 로 옮기자
     private inMemoryUsers: InMemoryUsers,
   ) {}
-  private logger: Logger = new Logger('ChatService');
+
+  private messanger: LoggerWithRes = new LoggerWithRes('ChatService');
 
   /********************* check Room Member & client *********************/
   // async checkAlreadyInRoom(clientData: any) {
@@ -156,7 +158,12 @@ export class ChatService {
       targetIdx,
     );
     if (!dmChannel) {
-      console.log('채널이 없습니다.');
+      this.messanger.logWithMessage(
+        'checkDM',
+        'dmChannel',
+        'null',
+        'No DM Channel',
+      );
       return false;
     }
     const dmMessageList = await Promise.all(
@@ -220,7 +227,7 @@ export class ChatService {
 
   async createPublicAndProtected(password: string, user: UserObject) {
     const channelIdx = await this.setNewChannelIdx();
-    // TODO: 함수로 빼기?
+    // FIXME: 함수로 빼기
     const channel = new Channel();
     channel.setChannelIdx = channelIdx;
     channel.setRoomId = channelIdx;
@@ -246,7 +253,6 @@ export class ChatService {
     const maxChannelIdxInIM = await this.chat.getMaxChannelIdxInIM();
     const maxChannelIdxInDB =
       await this.dmChannelRepository.getMaxChannelIdxInDB();
-    // FIXME: chat 클래스에 있는 정적 변수는 지워도 되지 않을까?
     const channelIdx = Math.max(maxChannelIdxInIM, maxChannelIdxInDB) + 1;
     return channelIdx;
   }
@@ -257,8 +263,6 @@ export class ChatService {
     const channel = this.chat.getProtectedChannels.find(
       (channel) => channel.getChannelIdx === channelIdx,
     );
-    console.log(channel.getMember);
-
     const msgInfo = new Message(channelIdx, senderIdx, msg);
     msgInfo.setMsgDate = new Date();
     if (channel) {
@@ -306,7 +310,6 @@ export class ChatService {
 
   /******************* Save Message Funcions *******************/
   async enterPublicRoom(user: UserObject, channel: Channel) {
-    // 이미 참여한 채널인지 확인한다.
     if (
       !channel.getMember?.some((member) => member?.userIdx === user?.userIdx)
     ) {
@@ -466,11 +469,6 @@ export class ChatService {
       channel.setMode = Mode.PROTECTED;
     }
     const channels = this.getPublicAndProtectedChannel();
-    // const channelInfo = {
-    //   channelIdx: channel.getChannelIdx,
-    //   mode: channel.getMode,
-    // };
-    // return channelInfo;
     return channels;
   }
 
@@ -481,8 +479,7 @@ export class ChatService {
     const isAdmin: boolean = channel.getAdmin.some(
       (member) => member.userIdx === user.userIdx,
     );
-    console.log('Bfter Leaving member: ', channel);
-    // 멤버 삭제
+
     channel.removeMember(user);
     if (isAdmin) {
       channel.removeAdmin(user);
@@ -492,7 +489,6 @@ export class ChatService {
       channel.setOwner = channel.getMember[0];
       channel.setAdmin = channel.getMember[0];
     }
-    console.log('After Leaving member: ', channel);
     const channelsInfo = this.getPublicAndProtectedChannel().map((channel) => {
       return {
         owner: channel.owner,
@@ -500,7 +496,6 @@ export class ChatService {
         mode: channel.mode,
       };
     });
-    console.log(channelsInfo);
     client.leave(`chat_room_${channel.getChannelIdx}`);
     return channelsInfo;
   }
