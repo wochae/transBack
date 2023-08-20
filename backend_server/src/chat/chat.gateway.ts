@@ -787,7 +787,7 @@ export class ChatGateway
         'chat_mute',
         'target',
         user.nickname,
-        'Is Admin',
+        'Cannot mute',
       );
     }
     let muteInfo = this.chatService.setMute(channel, target, true);
@@ -816,7 +816,6 @@ export class ChatGateway
     const userId: number = parseInt(client.handshake.query.userId as string);
     const channel = this.chat.getProtectedChannel(channelIdx);
 
-    // console.log(channel);
     // owner 유효성 검사
     const user: UserObject = channel.getMember.find((member) => {
       return member.userIdx === userId;
@@ -862,7 +861,7 @@ export class ChatGateway
         'chat_kick',
         'target',
         user.nickname,
-        'Is Admin',
+        'Cannot kick',
       );
     }
     // 대상이 나간걸 감지 후 emit
@@ -880,44 +879,64 @@ export class ChatGateway
   @SubscribeMessage('chat_ban')
   banMember(@ConnectedSocket() client: Socket, @MessageBody() payload: string) {
     const { channelIdx, targetNickname, targetIdx } = JSON.parse(payload);
-    const requestId: number = parseInt(client.handshake.query.userId as string);
+    const userId: number = parseInt(client.handshake.query.userId as string);
     const channel = this.chat.getProtectedChannel(channelIdx);
 
     console.log(channel);
     // owner 유효성 검사
-    const requester: UserObject = channel.getMember.find((member) => {
-      return member.userIdx === requestId;
+    const user: UserObject = channel.getMember.find((member) => {
+      return member.userIdx === userId;
     });
-    if (requester === undefined) {
-      return '요청자가 대화방에 없습니다.';
+    if (user === undefined) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'chat_ban',
+        'user',
+      );
     }
-    const clientIsAdmin: boolean = channel.getAdmin.some(
-      (admin) => admin.userIdx === requester.userIdx,
+    const userIsAdmin: boolean = channel.getAdmin.some(
+      (admin) => admin.userIdx === user.userIdx,
     );
-    if (!clientIsAdmin) {
-      return '요청자가 적절한 권한자가 아닙니다.';
+    if (!userIsAdmin) {
+      return this.messanger.logWithWarn(
+        'chat_ban',
+        'user',
+        user.nickname,
+        'Not Admin',
+      );
     }
     // 대상 유효성 검사
     const target = channel.getMember.find((member) => {
       return member.userIdx === targetIdx;
     });
     if (target === undefined) {
-      return '대상이 채널에 없습니다.';
+      return this.messanger.logWithWarn(
+        'chat_ban',
+        'target',
+        user.nickname,
+        'Not Found Target',
+      );
     }
     // 대상 권한 검사
     const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
       return admin.userIdx === target.userIdx;
     });
     if (targetIsAdmin) {
-      return '대상을 퇴장할 수 없습니다.';
+      return this.messanger.logWithMessage(
+        'chat_ban',
+        'target',
+        user.nickname,
+        'Cannot Ban',
+      );
     }
 
     // 대상 ban 처리 및 emit
     const banInfo = this.chatService.setBan(channel, target);
     console.log('after ban : ', channel);
-    this.server.to(`chat_room_${channelIdx}`).emit('chat_room_admin', banInfo);
+    this.server.to(`chat_room_${channelIdx}`).emit('chat_ban', banInfo);
     // return 'ban 처리 되었습니다.';
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(200, 'Done ban', 'chat_ban');
   }
 
   // API: MAIN_CHAT_15
