@@ -830,49 +830,4 @@ export class GameService {
 
     return records;
   }
-  // async getGameRecordsByInfinity(userIdx: number, matchDate: Date) {
-  //   const user = await this.userObjectRepository.findOneBy({userIdx});
-  //   const records = user.userRecordList.find({
-  //     where: [{ userIdx: userIdx, matchDate: LessThanOrEqual(matchDate)}],
-  //     order: { matchDate: 'DESC' },
-  //     take: 5,
-  //   });
-
-  //   return records;
-  // }
-
-  /*
-  
-  UserProfileGameRecordDto {
-    userInfo : UserRecordInfoDto;
-    gameList : GameRecord[];
-  }
-  
-  GameRecord {
-    idx: number;
-    gameIdx: number;
-    userIdx: number;
-    matchUserNickname: string;
-    matchUserIdx: number;
-    type: RecordType;
-    result: RecordResult;
-    score: string;
-    matchDate: Date;
-  }
-  
-  
-  UserRecordInfoDto {
-    userNickname : string;
-    win: number;
-    lose: number;
-  }
-  
-  UserProfileGameDto {
-    matchUserIdx : number;
-    matchUserNickname : string;
-    score: string;
-    type : RecordType;
-    result : RecordResult;
-  }
-   */
 }
