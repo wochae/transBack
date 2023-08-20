@@ -457,7 +457,16 @@ export class GameService {
   public async deleteUserFromAllList(userIdx: number) {
     this.deleteUserFromQueue(userIdx, this.normalQueue);
     this.deleteUserFromQueue(userIdx, this.rankQueue);
+    this.deleteRoom(userIdx);
     await this.popOnlineUser(userIdx);
+  }
+
+  public deleteRoom(userIdx: number) {
+    const room = this.getRoomByUserIdx(userIdx);
+    const index = this.getRoomIdxWithRoom(room);
+    if (index === -1) return;
+    this.playRoomList.splice(index);
+    return;
   }
 
   /**
