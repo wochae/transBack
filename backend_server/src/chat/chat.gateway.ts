@@ -821,9 +821,7 @@ export class ChatGateway
     }
     // 대상이 나간걸 감지 후 emit
     const channelInfo = this.chatService.kickMember(channel, target);
-    this.server
-      .to(`chat_room_${channelIdx}`)
-      .emit('chat_room_exit', channelInfo);
+    this.server.to(`chat_room_${channelIdx}`).emit('chat_kick', channelInfo);
     // console.log(channel);
     return 200;
   }
