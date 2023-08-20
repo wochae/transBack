@@ -4,6 +4,7 @@ import { UserObject } from 'src/entity/users.entity';
 
 @Injectable()
 export class InMemoryUsers {
+  // FIXME: private 으로 바꾸기
   inMemoryUsers: UserObject[] = [];
   inMemoryBlockList: BlockList[] = [];
 

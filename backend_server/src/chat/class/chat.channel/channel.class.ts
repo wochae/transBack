@@ -87,10 +87,8 @@ export class Channel {
   set setMode(mode: Mode) {
     this.mode = mode;
   }
-  set setOwner(owner: UserObject | null) {
-    if (owner !== null) {
-      this.owner = owner;
-    }
+  set setOwner(owner: UserObject) {
+    this.owner = owner;
   }
   set setAdmin(admin: UserObject | null) {
     if (admin !== null) {

@@ -35,16 +35,17 @@ export class ChatModule {
   async onModuleInit() {
     await this.initializeInMemoryDataFromDatabase();
     // FIXME: Test 용으로 만들었기 때문에 지워야함. channel 생성하는 코드.
-    // channel 10 에는 jakeim 과 클라이언트
+    // channel 10 에는 jeekim 과 클라이언트
     // channel 11 에는 haryu 와 클라이언트가 들어가있음.비번은 1234
     // const testChannel = new Channel();
-    // testChannel.setOwner = await this.usersService.getUserInfoFromDB('jaekim');
-    // testChannel.setAdmin = await this.usersService.getUserInfoFromDB('jaekim');
-    // testChannel.setMember = await this.usersService.getUserInfoFromDB('jaekim');
+    // testChannel.setOwner = await this.usersService.getUserInfoFromDB('jeekim');
+    // testChannel.setAdmin = await this.usersService.getUserInfoFromDB('jeekim');
+    // testChannel.setMember = await this.usersService.getUserInfoFromDB('jeekim');
     // testChannel.setChannelIdx = 10;
     // testChannel.setMode = Mode.PUBLIC;
     // testChannel.setPassword = '';
     // this.chat.setProtectedChannels = testChannel;
+    // console.log(testChannel.getOwner);
 
     // const testChannel1 = new Channel();
     // testChannel1.setOwner = await this.usersService.getUserInfoFromDB('haryu');
@@ -58,10 +59,11 @@ export class ChatModule {
 
   private async initializeInMemoryDataFromDatabase() {
     const usersFromDatabase = await this.usersService.getAllUsersFromDB();
-    this.inMemoryUsers.inMemoryUsers = usersFromDatabase;
+    this.inMemoryUsers.inMemoryUsers = await usersFromDatabase;
 
     const blockListFromDatabase =
       await this.usersService.getAllBlockedListFromDB();
     this.inMemoryUsers.inMemoryBlockList = blockListFromDatabase;
+    console.log('111111', this.inMemoryUsers.inMemoryUsers);
   }
 }

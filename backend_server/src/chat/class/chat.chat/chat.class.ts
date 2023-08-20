@@ -38,6 +38,7 @@ export class Chat {
   get getProtectedChannels(): Channel[] {
     return this.protectedChannels;
   }
+
   getProtectedChannel(channelIdx: number): Channel {
     for (const channel of this.protectedChannels) {
       if (channel.getChannelIdx === channelIdx) {

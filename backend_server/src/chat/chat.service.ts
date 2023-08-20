@@ -21,6 +21,7 @@ import { InMemoryUsers } from 'src/users/users.provider';
 import { Socket } from 'socket.io';
 import { Message } from './class/chat.message/message.class';
 import { InjectRepository } from '@nestjs/typeorm';
+import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
 @Injectable()
 export class ChatService {
@@ -32,7 +33,8 @@ export class ChatService {
     // TODO: gateway에서도 InmemoryUsers 를 사용하는데, service 로 옮기자
     private inMemoryUsers: InMemoryUsers,
   ) {}
-  private logger: Logger = new Logger('ChatService');
+
+  private messanger: LoggerWithRes = new LoggerWithRes('ChatService');
 
   /********************* check Room Member & client *********************/
   // async checkAlreadyInRoom(clientData: any) {
@@ -156,7 +158,12 @@ export class ChatService {
       targetIdx,
     );
     if (!dmChannel) {
-      console.log('채널이 없습니다.');
+      this.messanger.logWithMessage(
+        'checkDM',
+        'dmChannel',
+        'null',
+        'No DM Channel',
+      );
       return false;
     }
     const dmMessageList = await Promise.all(
@@ -220,7 +227,7 @@ export class ChatService {
 
   async createPublicAndProtected(password: string, user: UserObject) {
     const channelIdx = await this.setNewChannelIdx();
-    // TODO: 함수로 빼기?
+    // FIXME: 함수로 빼기
     const channel = new Channel();
     channel.setChannelIdx = channelIdx;
     channel.setRoomId = channelIdx;
@@ -246,7 +253,6 @@ export class ChatService {
     const maxChannelIdxInIM = await this.chat.getMaxChannelIdxInIM();
     const maxChannelIdxInDB =
       await this.dmChannelRepository.getMaxChannelIdxInDB();
-    // FIXME: chat 클래스에 있는 정적 변수는 지워도 되지 않을까?
     const channelIdx = Math.max(maxChannelIdxInIM, maxChannelIdxInDB) + 1;
     return channelIdx;
   }
@@ -257,8 +263,6 @@ export class ChatService {
     const channel = this.chat.getProtectedChannels.find(
       (channel) => channel.getChannelIdx === channelIdx,
     );
-    console.log(channel.getMember);
-
     const msgInfo = new Message(channelIdx, senderIdx, msg);
     msgInfo.setMsgDate = new Date();
     if (channel) {
@@ -306,7 +310,6 @@ export class ChatService {
 
   /******************* Save Message Funcions *******************/
   async enterPublicRoom(user: UserObject, channel: Channel) {
-    // 이미 참여한 채널인지 확인한다.
     if (
       !channel.getMember?.some((member) => member?.userIdx === user?.userIdx)
     ) {
@@ -318,11 +321,11 @@ export class ChatService {
           userIdx: member?.userIdx,
           nickname: member?.nickname,
           imgUri: member?.imgUri,
-          admin: channel.getAdmin.map((member) => {
-            return {
-              userNickname: member.nickname,
-            };
-          }),
+        };
+      }),
+      admin: channel.getAdmin?.map((member) => {
+        return {
+          nickname: member.nickname,
         };
       }),
       channelIdx: channel.getChannelIdx,
@@ -339,16 +342,17 @@ export class ChatService {
       channel.setMember = user;
     }
     const channelInfo = {
-      member: channel.getMember.map((member) => {
+      member: channel.getMember?.map((member) => {
+        console.log(member);
         return {
           userIdx: member.userIdx,
           nickname: member.nickname,
           imgUri: member.imgUri,
-          admin: channel.getAdmin.map((member) => {
-            return {
-              userNickname: member.nickname,
-            };
-          }),
+        };
+      }),
+      admin: channel.getAdmin?.map((member) => {
+        return {
+          nickname: member.nickname,
         };
       }),
       channelIdx: channel.getChannelIdx,
@@ -381,7 +385,7 @@ export class ChatService {
       grant: grant,
       admin: channel.getAdmin.map((member) => {
         return {
-          userNickname: member.nickname,
+          nickname: member.nickname,
         };
       }),
     };
@@ -420,13 +424,18 @@ export class ChatService {
     if (!ban) {
       channel.setBan = user;
     } else {
-      return 'Already Banned.';
+      return this.messanger.logWithMessage(
+        'setBan',
+        'target',
+        user.nickname,
+        'Already Banned',
+      );
     }
     console.log('ban', channel.getBan);
     const banInfo = {
       targetNickname: user.nickname,
       targetIdx: user.userIdx,
-      leftMember: channel.getBan.map((member) => {
+      leftMember: channel.getMember.map((member) => {
         return {
           userNickname: member.nickname,
           userIdx: member.userIdx,
@@ -457,6 +466,13 @@ export class ChatService {
     return channelInfo;
   }
 
+  checkBanList(channel: Channel, user: UserObject) {
+    const ban = channel.getBan.some(
+      (member) => member.userIdx === user.userIdx,
+    );
+    return ban;
+  }
+
   changePassword(channel: Channel, password: string) {
     channel.setPassword = password;
     if (password === '' || !password) {
@@ -465,11 +481,6 @@ export class ChatService {
       channel.setMode = Mode.PROTECTED;
     }
     const channels = this.getPublicAndProtectedChannel();
-    // const channelInfo = {
-    //   channelIdx: channel.getChannelIdx,
-    //   mode: channel.getMode,
-    // };
-    // return channelInfo;
     return channels;
   }
 
@@ -477,12 +488,19 @@ export class ChatService {
 
   goToLobby(client: Socket, channel: Channel, user: UserObject) {
     const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
-    if (isOwner) {
-      channel.setOwner = channel.getMember[0];
-      channel.removeOwner();
-    }
+    const isAdmin: boolean = channel.getAdmin.some(
+      (member) => member.userIdx === user.userIdx,
+    );
+
     channel.removeMember(user);
-    channel.removeAdmin(user);
+    if (isAdmin) {
+      channel.removeAdmin(user);
+    }
+    if (isOwner) {
+      channel.removeOwner();
+      channel.setOwner = channel.getMember[0];
+      channel.setAdmin = channel.getMember[0];
+    }
     const channelsInfo = this.getPublicAndProtectedChannel().map((channel) => {
       return {
         owner: channel.owner,
@@ -490,7 +508,6 @@ export class ChatService {
         mode: channel.mode,
       };
     });
-    console.log(channelsInfo);
     client.leave(`chat_room_${channel.getChannelIdx}`);
     return channelsInfo;
   }
@@ -531,7 +548,7 @@ export class ChatService {
   getPublicAndProtectedChannel() {
     const channels = this.chat.getProtectedChannels?.map((channel) => {
       return {
-        owner: channel.getOwner.nickname,
+        owner: channel.getOwner?.nickname,
         channelIdx: channel.getChannelIdx,
         mode: channel.getMode,
       };
