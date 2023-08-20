@@ -19,4 +19,16 @@ export class GameOptionDto {
     message: 'Is not invalid Enum.',
   })
   mapNumber: MapNumber;
+
+  constructor(
+    type: GameType,
+    userIdx: number,
+    speed: GameSpeed,
+    mapNumber: MapNumber,
+  ) {
+    this.gameType = type;
+    this.userIdx = userIdx;
+    this.speed = speed;
+    this.mapNumber = mapNumber;
+  }
 }
