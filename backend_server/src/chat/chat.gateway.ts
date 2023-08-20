@@ -197,7 +197,8 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: any,
   ) {
-    const { targetNickname, targetIdx } = JSON.parse(payload);
+    // const { userIdx, targetNickname, targetIdx } = JSON.parse(payload);
+    const { userIdx, targetNickname, targetIdx } = payload;
     // const { targetNickname, targetIdx } = payload;
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
