@@ -22,30 +22,33 @@ import { CertificateObject } from 'src/entity/certificate.entity';
 import { UserObject } from 'src/entity/users.entity';
 import { IntraSimpleInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 
-
-
 @Controller()
 export class LoginController {
   constructor(
     private readonly loginService: LoginService,
     private readonly usersService: UsersService,
-  ) { }
+  ) {}
 
   private logger: Logger = new Logger('LoginController');
 
   @Post('login/auth')
-  async codeCallback(@Headers('token') authHeader: any, @Req() req: Request, @Res() res: Response, @Body() query: any) {
 
+  async codeCallback(
+    @Headers('token') authHeader: any,
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() query: any,
+  ) {
     this.logger.log(`codeCallback code : ${query.code}`);
-    console.log("authHeader", authHeader);
+    console.log('authHeader', authHeader);
     if (!authHeader) {
-      this.logger.log(`req.headers.authorization is exist : ${req.headers.token}`);
       authHeader = req.headers.token;
     } else {
-      authHeader = authHeader.startsWith('Bearer') ? authHeader.split(' ')[1] : req.headers.token;
+      authHeader = authHeader.startsWith('Bearer')
+        ? authHeader.split(' ')[1]
+        : req.headers.token;
       console.log('codeCallback token : ', authHeader);
     }
-
     let intraInfo: IntraInfoDto;
     let intraSimpleInfoDto: IntraSimpleInfoDto;
     intraInfo = await this.loginService.getIntraInfo(query.code);
@@ -75,5 +78,4 @@ export class LoginController {
     this.logger.log('logout');
     return { message: '로그아웃 되었습니다.' };
   }
-
 }

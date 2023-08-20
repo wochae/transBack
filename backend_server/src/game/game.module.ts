@@ -7,6 +7,7 @@ import { TypeOrmExModule } from 'src/typeorm-ex.module';
 // import { UsersModule } from 'src/users/users.module';
 import { SharedModule } from 'src/shared/shared.module';
 import { GameController } from './game.controller';
+import { GamePlayService } from './game.play/game.play.service';
 
 @Module({
   imports: [
