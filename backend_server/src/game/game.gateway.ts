@@ -10,7 +10,8 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { GameService } from './game.service';
-import { UseFilters } from '@nestjs/common';
+// import { ReturnMsgDto } from './dto/error.message.dto';
+import { Logger, UseFilters } from '@nestjs/common';
 import { WsExceptionFilter } from 'src/ws.exception.filter';
 import { UsersService } from 'src/users/users.service';
 import { GameOnlineMember } from './class/game.online.member/game.online.member';
@@ -40,8 +41,9 @@ export class GameGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer()
-  private server: Server;
-  private messanger: LoggerWithRes = new LoggerWithRes('GameGateway');
+  server: Server;
+
+  messanger: LoggerWithRes = new LoggerWithRes('GameGateway');
 
   constructor(
     private readonly gameService: GameService,
@@ -79,6 +81,7 @@ export class GameGateway
       `${userId} is connected`,
     );
     const user = await this.usersService.getUserObjectFromDB(userId);
+    // this.logger.log(user.nickname);
     const OnUser = new GameOnlineMember(user, client);
     // this.logger.log(OnUser.user.nickname);
     this.messanger.logWithMessage(
@@ -93,12 +96,6 @@ export class GameGateway
         return;
       }
       //   this.logger.log('현재 접속 자 : ' + data);
-      this.messanger.logWithMessage(
-        'Handle Connection',
-        '',
-        '',
-        `현재 접속자 : ${data}`,
-      );
     });
   }
 
@@ -110,31 +107,31 @@ export class GameGateway
       'constructor',
       '',
       '',
-      'Logger-log is initialized',
+      '애플리케이션의 정상 동작 상황을 나타내는 로그에 사용됩니다. 주로 사용자의 행동, 요청 처리 또는 중요한 이벤트에 대한 정보를 기록하는데 사용합니다.',
     );
     this.messanger.logWithWarn(
       'constructor',
       '',
       '',
-      'Logger-warning is initialized',
+      '경고 메시지에 사용됩니다. 예상치 못한 상황이나 잠재적인 문제를 나타내며, 애플리케이션은 계속 작동하지만 주의해야 할 상황임을 알려줍니다.',
     );
     this.messanger.logWithError(
       'constructor',
       '',
       '',
-      'Logger-error is initialized',
+      '오류 메시지에 사용됩니다. 장애 상황이나 처리할 수 없는 문제가 발생한 경우 사용되며, 애플리케이션이 예상대로 작동하지 않는 상황임을 나타냅니다.',
     );
     this.messanger.logWithDebug(
       'constructor',
       '',
       '',
-      'Logger-debug is initialized',
+      '디버깅 목적으로 사용됩니다. 개발 중에만 유용하며, 애플리케이션 내부의 상세 정보와 변수 값을 출력해 문제 해결에 도움을 줍니다.',
     );
     this.messanger.logWithVerbose(
       'constructor',
       '',
       '',
-      'Logger-verbose is initialized',
+      '더 자세한 디버깅 정보를 제공하기 위해 사용됩니다. 일반적으로 debug보다 더 상세한 정보를 출력하며, 상세한 내부 동작을 추적하는 데 사용됩니다.',
     );
   }
 
@@ -151,13 +148,6 @@ export class GameGateway
         options.userIdx,
         optionObject,
       );
-      if (after == -1) {
-        return this.messanger.setResponseMsgWithLogger(
-          400,
-          'Bad Request, already an user logged in.',
-          'game_option',
-        );
-      }
       // this.gameService.checkStatus('game option start');
       if (after !== condition) {
         client.emit('game_option', options);
@@ -166,7 +156,12 @@ export class GameGateway
           'OK!',
           'game_option',
         );
-      }
+      } else
+        return this.messanger.setResponseMsgWithLogger(
+          500,
+          'Setting Error!',
+          'game_option',
+        );
     } else {
       const userId = options.userIdx;
       const room = this.gameService.getRoomByUserIdx(userId);
@@ -211,7 +206,27 @@ export class GameGateway
         'Bad Request',
         'game_queue_regist',
       );
-    else {
+    else if (roomNumber === null) {
+      //   this.logger.log('대기상태');
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'Plz, Wait queue',
+        'game_queue_regist',
+      );
+    } else if (roomNumber >= 0) {
+      //   this.logger.log(`룸 작성 성공`);
+      this.gameService.getReadyFirst(roomNumber, this.server);
+      this.gameService.getReadySecond(roomNumber, this.server);
+      try {
+        await this.gameService.setRoomToDB(roomNumber);
+      } catch (exception) {
+        console.log(exception);
+      }
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'OK!',
+        'game_queue_regist',
+      );
     }
     // this.logger.log(`user: ${userIdx} - regi date : ${queueDate}`);
     // 세팅 상태를 파악하고
