@@ -60,6 +60,8 @@ export class UsersController {
     @Body() body: any,
   ) {
     try {
+      const changedUser: UserEditprofileDto = body;
+      const result = await this.usersService.updateUser(changedUser);
       if (result) {
         console.log('success :', result);
         return res
