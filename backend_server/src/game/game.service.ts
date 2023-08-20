@@ -56,6 +56,7 @@ export class GameService {
     this.waitingList = new GameWaitQueue();
     this.normalQueue = new GameQueue();
     this.rankQueue = new GameQueue();
+    this.inviteQueue = new GameInviteQueue();
     this.cnt = 0;
   }
   /**
@@ -805,19 +806,12 @@ export class GameService {
       const roomNumber = this.playRoomList.push(
         new GameRoom(this.makeRoomId()),
       );
+      console.log(`${user1.userIdx}, ${user2.userIdx}`);
       const targetRoom = this.getRoomByRoomNumber(roomNumber);
-      targetRoom.setUser(
-        users[0],
-        new GameOptions(
-          new GameOptionDto(GameType.FRIEND, users[0].userIdx, 0, 0),
-        ),
-      );
-      targetRoom.setUser(
-        users[1],
-        new GameOptions(
-          new GameOptionDto(GameType.FRIEND, users[1].userIdx, 0, 0),
-        ),
-      );
+      const optionDto = new GameOptionDto(GameType.FRIEND, user1.userIdx, 0, 0);
+      const options = new GameOptions(optionDto);
+      targetRoom.setUser(user1, options);
+      targetRoom.setUser(user2, options);
       const msg = 'Friend match preparing is done!';
       user1.socket.emit('game_invite_finish', msg);
       user2.socket.emit('game_invite_finish', msg);

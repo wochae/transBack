@@ -37,6 +37,7 @@ export class GameRoom {
   }
 
   public setUser(userData: GamePlayer, option: GameOptions): boolean {
+    console.log('여기 들어오나?');
     if (this.count == 0) this.user1 = userData;
     else this.user2 = userData;
     this.option = option;

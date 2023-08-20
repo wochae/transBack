@@ -40,7 +40,7 @@ export class LoggerWithRes {
   ): ReturnMsgDto {
     this.code = code;
     this.msg = msg;
-    this.logger.log(`Response	:	${apiName} = ${code} - ${msg}`);
+    this.logger.log(`Response :	${apiName} = ${code} - ${msg}`);
     return { code: this.code, msg: this.msg };
   }
 

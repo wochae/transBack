@@ -375,7 +375,7 @@ export class GameGateway
   //     return new ReturnMsgDto(200, 'OK!');
   //   }
 
-  @SubscribeMessage('game_invite_final')
+  @SubscribeMessage('game_invite_finish')
   prePareGameFormRiend(
     @MessageBody() matchList: GameFriendMatchDto,
   ): ReturnMsgDto {
