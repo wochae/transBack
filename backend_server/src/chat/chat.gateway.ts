@@ -1003,7 +1003,11 @@ export class ChatGateway
     );
     console.log(dm);
     client.emit('chat_get_DM', dm);
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done get DM',
+      'chat_get_DM',
+    );
   }
 
   // API: MAIN_CHAT_20
@@ -1018,7 +1022,11 @@ export class ChatGateway
     const channel = this.chat.getProtectedChannel(channelIdx);
     const grant = this.chatService.getGrant(channel, user);
     client.emit('chat_get_grant', grant);
-    return 200;
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done get Grant',
+      'chat_get_grant',
+    );
   }
 
   @SubscribeMessage('chat_invite_ask')
@@ -1063,10 +1071,6 @@ export class ChatGateway
       answer.answer,
     );
     if (answer.answer === true) {
-      // 이건 inmemory 에 저장함
-      // targetUser.isOnline = OnlineStatus.ONGAME;
-      // inviteUser.isOnline = OnlineStatus.ONGAME;
-      //TODO: save 메서드 필요
       this.usersService.setIsOnline(targetUser, OnlineStatus.ONGAME);
       this.usersService.setIsOnline(inviteUser, OnlineStatus.ONGAME);
     }
