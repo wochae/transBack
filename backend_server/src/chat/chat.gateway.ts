@@ -65,7 +65,6 @@ export class ChatGateway
 
   async handleConnection(client: Socket) {
     const userId: number = parseInt(client.handshake.query.userId as string);
-    // TODO: client.handshake.query.userId & intra 가 db 에 있는 userIdx & intra 와 일치한지 확인하는 함수 추가
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
@@ -86,10 +85,6 @@ export class ChatGateway
         client.join(`chat_room_${channel.channelIdx}`);
       });
     });
-    //
-    // FIXME: 테스트용 코드 지우기
-    client.join('chat_room_10');
-    client.join('chat_room_11');
     //
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
     this.messanger.logWithMessage('handleConnection', 'user', user.nickname);
@@ -145,6 +140,18 @@ export class ChatGateway
     const { intra } = chatMainEnterReqDto;
 
     // FIXME: 1. connect 된 소켓의 유저 인트라와 요청한 인트라가 일치하는지 확인하는 함수 추가 필요
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    if (checkUser.intra !== intra) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Access',
+        'main_enter',
+        intra,
+      );
+    }
+    //
     const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
     // FIXME: 2. 예외처리 함수 만들기
     if (!user) {

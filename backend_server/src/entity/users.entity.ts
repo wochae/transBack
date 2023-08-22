@@ -54,7 +54,7 @@ export class UserObject extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   lose: number;
 
-  @Column({ type: 'varchar', default: ""})
+  @Column({ type: 'varchar', default: '' })
   email: string;
 
   @Column({ type: 'boolean', default: false })
