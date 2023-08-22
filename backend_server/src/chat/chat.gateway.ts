@@ -785,7 +785,16 @@ export class ChatGateway
     @MessageBody() chatGeneralReqDto: ChatGeneralReqDto,
   ) {
     const { channelIdx, userIdx } = chatGeneralReqDto;
-    // const { channelIdx, userIdx } = payload;
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    if (userId != userIdx) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Access',
+        'chat_goto_lobby',
+        userId,
+      );
+    }
     const channel = this.chat.getProtectedChannel(channelIdx);
     const user: UserObject = channel.getMember.find((member) => {
       return member.userIdx === userIdx;
@@ -839,7 +848,6 @@ export class ChatGateway
     const { channelIdx, targetNickname, targetIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     const channel: Channel = this.chat.getProtectedChannel(channelIdx);
-
     const user: UserObject = channel.getMember.find((member) => {
       return member.userIdx === userId;
     });
@@ -867,6 +875,15 @@ export class ChatGateway
     const target = channel.getMember.find((member) => {
       return member.userIdx === targetIdx;
     });
+    if (target.nickname !== targetNickname) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Request',
+        'chat_mute',
+        target.nickname,
+      );
+    }
     if (target === undefined) {
       return this.messanger.logWithWarn(
         'chat_mute',
@@ -941,6 +958,15 @@ export class ChatGateway
     const target = channel.getMember.find((member) => {
       return member.userIdx === targetIdx;
     });
+    if (target.nickname !== targetNickname) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Request',
+        'chat_kick',
+        target.nickname,
+      );
+    }
     if (target === undefined) {
       return this.messanger.logWithWarn(
         'chat_kick',
@@ -964,7 +990,6 @@ export class ChatGateway
     // 대상이 나간걸 감지 후 emit
     const channelInfo = this.chatService.kickMember(channel, target);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_kick', channelInfo);
-    // console.log(channel);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done kick',
@@ -1009,6 +1034,15 @@ export class ChatGateway
     const target = channel.getMember.find((member) => {
       return member.userIdx === targetIdx;
     });
+    if (target.nickname !== targetNickname) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Request',
+        'chat_ban',
+        target.nickname,
+      );
+    }
     if (target === undefined) {
       return this.messanger.logWithWarn(
         'chat_ban',
@@ -1030,11 +1064,9 @@ export class ChatGateway
       );
     }
 
-    // 대상 ban 처리 및 emit
     const banInfo = this.chatService.setBan(channel, target);
     console.log('after ban : ', channel);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_ban', banInfo);
-    // return 'ban 처리 되었습니다.';
     return this.messanger.setResponseMsgWithLogger(200, 'Done ban', 'chat_ban');
   }
 
@@ -1048,8 +1080,26 @@ export class ChatGateway
     // FIXME: targetIdx 가 본인인지 확인
     const { targetNickname, targetIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const targetUser: UserObject =
+      this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+    if (targetUser.nickname !== targetNickname) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Request',
+        'chat_block',
+        targetNickname,
+      );
+    }
+    if (!targetUser) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'chat_block',
+        targetNickname,
+      );
+    }
     const blockInfo = await this.usersService.setBlock(
       targetNickname,
       user,
@@ -1116,6 +1166,16 @@ export class ChatGateway
   ) {
     const { userIdx, channelIdx } = chatGeneralReqDto;
     const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userIdx);
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    if (user.userIdx !== userId) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Access',
+        'chat_get_grant',
+        userId,
+      );
+    }
     const channel = this.chat.getProtectedChannel(channelIdx);
     const grant = this.chatService.getGrant(channel, user);
     client.emit('chat_get_grant', grant);
