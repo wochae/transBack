@@ -148,7 +148,7 @@ export class ChatGateway
         400,
         'Improper Access',
         'main_enter',
-        intra,
+        userId,
       );
     }
     //
@@ -215,8 +215,28 @@ export class ChatGateway
     const { userIdx, targetNickname, targetIdx } = chatGeneralReqDto;
 
     // FIXME: 함수로 빼기
-    const user = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
-    if (!user || user.nickname !== targetNickname) {
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    if (userId != userIdx) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Access',
+        'user_profile',
+        userId,
+      );
+    }
+    const target = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+    if (target.nickname !== targetNickname) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Request',
+        'user_profile',
+        userId,
+      );
+    }
+    // FIXME: 함수로 빼기
+    if (!target) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
@@ -227,15 +247,15 @@ export class ChatGateway
     }
     //
     // FIXME: game 기록도 인메모리에서 관리하기로 했었나?? 전적 데이터 추가 필요
-    const user_profile = new chatGetProfileDto(
-      user.nickname,
-      user.imgUri,
-      user.rankpoint,
-      user.win,
-      user.lose,
-      user.isOnline,
+    const target_profile = new chatGetProfileDto(
+      target.nickname,
+      target.imgUri,
+      target.rankpoint,
+      target.win,
+      target.lose,
+      target.isOnline,
     );
-    client.emit('user_profile', user_profile);
+    client.emit('user_profile', target_profile);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done Get Profile',
@@ -257,7 +277,6 @@ export class ChatGateway
     );
     if (check_dm === false) {
       client.emit('check_dm', []);
-      // FIXME: emit 으로 처리하는지, return false 로 처리하는지 질문
       return false;
     } else {
       client.emit('check_dm', check_dm);
