@@ -296,15 +296,21 @@ export class ChatGateway
   ) {
     const { targetNickname, targetIdx, msg } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    // FIXME: 왜 DB 에서 가져오지? 인메모리에서 가져오면 안되나?
-    const user: UserObject = await this.usersService.getUserInfoFromDB(
-      this.inMemoryUsers.getUserByIdFromIM(userId).nickname,
-    );
     // 오프라인일 수도 있기 때문에 db 에서 가져옴
     // FIXME: targetNickname 과 targetIdx 가 같은 유저인지 확인하는 함수 추가 필요
     const targetUser: UserObject = await this.usersService.getUserInfoFromDB(
       targetNickname,
     );
+    if (targetUser.userIdx !== targetIdx) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Request',
+        'user_profile',
+        userId,
+      );
+    }
+    const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(userId);
     // FIXME: 함수로 빼기
     if (!user) {
       client.disconnect();
@@ -323,8 +329,6 @@ export class ChatGateway
         'create_dm',
       );
     }
-    //
-    // 동시에 생성될 수도 있기 때문에 필요
     if (await this.chatService.checkDM(user.userIdx, targetUser.userIdx)) {
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
