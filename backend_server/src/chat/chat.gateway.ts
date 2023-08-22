@@ -297,7 +297,6 @@ export class ChatGateway
     const { targetNickname, targetIdx, msg } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     // 오프라인일 수도 있기 때문에 db 에서 가져옴
-    // FIXME: targetNickname 과 targetIdx 가 같은 유저인지 확인하는 함수 추가 필요
     const targetUser: UserObject = await this.usersService.getUserInfoFromDB(
       targetNickname,
     );
@@ -376,10 +375,23 @@ export class ChatGateway
   ) {
     // TODO: DTO 로 인자 유효성 검사 및 json 파싱하기
     const { userNickname, userIdx, channelIdx, password } = chatEnterReqDto;
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    if (checkUser.nickname !== userNickname || checkUser.userIdx !== userIdx) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Access',
+        'chat_enter',
+        userId,
+      );
+    }
+
     let channel: any = await this.chatService.findChannelByRoomId(channelIdx);
     const user: UserObject = await this.inMemoryUsers.getUserByIdFromIM(
       userIdx,
     );
+
     // FIXME: 함수로 빼기
     if (!user) {
       client.disconnect();
@@ -504,7 +516,15 @@ export class ChatGateway
     const target: UserObject = this.inMemoryUsers.getUserByIdFromIM(targetIdx);
     const channel: Channel | DMChannel =
       await this.chatService.findChannelByRoomId(channelIdx);
-    // FIXME: userId, user, target, channel 유효성 검사 함수 추가 필요
+    if (user.userIdx !== senderIdx) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Access',
+        'chat_send_msg',
+        userId,
+      );
+    }
     // FIXME: service 로 빼기
     if (channel instanceof Channel) {
       const msgInfo = await this.chatService.saveMessageInIM(
@@ -524,6 +544,14 @@ export class ChatGateway
         .to(`chat_room_${channelIdx}`)
         .emit('chat_send_msg', msgInfo);
     } else if (channel instanceof DMChannel) {
+      if (!target) {
+        return this.messanger.setResponseErrorMsgWithLogger(
+          400,
+          'Not Found',
+          'chat_send_msg',
+          targetIdx,
+        );
+      }
       const message: SendDMDto = { msg: msg };
       const msgInfo = await this.chatService
         .saveMessageInDB(channelIdx, senderIdx, message)
