@@ -631,12 +631,18 @@ export class ChatGateway
   ) {
     const { channelIdx, userIdx, grant } = chatRoomAdminReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    // error 발생
-    console.log(this.chat.getProtectedChannels);
+    const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    if (checkUser.userIdx !== userIdx) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Access',
+        'chat_room_admin',
+        userId,
+      );
+    }
     const channel = this.chat.getProtectedChannel(channelIdx);
-    // console.log(channel);
     // FIXME: 함수로 빼기
-    // 채널 유효성 검사
     if (!channel) {
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
@@ -714,11 +720,19 @@ export class ChatGateway
     @MessageBody() chatRoomSetPasswordReqDto: ChatRoomSetPasswordReqDto,
   ) {
     const { channelIdx, userIdx, changePassword } = chatRoomSetPasswordReqDto;
-    // const { channelIdx, userIdx, changePassword } = payload;
     const userId: number = parseInt(client.handshake.query.userId as string);
     const channel = this.chat.getProtectedChannel(channelIdx);
 
     // FIXME: 함수로 빼기
+    if (userId != userIdx) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Access',
+        'BR_chat_room_password',
+        userId,
+      );
+    }
     // 채널 유효성 검사
     if (!channel) {
       return this.messanger.setResponseErrorMsgWithLogger(
