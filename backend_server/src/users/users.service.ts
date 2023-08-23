@@ -326,7 +326,7 @@ export class UsersService {
     userIdx: number,
     patchAuthDto: TFAuthDto,
   ): Promise<TFAUserDto> {
-    const auth = await this.certificateRepository.findOneBy({ userIdx });
+    const auth = await this.userObjectRepository.findOneBy({ userIdx });
     const { code } = patchAuthDto;
     console.log(this.mailCodeList, code);
 
@@ -337,7 +337,7 @@ export class UsersService {
       if (auth.check2Auth === true) return { checkTFA: true };
     }
     auth.check2Auth = !auth.check2Auth;
-    const certi = await this.certificateRepository.save(auth);
-    return { checkTFA: certi.check2Auth };
+    const user = await this.userObjectRepository.save(auth);
+    return { checkTFA: user.check2Auth };
   }
 }
