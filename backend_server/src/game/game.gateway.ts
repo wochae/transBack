@@ -71,6 +71,8 @@ export class GameGateway
       client.handshake.query.userId as string,
       10,
     );
+    if (Number.isNaN(userId))
+    return;
     const date = Date.now();
     // this.logger.log(`시작 일시 : ${date}`);
     // this.logger.log(userId + ' is connected');
