@@ -827,7 +827,13 @@ export class GameService {
     return;
   }
 
-
+  checkUserIdInOnlineMember(userIdxValue: number): boolean {
+    const target = this.onlinePlayerList.find(
+      (user) => user.user.userIdx === userIdxValue,
+    );
+    if (target === undefined) return false;
+    return true;
+  }
 
   // PROFILE_INFINITY
   async getGameRecordsByInfinity(userIdx: number, page: number) {
