@@ -44,14 +44,13 @@ import {
   },
 })
 export class ChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly chatService: ChatService,
     private readonly usersService: UsersService,
     private readonly inMemoryUsers: InMemoryUsers,
     private chat: Chat,
-  ) {}
+  ) { }
   private messanger: LoggerWithRes = new LoggerWithRes('ChatGateway');
   private logger: Logger = new Logger('ChatGateway');
 
@@ -64,7 +63,11 @@ export class ChatGateway
   }
 
   async handleConnection(client: Socket) {
+    console.log("@@@@@@", client.handshake.query.userId)
     const userId: number = parseInt(client.handshake.query.userId as string);
+    if (Number.isNaN(userId))
+      return;
+
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
@@ -91,7 +94,9 @@ export class ChatGateway
   }
 
   async handleDisconnect(client: Socket) {
+    console.log("!!!!", client.handshake.query.userId)
     const userId: number = parseInt(client.handshake.query.userId as string);
+
     // FIXME: 함수로 빼기
     const user = this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
