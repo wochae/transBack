@@ -73,19 +73,49 @@ export class UsersService {
     } else { return false; } // 닉네임이 이미 존재한다면
   }
 
+  private async createDirectoryIfNotExists(dirPath) {
+    try {
+      await fs.mkdir(dirPath, { recursive: true });
+      console.log('Directory created successfully:', dirPath);
+    } catch (error) {
+      console.error('Error creating directory:', error);
+    }
+  }
+
+  private async checkFileExists(filePath) {
+    try {
+      await fs.access(filePath);
+      console.log('File exists:', filePath);
+      return true;
+    } catch (error) {
+      console.log('File does not exist:', filePath);
+      return false;
+    }
+  }
+
+
+
   async updateImgFile(filepath: string, filename: string, imgData: any) {
     if (imgData === '') return;
-
     // imgUri를 저장할 경로를 만들고 그 안에 이미지 파일을 생성해야 함.
 
     const base64 = imgData.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Buffer.from(base64, 'base64');
     const fileExtension = 'png'; // 이미지 데이터의 확장자 동적으로 결정
 
-    const filePath = `${filepath}/${filename}.${fileExtension}`;
+    const completeFilePath = `${filepath}/${filename}.${fileExtension}`; // 완전한 파일 경로 생성
+    const fileExists = await this.checkFileExists(completeFilePath);
+  
+    if (fileExists) {
+      await fs.unlink(completeFilePath); // 파일이 존재한다면 삭제
+    }
+    
+
+    const directoryPath = 'public/img';
+    await this.createDirectoryIfNotExists(directoryPath);
 
     try {
-      await fs.writeFile(filePath, buffer); // 비동기적으로 파일 저장
+      await fs.writeFile(filepath, buffer); // 비동기적으로 파일 저장
     } catch (error) {
       console.error('Error saving image:', error);
       throw new Error('Failed to save image');

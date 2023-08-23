@@ -82,8 +82,8 @@ export class UsersController {
     }
   }
 
-  @Patch('profile/:userNickname')
-  async updateUserProfileNick(@Param('userNickname') userNickname: string, @Req() req, @Res() res: Response, @Body() body: UserEditprofileDto) {
+  @Patch('profile')
+  async updateUserProfileNick(@Req() req, @Res() res: Response, @Body() body: UserEditprofileDto) {
     try {
       const changedUser: UserEditprofileDto = body;
       const result = await this.usersService.updateUser(changedUser);
