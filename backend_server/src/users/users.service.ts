@@ -14,7 +14,7 @@ import { BlockInfoDto, BlockTargetDto } from './dto/block-target.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { BlockListRepository } from './blockList.repository';
 import { FriendListRepository } from './friendList.repository';
-import { FollowFriendDto, FriendResDto } from './dto/friend.dto';
+import { FollowFriendDto, FriendListResDto } from './dto/friend.dto';
 import axios from 'axios';
 import { response } from 'express';
 import {
@@ -197,16 +197,32 @@ export class UsersService {
   async findUserByIntra(intra: string): Promise<UserObject> {
     return this.userObjectRepository.findOne({ where: { intra: intra } });
   }
-
+   /*
+    export class FriendListResDto {
+      FriendDto[] {
+        frindNickname : string;
+        friendIdx : number;
+        isOnline : boolean;
+      },,,{}
+    } 
+  */
   async addFriend(
     insertFriendDto: FollowFriendDto,
     user: UserObject,
-  ): Promise<FriendList[]> {
-    return this.friendListRepository.insertFriend(
+  ): Promise<FriendListResDto> {
+    const target = await this.userObjectRepository.findOneBy({userIdx: insertFriendDto.targetIdx});
+    const list = await this.friendListRepository.insertFriend(
       insertFriendDto,
       user,
       this.userObjectRepository,
     );
+    const updatedList: FriendListResDto = list.map((res) => ({
+      friendNickname: res.friendNickname,
+      friendIdx: res.friendIdx,
+      isOnline: target.isOnline, // 여기서 user.isOnline 값을 추가
+    }));
+    return updatedList;
+    
   }
 
   async deleteFriend(
@@ -242,7 +258,7 @@ export class UsersService {
   
   async validateUser(intraInfo: IntraInfoDto): Promise<IntraSimpleInfoDto> {
     let user = await this.createUser(intraInfo);
-    return new IntraSimpleInfoDto(user.userIdx, user.imgUri, false);
+    return new IntraSimpleInfoDto(user.userIdx, user.imgUri, user.check2Auth);
   }
 
   async getAllUsersFromDB(): Promise<UserObject[]> {

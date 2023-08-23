@@ -11,7 +11,7 @@ import {
   Logger,
   UseGuards,
   Headers,
-  HttpStatus,
+  HttpStatus, 
   Req,
   Put,
   Param,
@@ -27,11 +27,14 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { UserEditprofileDto, ProfileResDto } from './dto/user.dto';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 import { FollowFriendDto } from './dto/friend.dto';
+import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) { }
-  private logger: Logger = new Logger('UserController');
+  logger: Logger = new Logger('UsersController');
+  messanger: LoggerWithRes = new LoggerWithRes('UsersController');
+  
   @UseGuards(AuthGuard)
   @Get('profile')
   async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) {
@@ -47,9 +50,9 @@ export class UsersController {
         rank: user.rankpoint,
         email: email,
       };
+      this.messanger.setResponseMsgWithLogger(200, "ok", "getUserProfile");
       return res.status(HttpStatus.OK).json(userProfile);
     } catch (err) {
-      this.logger.error(err);
       return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
     }
   }
