@@ -95,10 +95,9 @@ export class UsersService {
 
 
 
-  async updateImgFile(filepath: string, filename: string, imgData: any) {
+  async updateImgFile(filepath: string, filename: string, imgData: string) {
     if (imgData === '') return;
     // imgUri를 저장할 경로를 만들고 그 안에 이미지 파일을 생성해야 함.
-
     const base64 = imgData.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Buffer.from(base64, 'base64');
     const fileExtension = 'png'; // 이미지 데이터의 확장자 동적으로 결정
@@ -109,13 +108,12 @@ export class UsersService {
     if (fileExists) {
       await fs.unlink(completeFilePath); // 파일이 존재한다면 삭제
     }
-    
 
     const directoryPath = 'public/img';
     await this.createDirectoryIfNotExists(directoryPath);
 
     try {
-      await fs.writeFile(filepath, buffer); // 비동기적으로 파일 저장
+      await fs.writeFile(completeFilePath, buffer); // 비동기적으로 파일 저장
     } catch (error) {
       console.error('Error saving image:', error);
       throw new Error('Failed to save image');
@@ -127,16 +125,19 @@ export class UsersService {
   */
   async updateUser(userEditImgDto: UserEditprofileDto): Promise<any> {
     const { userIdx, userNickname, imgData } = userEditImgDto;
+  
     const user = await this.findOneUser(userIdx);
-    await this.updateImgFile(`public/img`, `${userIdx}`, imgData); // 이미지 파일 비동기 저장
     if (userNickname !== '') {
       user.nickname = userNickname;
+      try {
+        await this.updateUserNick({ userIdx, userNickname: userNickname, imgData: user.imgUri });
+      } catch (err) {
+        throw new HttpException('update user error', HttpStatus.FORBIDDEN);
+      }
+    } else {
+      await this.updateImgFile(`public/img`, `${userIdx}`, imgData); // 이미지 파일 비동기 저장
     }
-    try {
-      await this.updateUserNick({ userIdx, userNickname: userNickname, imgData: user.imgUri });
-    } catch (err) {
-      throw new HttpException('update user error', HttpStatus.FORBIDDEN);
-    }
+    
     return user;
   }
   
@@ -273,7 +274,7 @@ export class UsersService {
       userIdx: userIdx,
       intra: intra,
       nickname: intra,
-      imgUri: imgUri,
+      imgUri: `localhost:4000/img/${userIdx}.png`,
       rankpoint: 0,
       isOnline: OnlineStatus.ONLINE,
       available: true,

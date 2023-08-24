@@ -17,6 +17,8 @@ import {
   Param,
   Patch,
   Delete,
+  UploadedFile,
+  UseInterceptors 
 } from '@nestjs/common';
 import { Response } from 'express';
 import { UsersService } from './users.service';
@@ -29,6 +31,8 @@ import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 import { FollowFriendDto } from './dto/friend.dto';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express';
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) { }
@@ -57,35 +61,36 @@ export class UsersController {
     }
   }
 
-  @Put('profile/:userNickname')
-  async updateUserProfile(
-    @Param('userNickname') userNickname: string,
-    @Req() req,
-    @Res() res: Response,
-    @Body() body: any,
-  ) {
-    try {
-      const changedUser: UserEditprofileDto = body;
-      const result = await this.usersService.updateUser(changedUser);
-      if (result) {
-        console.log('success :', result);
-        return res
-          .status(HttpStatus.OK)
-          .json({ message: '유저 정보가 업데이트 되었습니다.', result });
-      } else
-        return res
-          .status(HttpStatus.OK)
-          .json({ message: '이미 존재하는 유저 닉네임입니다.' });
-    } catch (err) {
-      this.logger.error(err);
-      return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
-    }
-  }
+  // @Put('profile/:userNickname')
+  // async updateUserProfile(
+  //   @Param('userNickname') userNickname: string,
+  //   @Req() req,
+  //   @Res() res: Response,
+  //   @Body() body: any,
+  // ) {
+  //   try {
+  //     const changedUser: UserEditprofileDto = body;
+  //     const result = await this.usersService.updateUser(changedUser);
+  //     if (result) {
+  //       console.log('success :', result);
+  //       return res
+  //         .status(HttpStatus.OK)
+  //         .json({ message: '유저 정보가 업데이트 되었습니다.', result });
+  //     } else
+  //       return res
+  //         .status(HttpStatus.OK)
+  //         .json({ message: '이미 존재하는 유저 닉네임입니다.' });
+  //   } catch (err) {
+  //     this.logger.error(err);
+  //     return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
+  //   }
+  // }
 
-  @Patch('profile')
-  async updateUserProfileNick(@Req() req, @Res() res: Response, @Body() body: UserEditprofileDto) {
+  @Post('profile')
+  @UseInterceptors(FileInterceptor('imgData'))
+  async updateUserProfile(@Req() req, @Res() res: Response, @Body() body: any, @UploadedFile() imgData: Express.Multer.File,) {
     try {
-      const changedUser: UserEditprofileDto = body;
+      const changedUser = body;
       const result = await this.usersService.updateUser(changedUser);
       if (result) {
         console.log("success :", result)
