@@ -65,7 +65,7 @@ export class LoginController {
     const jwt = await this.loginService.issueToken(payload);
     intraInfo.token = (jwt).toString();
     intraInfo.check2Auth = intraSimpleInfoDto.check2Auth;
-    intraInfo.imgUri = `http://${intraSimpleInfoDto.imgUri}`;
+    intraInfo.imgUri = intraSimpleInfoDto.imgUri;
 
     res.cookie('authorization', (await jwt).toString(), { httpOnly: true, path: '*' });
 

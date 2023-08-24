@@ -274,7 +274,7 @@ export class UsersService {
       userIdx: userIdx,
       intra: intra,
       nickname: intra,
-      imgUri: `localhost:4000/img/${userIdx}.png`,
+      imgUri: `http://localhost:4000/img/${userIdx}.png`,
       rankpoint: 0,
       isOnline: OnlineStatus.ONLINE,
       available: true,
