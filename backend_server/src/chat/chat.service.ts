@@ -129,14 +129,14 @@ export class ChatService {
         target,
         channelIdx,
       );
-      const firstDM = await this.directMessagesRepository.sendDm(
-        msg,
-        client,
-        channelIdx,
-      );
+      // const firstDM = await this.directMessagesRepository.sendDm(
+      //   msg,
+      //   client,
+      //   channelIdx,
+      // );
       await queryRunner.manager.save(list[0]);
       await queryRunner.manager.save(list[1]);
-      await this.directMessagesRepository.save(firstDM);
+      // await this.directMessagesRepository.save(firstDM);
 
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -201,28 +201,52 @@ export class ChatService {
     // TODO: 예외처리 필요
     await this.createDmChannel(user, targetUser, channelIdx, msg);
 
-    const msgInfo: MessageInteface = {
-      sender: user.nickname,
-      msg: msg.msg,
-      msgDate: new Date().toString(),
-    };
-    const dmInfo = {
-      message: msgInfo,
-      channelIdx: channelIdx,
-    };
+    // const msgInfo: MessageInteface = {
+    //   sender: user.nickname,
+    //   msg: msg.msg,
+    //   msgDate: new Date().toString(),
+    // };
+    // const dmInfo = {
+    //   message: msgInfo,
+    //   channelIdx: channelIdx,
+    // };
     if (checkBlock) {
-      console.log('차단된 유저입니다.');
+      this.messanger.logWithMessage(
+        'createDM',
+        'checkBlock',
+        'true',
+        '차단된 유저입니다.',
+      );
     } else {
       // 상대방 소켓 찾아서 join 시키기
       const targetSocket = await this.chat.getSocketObject(targetUser.userIdx);
       if (targetSocket) {
         await targetSocket.socket.join(`chat_room_${channelIdx}`);
       } else {
-        console.log('상대방이 오프라인입니다.');
+        this.messanger.logWithMessage(
+          'createDM',
+          'targetSocket',
+          'null',
+          '상대방 소켓이 없습니다.',
+        );
       }
     }
     client.join(`chat_room_${channelIdx}`);
-    return dmInfo;
+    const channelsInfo = [];
+    const channels: DMChannel[] =
+      await this.dmChannelRepository.findDMChannelsByUserIdx(user.userIdx);
+    for (const channel of channels) {
+      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
+        channel.userIdx1,
+      );
+      const isBlocked = blockList.some(
+        (user) => user.blockedUserIdx === channel.userIdx2,
+      );
+      if (!isBlocked) {
+        channelsInfo.push(channel);
+      }
+    }
+    return channelsInfo;
   }
 
   async createPublicAndProtected(password: string, user: UserObject) {

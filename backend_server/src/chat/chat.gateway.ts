@@ -44,13 +44,14 @@ import {
   },
 })
 export class ChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   constructor(
     private readonly chatService: ChatService,
     private readonly usersService: UsersService,
     private readonly inMemoryUsers: InMemoryUsers,
     private chat: Chat,
-  ) { }
+  ) {}
   private messanger: LoggerWithRes = new LoggerWithRes('ChatGateway');
   private logger: Logger = new Logger('ChatGateway');
 
@@ -63,10 +64,9 @@ export class ChatGateway
   }
 
   async handleConnection(client: Socket) {
-    console.log("@@@@@@", client.handshake.query.userId)
+    console.log('@@@@@@', client.handshake.query.userId);
     const userId: number = parseInt(client.handshake.query.userId as string);
-    if (Number.isNaN(userId))
-      return;
+    if (Number.isNaN(userId)) return;
 
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
@@ -94,7 +94,7 @@ export class ChatGateway
   }
 
   async handleDisconnect(client: Socket) {
-    console.log("!!!!", client.handshake.query.userId)
+    console.log('!!!!', client.handshake.query.userId);
     const userId: number = parseInt(client.handshake.query.userId as string);
 
     // FIXME: 함수로 빼기
@@ -347,14 +347,14 @@ export class ChatGateway
       this.inMemoryUsers,
       targetUser,
     );
-    const newChannelAndMsg = await this.chatService.createDM(
+    const newChannel = await this.chatService.createDM(
       client,
       user,
       targetUser,
       message,
       checkBlock,
     );
-    if (!newChannelAndMsg) {
+    if (!newChannel) {
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
         'Fail to Create DM',
@@ -362,8 +362,8 @@ export class ChatGateway
       );
     }
     this.server
-      .to(`chat_room_${newChannelAndMsg.channelIdx}`)
-      .emit('create_dm', newChannelAndMsg);
+      .to(`chat_room_${newChannel.channelIdx}`)
+      .emit('create_dm', newChannel);
     //
     return this.messanger.setResponseMsgWithLogger(
       200,
