@@ -246,7 +246,7 @@ export class ChatService {
         channelsInfo.push(channel);
       }
     }
-    return channelsInfo;
+    return { channelsInfo, channelIdx };
   }
 
   async createPublicAndProtected(password: string, user: UserObject) {

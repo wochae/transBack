@@ -363,7 +363,7 @@ export class ChatGateway
     }
     this.server
       .to(`chat_room_${newChannel.channelIdx}`)
-      .emit('create_dm', newChannel);
+      .emit('create_dm', newChannel.channelsInfo);
     //
     return this.messanger.setResponseMsgWithLogger(
       200,
