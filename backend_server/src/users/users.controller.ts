@@ -16,6 +16,7 @@ import {
   Put,
   Param,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { UsersService } from './users.service';
@@ -25,10 +26,11 @@ import { UserObject } from '../entity/users.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { UserEditprofileDto, ProfileResDto } from './dto/user.dto';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
+import { FollowFriendDto } from './dto/friend.dto';
 
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
   private logger: Logger = new Logger('UserController');
   @UseGuards(AuthGuard)
   @Get('profile')
@@ -93,7 +95,7 @@ export class UsersController {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
     }
   }
-  
+
   @Get(':userIdx/second')
   async getTFA(@Param('userIdx') userIdx: number) {
     return this.usersService.getTFA(userIdx);
@@ -125,5 +127,27 @@ export class UsersController {
     return res
       .status(HttpStatus.OK)
       .json({ message: '유저 정보가 업데이트 되었습니다.', result });
+  }
+
+  // @UseGuards(AuthGuard)
+  @Post('follow')
+  async followFriend(@Req() req, @Res() res: Response, @Body() body: FollowFriendDto) {
+    // const { myIdx, targetNickname, targetIdx } = req.jwtPayload;
+    const userIdx = body.myIdx;
+    const myUser = await this.usersService.findOneUser(userIdx);
+    const result = await this.usersService.addFriend(body, myUser);
+    console.log('res', result);
+    return res.status(HttpStatus.OK).json({ result });
+  }
+
+  // @UseGuards(AuthGuard)
+  @Delete('unfollow')
+  async unfollowFriend(@Req() req, @Res() res: Response, @Body() body: FollowFriendDto) {
+    // const { myIdx, targetNickname, targetIdx } = req.jwtPayload;
+    const userIdx = body.myIdx;
+    // logic
+    const myUser = await this.usersService.findOneUser(userIdx);
+    const result = await this.usersService.deleteFriend(body, myUser);
+    return res.status(HttpStatus.OK).json({ result });
   }
 }
