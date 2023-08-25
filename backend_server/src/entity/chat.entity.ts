@@ -70,7 +70,7 @@ export class DirectMessage extends BaseEntity {
   msg: string;
 
   @Column()
-  msgDate: Date;
+  msgDate: string;
 
   @ManyToMany(() => DMChannel, (targetMessage) => targetMessage.channelIdx)
   @JoinColumn({ name: 'channelIdx', referencedColumnName: 'channelIdx' })

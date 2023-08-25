@@ -204,7 +204,7 @@ export class ChatService {
     const msgInfo: MessageInteface = {
       sender: user.nickname,
       msg: msg.msg,
-      msgDate: new Date(),
+      msgDate: new Date().toString(),
     };
     const dmInfo = {
       message: msgInfo,
@@ -264,7 +264,7 @@ export class ChatService {
       (channel) => channel.getChannelIdx === channelIdx,
     );
     const msgInfo = new Message(channelIdx, senderIdx, msg);
-    msgInfo.setMsgDate = new Date();
+    msgInfo.setMsgDate = new Date().toString();
     if (channel) {
       channel.setMessage = msgInfo;
     } else {
@@ -297,6 +297,7 @@ export class ChatService {
         user,
         channelIdx,
       );
+      console.log(dm);
       await queryRunner.manager.save(dm);
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -474,6 +475,7 @@ export class ChatService {
   }
 
   changePassword(channel: Channel, password: string) {
+    console.log('pw: ', password);
     channel.setPassword = password;
     if (password === '' || !password) {
       channel.setMode = Mode.PUBLIC;
@@ -609,10 +611,10 @@ export class ChatService {
   }
 
   // MAIN_CHAT_INFINITY
-  async getChatMessagesByInfinity(channelIdx: number, msgDate: Date) {
+  async getChatMessagesByInfinity(channelIdx: number, msgDate: string) {
     // 일단 channelIdx 로 채널을 꾸려야한다.
     const messages = await this.directMessagesRepository.find({
-      where: [{ channelIdx: channelIdx, msgDate: LessThanOrEqual(msgDate) }],
+      where: [{ channelIdx: channelIdx, msgDate: LessThan(msgDate) }],
       order: {
         msgDate: 'DESC',
       },
