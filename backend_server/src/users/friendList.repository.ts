@@ -58,7 +58,7 @@ export class FriendListRepository extends Repository<FriendList> {
   async getFriendList(
     userIdx: number,
     userList: UserObjectRepository,
-  ): Promise<{ friendNicname: string; isOnline: OnlineStatus }[]> {
+  ): Promise<{ friendNickname: string; friendIdx: number; isOnline: OnlineStatus }[]> {
     // TODO: 더 효과적인 방법 찾아보기.
     const friendList: FriendList[] = await this.find({
       where: { userIdx: userIdx },
@@ -69,7 +69,7 @@ export class FriendListRepository extends Repository<FriendList> {
           where: { userIdx: friend.friendIdx },
         });
         return {
-          friendNicname: user.nickname,
+          friendNickname: user.nickname,
           friendIdx: user.userIdx,
           isOnline: user.isOnline,
         };
