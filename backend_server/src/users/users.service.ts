@@ -127,6 +127,7 @@ export class UsersService {
     const { userIdx, userNickname, imgData } = userEditImgDto;
   
     const user = await this.findOneUser(userIdx);
+    console.log('user', user);
     if (userNickname !== '') {
       user.nickname = userNickname;
       try {
@@ -360,6 +361,19 @@ export class UsersService {
         console.log('Error occured: ' + err);
         throw new BadRequestException();
       });
+  }
+
+  async patchUserTFA(userIdx: number, check2Auth: boolean): Promise<TFAUserDto> {
+    const auth = await this.userObjectRepository.findOneBy({ userIdx });
+    
+    try {
+    auth.check2Auth = check2Auth;
+    const user = await this.userObjectRepository.update(userIdx, { check2Auth: check2Auth });
+    return { checkTFA: check2Auth };
+    } catch (err) {
+      console.log(err);
+      throw new BadRequestException();
+    }
   }
 
   async getTFA(userIdx: number): Promise<TFAUserDto> {

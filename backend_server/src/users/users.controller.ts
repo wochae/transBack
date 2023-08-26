@@ -91,6 +91,7 @@ export class UsersController {
   async updateUserProfile(@Req() req, @Res() res: Response, @Body() body: any, @UploadedFile() imgData: Express.Multer.File,) {
     try {
       const changedUser = body;
+      console.log('changedUser', changedUser);
       const result = await this.usersService.updateUser(changedUser);
       if (result) {
         console.log("success :", result)
@@ -125,8 +126,20 @@ export class UsersController {
     }
     return res
       .status(HttpStatus.OK)
-      .json({ message: '인증번호가 전송되었습니다.' });
+      .json({ message: '인증번호가 전송되었습니다.' , result: true });
   }
+
+  @UseGuards(AuthGuard)
+  @Patch('profile/second')
+  async userTFA(@Req() req, @Res() res: Response, @Body() body: any) {
+    const { id: userIdx } = req.jwtPayload;
+    const check2Auth = body.check2Auth;
+    console.log('userTFA', userIdx, check2Auth);
+    const result = await this.usersService.patchUserTFA(userIdx, check2Auth); 
+    return res
+      .status(HttpStatus.OK)
+      .json({ message: '유저 정보가 업데이트 되었습니다.', result });
+  };
 
   @Patch('second')
   async patchTFA(@Req() req, @Res() res: Response, @Body() body: any) {
