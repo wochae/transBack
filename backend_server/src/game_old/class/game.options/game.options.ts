@@ -1,4 +1,4 @@
-import { GameOptionDto } from 'src/game/dto/game.option.dto';
+import { GameOptionDto } from 'src/game_old/dto/game.option.dto';
 import { GameType, GameSpeed, MapNumber } from '../../enum/game.type.enum';
 export class GameOptions {
   private type: GameType;

@@ -20,7 +20,7 @@ import { InMemoryUsers } from 'src/users/users.provider';
 import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import { SendDMDto } from './dto/send-dm.dto';
 import { GameInvitationDto } from './dto/game.invitation.dto';
-import { ReturnMsgDto } from 'src/game/dto/error.message.dto';
+import { ReturnMsgDto } from 'src/game_old/dto/error.message.dto';
 import {
   GameInvitationAnswerDto,
   GameInvitationAnswerPassDto,

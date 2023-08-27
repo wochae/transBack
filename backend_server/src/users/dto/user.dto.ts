@@ -1,4 +1,4 @@
-import { RecordResult, RecordType } from "src/game/enum/game.type.enum";
+import { RecordResult, RecordType } from "src/game_old/enum/game.type.enum";
 
 export class UserDto {
   userIdx: number;

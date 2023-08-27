@@ -7,9 +7,10 @@ import {
   GameType,
   RecordResult,
   RecordType,
-} from 'src/game/enum/game.type.enum';
-import { GameScoreDto } from 'src/game/dto/game.score.dto';
-import { GameBallEventDto } from 'src/game/dto/game.ball.event.dto';
+} from 'src/game_old/enum/game.type.enum';
+import { GameScoreDto } from 'src/game_old/dto/game.score.dto';
+import { GameBallEventDto } from 'src/game_old/dto/game.ball.event.dto';
+import { Interval } from '@nestjs/schedule';
 
 export class GameRoom {
   public roomId: string;
@@ -22,6 +23,9 @@ export class GameRoom {
   private gameRecordObject: GameRecord[];
   private scoreData: GameScoreDto[];
   private eventData: GameBallEventDto[];
+  private static ballWdith: number;
+  private static paddleWidht: number;
+  private static paddleHeight: number;
 
   constructor(roomId: string) {
     this.roomId = roomId;
