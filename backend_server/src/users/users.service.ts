@@ -48,6 +48,7 @@ const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 export class UsersService {
   constructor(
     private dataSource: DataSource,
+    private inMemoryUsers: InMemoryUsers,
     private userObjectRepository: UserObjectRepository,
     private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
@@ -69,7 +70,7 @@ export class UsersService {
     const isNicknameExist = await this.userObjectRepository.findOneBy({ nickname: userNickname });
     if (!isNicknameExist) { // 닉네임이 존재하지 않는다면
       user.nickname = userNickname;
-      return await this.userObjectRepository.save(user);
+      return await this.userObjectRepository.save(user);  
     } else { return false; } // 닉네임이 이미 존재한다면
   }
 
@@ -138,7 +139,7 @@ export class UsersService {
     } else {
       await this.updateImgFile(`public/img`, `${userIdx}`, imgData); // 이미지 파일 비동기 저장
     }
-    
+    this.inMemoryUsers.setUserByIdFromIM(user);
     return user;
   }
   
@@ -364,15 +365,22 @@ export class UsersService {
   }
 
   async patchUserTFA(userIdx: number, check2Auth: boolean): Promise<TFAUserDto> {
-    const auth = await this.userObjectRepository.findOneBy({ userIdx });
-    
+    const queryRunner = this.dataSource.createQueryRunner();
     try {
-    auth.check2Auth = check2Auth;
-    const user = await this.userObjectRepository.update(userIdx, { check2Auth: check2Auth });
-    return { checkTFA: check2Auth };
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      const auth = await this.userObjectRepository.findOneBy({ userIdx });
+      auth.check2Auth = !auth.check2Auth;
+      const checkTFA = await this.userObjectRepository.save(auth);
+      this.inMemoryUsers.setUserByIdFromIM(auth);
+      await queryRunner.commitTransaction();
+      return { checkTFA: checkTFA.check2Auth };
     } catch (err) {
+      await queryRunner.rollbackTransaction();
       console.log(err);
       throw new BadRequestException();
+    } finally {
+      await queryRunner.release();
     }
   }
 

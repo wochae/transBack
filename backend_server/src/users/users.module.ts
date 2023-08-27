@@ -10,6 +10,7 @@ import { UsersGateway } from './users.gateway';
 import { AuthModule } from 'src/auth/auth.module';
 import { DMChannelRepository } from 'src/chat/DM.repository';
 import { SharedModule } from 'src/shared/shared.module';
+import { InMemoryUsers } from './users.provider';
 
 // @Global()
 @Module({
@@ -24,7 +25,7 @@ import { SharedModule } from 'src/shared/shared.module';
     AuthModule,
   ],
   controllers: [UsersController],
-  providers: [UsersService, UsersGateway],
-  exports: [UsersService, TypeOrmExModule],
+  providers: [UsersService, UsersGateway, InMemoryUsers],
+  exports: [UsersService, TypeOrmExModule, InMemoryUsers],
 })
 export class UsersModule {}
