@@ -4,3 +4,4 @@ config
 src/configs
 
 *.yaml
+backend_server/public/img/*
