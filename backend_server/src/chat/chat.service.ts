@@ -201,15 +201,49 @@ export class ChatService {
     // TODO: 예외처리 필요
     await this.createDmChannel(user, targetUser, channelIdx, msg);
 
-    // const msgInfo: MessageInteface = {
-    //   sender: user.nickname,
-    //   msg: msg.msg,
-    //   msgDate: new Date().toString(),
-    // };
-    // const dmInfo = {
-    //   message: msgInfo,
-    //   channelIdx: channelIdx,
-    // };
+    const userChannelsInfo = [];
+    const targetChannelsInfo = [];
+
+    const userChannels: DMChannel[] =
+      await this.dmChannelRepository.findDMChannelsByUserIdx(user.userIdx);
+    for (const channel of userChannels) {
+      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
+        channel.userIdx1,
+      );
+      const isBlocked = blockList.some(
+        (user) => user.blockedUserIdx === channel.userIdx2,
+      );
+      if (!isBlocked) {
+        // 원하는 속성만 뽑아서 객체로 만들고 push 하기
+        const channelInfo = {
+          targetNickname: channel.userNickname2,
+          channelIdx: channel.channelIdx,
+          mode: Mode.PRIVATE,
+        };
+        userChannelsInfo.push(channelInfo);
+      }
+    }
+    const targetChannels: DMChannel[] =
+      await this.dmChannelRepository.findDMChannelsByUserIdx(
+        targetUser.userIdx,
+      );
+    for (const channel of targetChannels) {
+      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
+        channel.userIdx2,
+      );
+      const isBlocked = blockList.some(
+        (user) => user.blockedUserIdx === channel.userIdx2,
+      );
+      if (!isBlocked) {
+        // 원하는 속성만 뽑아서 객체로 만들고 push 하기
+        const channelInfo = {
+          targetNickname: channel.userNickname2,
+          channelIdx: channel.channelIdx,
+          mode: Mode.PRIVATE,
+        };
+        targetChannelsInfo.push(channelInfo);
+      }
+    }
     if (checkBlock) {
       this.messanger.logWithMessage(
         'createDM',
@@ -218,10 +252,10 @@ export class ChatService {
         '차단된 유저입니다.',
       );
     } else {
-      // 상대방 소켓 찾아서 join 시키기
       const targetSocket = await this.chat.getSocketObject(targetUser.userIdx);
       if (targetSocket) {
         await targetSocket.socket.join(`chat_room_${channelIdx}`);
+        await targetSocket.socket.emit('create_dm', targetChannelsInfo);
       } else {
         this.messanger.logWithMessage(
           'createDM',
@@ -232,21 +266,7 @@ export class ChatService {
       }
     }
     client.join(`chat_room_${channelIdx}`);
-    const channelsInfo = [];
-    const channels: DMChannel[] =
-      await this.dmChannelRepository.findDMChannelsByUserIdx(user.userIdx);
-    for (const channel of channels) {
-      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
-        channel.userIdx1,
-      );
-      const isBlocked = blockList.some(
-        (user) => user.blockedUserIdx === channel.userIdx2,
-      );
-      if (!isBlocked) {
-        channelsInfo.push(channel);
-      }
-    }
-    return { channelsInfo, channelIdx };
+    return userChannelsInfo;
   }
 
   async createPublicAndProtected(password: string, user: UserObject) {
