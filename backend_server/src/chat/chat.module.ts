@@ -37,8 +37,8 @@ export class ChatModule {
   }
 
   private async initializeInMemoryDataFromDatabase() {
-    // const usersFromDatabase = await this.usersService.getAllUsersFromDB();
-    // this.inMemoryUsers.inMemoryUsers = await usersFromDatabase;
+    const usersFromDatabase = await this.usersService.getAllUsersFromDB();
+    this.inMemoryUsers.inMemoryUsers = await usersFromDatabase;
 
     const blockListFromDatabase =
       await this.usersService.getAllBlockedListFromDB();
