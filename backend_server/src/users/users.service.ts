@@ -370,7 +370,7 @@ export class UsersService {
       await queryRunner.connect();
       await queryRunner.startTransaction();
       const auth = await this.userObjectRepository.findOneBy({ userIdx });
-      auth.check2Auth = !auth.check2Auth;
+      auth.check2Auth = check2Auth;
       const checkTFA = await this.userObjectRepository.save(auth);
       this.inMemoryUsers.setUserByIdFromIM(auth);
       await queryRunner.commitTransaction();
