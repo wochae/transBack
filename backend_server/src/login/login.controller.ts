@@ -55,10 +55,13 @@ export class LoginController {
     let intraSimpleInfoDto: IntraSimpleInfoDto;
     intraInfo = await this.loginService.getIntraInfo(query.code);
     const user = await this.usersService.findOneUser(intraInfo.userIdx);
+    console.log('codeCallback user : ', user);
     if (!user) {
+      console.log('codeCallback user not exist : ', user);
       intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
       this.loginService.downloadProfileImg(intraInfo);
     } else {
+      console.log('codeCallback user exist : ', user);
       intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.imgUri, user.check2Auth);
     }
     const payload = { id: intraInfo.userIdx, email: intraInfo.email };
@@ -68,7 +71,7 @@ export class LoginController {
     intraInfo.imgUri = intraSimpleInfoDto.imgUri;
 
     res.cookie('authorization', (await jwt).toString(), { httpOnly: true, path: '*' });
-
+    res.header('Cache-Control', 'no-store');
     console.log(`codeCallback intraInfo : `, intraInfo);
 
     console.log("success");
