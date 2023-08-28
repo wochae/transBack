@@ -45,4 +45,8 @@ export class ChatModule {
     this.inMemoryUsers.inMemoryBlockList = blockListFromDatabase;
     console.log('111111', this.inMemoryUsers.inMemoryUsers);
   }
+
+  public get getInMemoryUsers(): InMemoryUsers {
+    return this.inMemoryUsers;
+  }
 }

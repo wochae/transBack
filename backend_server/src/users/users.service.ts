@@ -364,24 +364,15 @@ export class UsersService {
       });
   }
 
-  async patchUserTFA(userIdx: number, check2Auth: boolean): Promise<TFAUserDto> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-      const auth = await this.userObjectRepository.findOneBy({ userIdx });
-      auth.check2Auth = check2Auth;
-      const checkTFA = await this.userObjectRepository.save(auth);
-      this.inMemoryUsers.setUserByIdFromIM(auth);
-      await queryRunner.commitTransaction();
-      return { checkTFA: checkTFA.check2Auth };
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      console.log(err);
-      throw new BadRequestException();
-    } finally {
-      await queryRunner.release();
-    }
+  async patchUserTFA(userIdx: number, check2Auth: boolean){
+    
+    
+    const auth = await this.userObjectRepository.findOneBy({ userIdx });
+    auth.check2Auth = check2Auth;
+    this.userObjectRepository.save(auth);
+    this.inMemoryUsers.setUserByIdFromIM(auth);
+      
+    
   }
 
   async getTFA(userIdx: number): Promise<TFAUserDto> {
