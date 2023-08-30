@@ -761,11 +761,11 @@ export class ChatGateway
     }
     const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
     if (!isOwner) {
-      return this.messanger.logWithWarn(
+      return this.messanger.setResponseErrorMsgWithLogger(
+        401,
+        'Not Owner',
         'BR_chat_room_password',
         'user',
-        user.nickname,
-        'Not Owner',
       );
     }
     const channelInfo = this.chatService.changePassword(
