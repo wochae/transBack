@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { GameRecord } from './gameRecord.entity';
 import { UserObject } from './users.entity';
-import { RecordType, RecordResult } from 'src/game_old/enum/game.type.enum';
+import { RecordType, RecordResult } from 'src/temp/game_old/enum/game.type.enum';
 
 @Entity('game_channel')
 export class GameChannel extends BaseEntity {

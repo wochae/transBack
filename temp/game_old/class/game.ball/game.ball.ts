@@ -1,5 +1,5 @@
-import { GameBallEventDto } from 'src/game_old/dto/game.ball.event.dto';
-import { Vector } from 'src/game_old/enum/game.vector.enum';
+import { GameBallEventDto } from 'src/temp/game_old/dto/game.ball.event.dto';
+import { Vector } from 'src/temp/game_old/enum/game.vector.enum';
 
 export class GameBall {
   initX: number;

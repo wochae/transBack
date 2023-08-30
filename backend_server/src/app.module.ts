@@ -5,7 +5,7 @@ import { UsersModule } from './users/users.module';
 import { ChatModule } from './chat/chat.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeORMConfig } from './configs/typeorm.config';
-import { GameModule } from './game_old/game.module';
+import { GameModule } from './game/game.module';
 import { AuthModule } from './auth/auth.module';
 import { LoginModule } from './login/login.module';
 import { InMemoryUsers } from './users/users.provider';

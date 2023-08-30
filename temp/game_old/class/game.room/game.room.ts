@@ -7,9 +7,9 @@ import {
   GameType,
   RecordResult,
   RecordType,
-} from 'src/game_old/enum/game.type.enum';
-import { GameScoreDto } from 'src/game_old/dto/game.score.dto';
-import { GameBallEventDto } from 'src/game_old/dto/game.ball.event.dto';
+} from 'src/temp/game_old/enum/game.type.enum';
+import { GameScoreDto } from 'src/temp/game_old/dto/game.score.dto';
+import { GameBallEventDto } from 'src/temp/game_old/dto/game.ball.event.dto';
 import { Interval } from '@nestjs/schedule';
 
 export class GameRoom {

@@ -9,7 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { GameChannel } from './gameChannel.entity';
-import { RecordType, RecordResult } from 'src/game_old/enum/game.type.enum';
+import { RecordType, RecordResult } from 'src/temp/game_old/enum/game.type.enum';
 
 @Entity('game_record')
 export class GameRecord extends BaseEntity {
