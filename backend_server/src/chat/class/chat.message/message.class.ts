@@ -5,7 +5,7 @@ export class Message {
   private channelIdx: number;
   private sender: number;
   private message: string;
-  private msgDate: Date;
+  private msgDate: string;
 
   /******************************* 메서드 *******************************/
   constructor(channelIdx: number, sender: number, message: string) {
@@ -24,7 +24,7 @@ export class Message {
   get getMessage(): string {
     return this.message;
   }
-  get getMsgDate(): Date {
+  get getMsgDate(): string {
     return this.msgDate;
   }
 
@@ -43,7 +43,7 @@ export class Message {
   set setSender(sender: number) {
     this.sender = sender;
   }
-  set setMsgDate(msgDate: Date) {
+  set setMsgDate(msgDate: string) {
     this.msgDate = msgDate;
   }
   // get getMessage(): string {
