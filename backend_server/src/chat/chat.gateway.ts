@@ -94,7 +94,6 @@ export class ChatGateway
   }
 
   async handleDisconnect(client: Socket) {
-    console.log('!!!!', client.handshake.query.userId);
     const userId: number = parseInt(client.handshake.query.userId as string);
 
     // FIXME: 함수로 빼기
@@ -117,6 +116,10 @@ export class ChatGateway
     );
     channelForLeave?.forEach((channel) => {
       channel.removeMember(user);
+      const roomIsEmpty = this.chatService.checkEmptyChannel(channel);
+      if (roomIsEmpty) {
+        const channels = this.chatService.removeEmptyChannel(channel);
+      }
       client.leave(`chat_room_${channel.getChannelIdx}`);
     });
     const dmChannelList: Promise<DMChannel[]> =
