@@ -1,4 +1,4 @@
-import { GameBall } from '../class/game.ball/game.ball';
+// import { GameBall } from '../class/game.ball/game.ball';
 
 export class GameStartDto {
   animationStartDate: number;
@@ -8,12 +8,12 @@ export class GameStartDto {
   ballNextPosY: number;
   ballExpectedEventDate: number;
 
-  constructor(start: number, expected: number, ball: GameBall) {
+  constructor(start: number, expected: number) {
     this.animationStartDate = start;
-    this.ballDegreeX = ball.degreeX;
-    this.ballDegreeY = ball.degreeY;
-    this.ballNextPosX = ball.nextX;
-    this.ballNextPosY = ball.nextY;
+    // this.ballDegreeX = ball.degreeX;
+    // this.ballDegreeY = ball.degreeY;
+    // this.ballNextPosX = ball.nextX;
+    // this.ballNextPosY = ball.nextY;
     this.ballExpectedEventDate = expected;
   }
 }

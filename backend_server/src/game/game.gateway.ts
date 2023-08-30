@@ -31,7 +31,7 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { connect } from 'http2';
 
 @WebSocketGateway({
-  namespace: 'game',
+  namespace: 'game/playroom',
   cors: {
     origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
   },
@@ -62,55 +62,11 @@ export class GameGateway
       client.handshake.query.userId as string,
       10,
     );
-	if (Number.isNaN(userIdx)) return ;
-	const date = Date.now();
-	//TODO: userObject 가져오기
-	//TODO: userObject online 관리 대상으로 만들기
+    if (Number.isNaN(userIdx)) return;
+    const date = Date.now();
+    //TODO: userObject 가져오기
+    //TODO: userObject online 관리 대상으로 만들기
   }
 
-  afterInit(server: any)}
-
-  @SubscribeMessage('game_option')
-  async sendGameOption(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() options: GameOptionDto,
-  ): Promise<ReturnMsgDto> {}
-
-  @SubscribeMessage('game_queue_regist')
-  async putInQueue(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() regiData: GameRegiDto,
-  ): Promise<ReturnMsgDto> {}
-
-  @SubscribeMessage('game_queue_quit')
-  cancleQueue(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() cancleUserIdx: GameCancleDto,
-  ): ReturnMsgDto {}
-
-  @SubscribeMessage('game_ready_second_answer')
-  async getLatency(
-    @MessageBody() latencyData: GameLatencyGetDto,
-  ): Promise<ReturnMsgDto> {}
-
-  @SubscribeMessage('game_move_paddle')
-  async sendPaddleToTarget(
-    @MessageBody() paddleMove: GamePaddleMoveDto,
-  ): Promise<ReturnMsgDto> {}
-
-  @SubscribeMessage('game_pause_score')
-  async pauseAndNextGame(
-    @MessageBody() scoreData: GameScoreDto,
-  ): Promise<ReturnMsgDto> {}
-
-  @SubscribeMessage('game_invite_finish')
-  prePareGameFormRiend(
-    @MessageBody() matchList: GameFriendMatchDto,
-  ): ReturnMsgDto {}
-
-  @SubscribeMessage('game_switch_to_chat')
-  exitGame(@ConnectedSocket() client: Socket): ReturnMsgDto {}
-
-  @SubscribeMessage('game_ping')
-  checkPing(@ConnectedSocket() client: socket, @MessageBody() pingData: any) {}
+  afterInit(server: any) {}
 }

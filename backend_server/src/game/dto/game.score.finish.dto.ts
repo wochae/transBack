@@ -17,11 +17,11 @@ export class GameScoreFinshDto {
     status: GameStatus,
     winner: number,
   ) {
-    this.userIdx1 = user1.userIdx;
-    this.userIdx2 = user2.userIdx;
-    this.userScore1 = user1.score;
-    this.userScore2 = user2.score;
-    this.gameStatus = status;
-    this.winner = winner;
+    // this.userIdx1 = user1.userIdx;
+    // this.userIdx2 = user2.userIdx;
+    // this.userScore1 = user1.score;
+    // this.userScore2 = user2.score;
+    // this.gameStatus = status;
+    // this.winner = winner;
   }
 }

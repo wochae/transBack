@@ -1,4 +1,4 @@
-import { RecordResult, RecordType } from "src/temp/game_old/enum/game.type.enum";
+import { RecordResult, RecordType } from 'src/game/enum/game.type.enum';
 
 export class UserDto {
   userIdx: number;
@@ -7,10 +7,10 @@ export class UserDto {
   imgUri: string;
   rating: number;
   mfaNeed: boolean;
-};
+}
 
 export class UserEditprofileDto {
-  userIdx : number;
+  userIdx: number;
   userNickname: string;
   imgData: any;
 }
@@ -21,7 +21,13 @@ export class UserEditprofileDto {
 //   imgData: any
 // }
 export class IntraInfoDto {
-  constructor(userIdx: number, intra: string, imgUri: string, token: string, email: string, check2Auth: boolean
+  constructor(
+    userIdx: number,
+    intra: string,
+    imgUri: string,
+    token: string,
+    email: string,
+    check2Auth: boolean,
   ) {
     this.userIdx = userIdx;
     this.intra = intra;
@@ -36,8 +42,7 @@ export class IntraInfoDto {
   token: string;
   email: string;
   check2Auth: boolean;
-};
-
+}
 
 /* response body
 {
@@ -62,15 +67,15 @@ export class ProfileResDto {
   nickname: string;
   imgUrl: string;
   win: number;
-  lose: number; 
+  lose: number;
   rank: number;
   email: string;
 }
 export class GameRecordDto {
-  matchUserNickname : string;
-  matchUserIdx : number;
-  type : RecordType;
-  result : RecordResult;
-  score : string; // OO : OO 로 저장됨
-  matchDate : Date;
+  matchUserNickname: string;
+  matchUserIdx: number;
+  type: RecordType;
+  result: RecordResult;
+  score: string; // OO : OO 로 저장됨
+  matchDate: Date;
 }

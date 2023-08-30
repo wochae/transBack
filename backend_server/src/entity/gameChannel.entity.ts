@@ -6,10 +6,11 @@ import {
   PrimaryGeneratedColumn,
   JoinColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { GameRecord } from './gameRecord.entity';
 import { UserObject } from './users.entity';
-import { RecordType, RecordResult } from 'src/temp/game_old/enum/game.type.enum';
+import { RecordType, RecordResult } from 'src/game/enum/game.type.enum';
 
 @Entity('game_channel')
 export class GameChannel extends BaseEntity {
@@ -42,6 +43,6 @@ export class GameChannel extends BaseEntity {
   @JoinColumn([{ name: 'userIdx2', referencedColumnName: 'userIdx' }])
   user2: UserObject;
 
-  @OneToOne(() => GameRecord, (record) => record.gameIdx)
-  record: GameRecord;
+  @OneToMany(() => GameRecord, (record) => record.gameIdx)
+  records: GameRecord[];
 }
