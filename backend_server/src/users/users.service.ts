@@ -41,6 +41,7 @@ import * as config from 'config';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 import * as fs from 'fs/promises'; // fs.promises를 사용하여 비동기적인 파일 처리
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
+import { UsersGateway } from './users.gateway';
 
 const mailConfig = config.get('mail');
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
@@ -48,7 +49,6 @@ const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 export class UsersService {
   constructor(
     private dataSource: DataSource,
-    private inMemoryUsers: InMemoryUsers,
     private userObjectRepository: UserObjectRepository,
     private blockedListRepository: BlockListRepository,
     private friendListRepository: FriendListRepository,
@@ -124,23 +124,23 @@ export class UsersService {
   /*
   filepath: string, filename: string, imgData: any
   */
-  async updateUser(userEditImgDto: UserEditprofileDto): Promise<any> {
+  async updateUser(userEditImgDto: UserEditprofileDto): Promise<UserObject> {
     const { userIdx, userNickname, imgData } = userEditImgDto;
   
     const user = await this.findOneUser(userIdx);
-    console.log('user', user);
+    console.log('update user : ', user);
     if (userNickname !== '') {
       user.nickname = userNickname;
       try {
         await this.updateUserNick({ userIdx, userNickname: userNickname, imgData: user.imgUri });
+        return await this.userObjectRepository.findOneBy({ userIdx });
       } catch (err) {
         throw new HttpException('update user error', HttpStatus.FORBIDDEN);
       }
     } else {
       await this.updateImgFile(`public/img`, `${userIdx}`, imgData); // 이미지 파일 비동기 저장
+      return await this.userObjectRepository.findOneBy({ userIdx });
     }
-    this.inMemoryUsers.setUserByIdFromIM(user);
-    return user;
   }
   
   async saveToken(
@@ -291,7 +291,7 @@ export class UsersService {
   
   async validateUser(intraInfo: IntraInfoDto): Promise<IntraSimpleInfoDto> {
     let user = await this.createUser(intraInfo);
-    return new IntraSimpleInfoDto(user.userIdx, user.imgUri, user.check2Auth);
+    return new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
   }
 
   async getAllUsersFromDB(): Promise<UserObject[]> {
@@ -370,7 +370,8 @@ export class UsersService {
     const auth = await this.userObjectRepository.findOneBy({ userIdx });
     auth.check2Auth = check2Auth;
     this.userObjectRepository.save(auth);
-    this.inMemoryUsers.setUserByIdFromIM(auth);
+
+    // this.inMemoryUsers.setUserByIdFromIM(auth);
       
     
   }

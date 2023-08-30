@@ -23,6 +23,7 @@ import { GameModule } from 'src/game/game.module';
   ],
   providers: [ChatGateway, ChatService, Chat, InMemoryUsers],
   controllers: [ChatController],
+  exports: [ChatGateway],
 })
 export class ChatModule {
   private logger: Logger = new Logger('ChatModule');
@@ -36,7 +37,7 @@ export class ChatModule {
     await this.initializeInMemoryDataFromDatabase();
   }
 
-  private async initializeInMemoryDataFromDatabase() {
+  async initializeInMemoryDataFromDatabase() {
     const usersFromDatabase = await this.usersService.getAllUsersFromDB();
     this.inMemoryUsers.inMemoryUsers = await usersFromDatabase;
 

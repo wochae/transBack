@@ -3,6 +3,7 @@ import { BlockList } from 'src/entity/blockList.entity';
 import { UserObject } from 'src/entity/users.entity';
 import { UserObjectRepository } from './users.repository';
 import { from } from 'rxjs';
+import { before } from 'node:test';
 
 @Injectable()
 export class InMemoryUsers {
@@ -11,7 +12,7 @@ export class InMemoryUsers {
   inMemoryUsers: UserObject[] = [];
   inMemoryBlockList: BlockList[] = [];
 
-  constructor(private readonly userObjectRepository: UserObjectRepository, ) {
+  constructor(private readonly userObjectRepository: UserObjectRepository) {
     this.initInMemoryUsers();
   }
 
@@ -29,26 +30,11 @@ export class InMemoryUsers {
     return this.inMemoryUsers.find((user) => user.userIdx === userId);
   }
 
-  setUserByIdFromIM(user: UserObject): void {
-     
-    // const index = this.inMemoryUsers.findIndex((u) => u.userIdx === user.userIdx);
-    // const index = this.inMemoryUsers.
-    console.log("targetUser :",user);
-    let targetUser = this.getUserByIdFromIM(user.userIdx);
-    console.log("targetUser :",targetUser);
-    // console.log(`index : ${index}`);
-    // console.log("inMem",this.inMemoryUsers[index].nickname);
-    // console.log("user", user.nickname);
-    // console.log('index', index);
-    if (targetUser) {
-    //   // 이미 존재하는 유저이므로 정보 업데이트
-      targetUser = user;
-      
-    //   console.log("inMem",this.inMemoryUsers[index].nickname);
-    //   console.log("user", user.nickname);
-    } else {
-    //   // 새로운 유저이므로 추가 // 새로운 유저가 추가되면 안된다.
-    //   // this.inMemoryUsers.push(user);
+  setUserByIdFromIM(updatedUser: UserObject): void {
+    const userIndex = this.inMemoryUsers.findIndex(user => user.userIdx === updatedUser.userIdx);
+    this.inMemoryUsers[userIndex] = updatedUser;
+    if (userIndex === -1) {
+      this.inMemoryUsers.push(updatedUser);
     }
   }
 
