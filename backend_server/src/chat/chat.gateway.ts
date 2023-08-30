@@ -113,9 +113,10 @@ export class ChatGateway
     this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
     const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
     const channelForLeave: Channel[] = notDmChannelList?.filter((channel) =>
-      channel.getMember.includes(user),
+      channel.getMember.some((member) => member.userIdx === user.userIdx),
     );
-    channelForLeave.forEach((channel) => {
+    channelForLeave?.forEach((channel) => {
+      channel.removeMember(user);
       client.leave(`chat_room_${channel.getChannelIdx}`);
     });
     const dmChannelList: Promise<DMChannel[]> =
