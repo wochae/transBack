@@ -33,7 +33,6 @@ import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.respo
 
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
-import { UsersGateway } from './users.gateway';
 import { UserStatusDto } from 'src/chat/dto/update-chat.dto';
 @Controller('users')
 export class UsersController {

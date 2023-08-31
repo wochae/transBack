@@ -41,7 +41,6 @@ import * as config from 'config';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 import * as fs from 'fs/promises'; // fs.promises를 사용하여 비동기적인 파일 처리
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
-import { UsersGateway } from './users.gateway';
 
 const mailConfig = config.get('mail');
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
@@ -365,15 +364,9 @@ export class UsersService {
   }
 
   async patchUserTFA(userIdx: number, check2Auth: boolean){
-    
-    
     const auth = await this.userObjectRepository.findOneBy({ userIdx });
     auth.check2Auth = check2Auth;
-    this.userObjectRepository.save(auth);
-
-    // this.inMemoryUsers.setUserByIdFromIM(auth);
-      
-    
+    return await this.userObjectRepository.save(auth);
   }
 
   async getTFA(userIdx: number): Promise<TFAUserDto> {

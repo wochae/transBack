@@ -34,7 +34,6 @@ export class LoginController {
   private messanger: LoggerWithRes = new LoggerWithRes('LoginController');
 
   @Post('login/auth')
-
   async codeCallback(
     @Headers('token') authHeader: any,
     @Req() req: Request,

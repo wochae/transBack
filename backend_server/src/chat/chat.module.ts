@@ -21,7 +21,7 @@ import { GameModule } from 'src/game/game.module';
     ]),
     GameModule,
   ],
-  providers: [ChatGateway, ChatService, Chat, InMemoryUsers],
+  providers: [ChatGateway, ChatService, Chat, InMemoryUsers, UsersService],
   controllers: [ChatController],
   exports: [ChatGateway],
 })
