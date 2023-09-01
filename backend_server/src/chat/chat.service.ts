@@ -662,6 +662,7 @@ export class ChatService {
       }
       pageForStart += 1;
     }
+    dmMessageListWhenEnterRoom.reverse();
     console.log("의심되는 부분입니다: ", dmMessageListWhenEnterRoom);
     const targetUser = this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
     const messageInfo = {
