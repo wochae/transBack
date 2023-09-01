@@ -682,16 +682,15 @@ export class ChatService {
     const messages = await this.directMessagesRepository.find({
       where: [{ channelIdx: channelIdx }],
     });
+    console.log('page : ', page);
     const messageList = [];
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 0; i < 5; i++) {
       const num = i + (Number(page) - 1) * 5;
       if (messages[num]) {
         messageList.push(messages[num]);
-      } else {
-        break;
-      }
+      } 
     }
-    console.log(messageList);
+    messageList.reverse();
     const messageInfo = await Promise.all(
       messageList.map(async (message) => {
         const senderIdx = this.inMemoryUsers.getUserByIntraFromIM(
