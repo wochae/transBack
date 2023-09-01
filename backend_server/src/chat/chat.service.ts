@@ -641,10 +641,23 @@ export class ChatService {
         };
       }),
     );
+    const totalMsgCount = dmMessageList.length;
+    // // 전체 개수를 5로 나눈다. 나눈 값이 10이라고 하면  7 + i, 8 + i, 9 + i, 10 + i 인텍스의 메시지를 더한다. (i는 0부터 5까지)
+    const dmMessageListWhenEnterRoom = [];
+    let pageForStart = Math.floor(totalMsgCount / 5) - 3;
+    for (let i = 0; i < 5; i++) {
+      const num = i + pageForStart * 5;
+      if (dmMessageList[num]) {
+        dmMessageListWhenEnterRoom.push(dmMessageList[num]);
+      } else {
+        break;
+      }
+      pageForStart += 1;
+    }
     const targetUser = this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
     const messageInfo = {
       message: dmMessageList,
-      totalMsgCount: dmMessageList.length,
+      totalMsgCount: totalMsgCount,
       userIdx1: channel.userIdx1,
       userIdx2: channel.userIdx2,
       userNickname1: channel.userNickname1,
