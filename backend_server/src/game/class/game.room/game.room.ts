@@ -1,10 +1,9 @@
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { UserObject } from 'src/entity/users.entity';
 import { GamePlayer } from '../game.player/game.player';
-import { lstat } from 'fs';
 import { GameSpeed, GameType, MapNumber } from 'src/game/enum/game.type.enum';
 import { GameOptionDto } from 'src/game/dto/game.option.dto';
-import { UserDto } from 'src/users/dto/user.dto';
+import { Vector } from 'src/game/enum/game.vector.enum';
 
 /**
  * 게임 구성요소를 나타내는 용도
@@ -16,11 +15,16 @@ export interface GameData {
   standardY: number;
   angle: number;
   yIntercept: number;
+  vector: Vector;
   paddle1: number;
+  paddle1MinMax: [number, number];
   paddle2: number;
+  paddle2MinMax: [number, number];
   gameType: GameType;
   gameSpeed: GameSpeed;
   gameMapNumber: MapNumber;
+  score1: number;
+  score2: number;
 }
 
 /**
@@ -97,37 +101,99 @@ export class KeyPress {
 }
 
 class Animations {
+  private readonly MAX_WIDTH = 1000;
+  private readonly MAX_HEIGHT = 600;
+  private readonly PADDLE_LINE_1 = -470;
+  private readonly PADDLE_LINE_2 = 470;
+
   prevDatas: FrameData;
   currentDatas: FrameData;
   maxFps: number;
+  currentFps: number;
+  totalDistancePerSec: number;
+  unitDistance: number;
 
   constructor() {
     this.prevDatas = null;
     this.currentDatas = null;
     this.maxFps = null;
+    this.currentFps = 0;
+    this.totalDistancePerSec = 150;
   }
 
   public setMaxFps(latency: number) {
     if (latency < 8) {
       this.maxFps = 60;
-      return;
-    } else if (latency < 15) {
+    } else if (latency >= 8 && latency < 15) {
       this.maxFps = 30;
-      return;
-    } else if (latency < 20) {
+    } else if (latency >= 15 && latency < 20) {
       this.maxFps = 24;
-      return;
-    } else if (latency < 50) {
+    } else if (latency >= 20 && latency < 50) {
       this.maxFps = 10;
-      return;
     }
+    this.unitDistance = parseFloat(
+      (this.totalDistancePerSec / this.maxFps).toFixed(2),
+    );
   }
 
   public getMaxFps(): number {
     return this.maxFps;
   }
 
-  public makeFrame(currentData: GameData) {}
+  public makeFrame(currentData: GameData, key: KeyPress[]) {
+    if (this.currentDatas != null) {
+      this.prevDatas = this.currentDatas;
+      this.currentDatas = null;
+    }
+    const nextX = currentData.currentPosX + this.unitDistance;
+    const nextY = currentData.angle * nextX + currentData.yIntercept;
+    const paddle1 = currentData.paddle1 + key[0].popKeyValue();
+    const paddle2 = currentData.paddle2 + key[1].popKeyValue();
+    currentData.currentPosX = nextX;
+    currentData.currentPosY = nextY;
+    currentData.paddle1 = paddle1;
+    currentData.paddle2 = paddle2;
+    currentData.paddle1MinMax = [
+      (currentData.paddle1MinMax[0] += paddle1),
+      (currentData.paddle1MinMax[1] += paddle1),
+    ];
+    currentData.paddle2MinMax = [
+      (currentData.paddle2MinMax[0] += paddle1),
+      (currentData.paddle2MinMax[1] += paddle1),
+    ];
+    // TODO: 충돌 확인
+    //	// TODO: 충돌 시 보정
+    //	// TODO: 충돌 시 랜덤 각도 호출(다음 부딪힐 각도 확인) 위아래 벽인경우, 좌우 벽인경우
+    //	//	// TODO: 좌우 벽인 경우 점수 반영
+    //	//	// TODO: 상하 벽인 경우 점수
+    //	//	TODO:
+
+    if (this.currentFps + 1 == this.maxFps || this.currentFps + 1 < this.maxFps)
+      this.currentFps = 1;
+    else {
+      this.currentFps++;
+    }
+    this.currentDatas = {
+      ballX: nextX,
+      ballY: nextY,
+      paddle1: paddle1,
+      paddle2: paddle2,
+      currentFrame: this.currentFps,
+      maxFrameRate: this.maxFps,
+    };
+  }
+}
+
+export enum GamePhase {
+  MAKE_ROOM = 0,
+  SET_NEW_GAME,
+  ON_PLAYING,
+  HIT_THE_WALL,
+  HIT_THE_PADDLE,
+  HIT_THE_GOAL_POST,
+  PAUSE_PLAYING,
+  MATCH_END,
+  RESULT_SAVED,
 }
 
 /**
@@ -135,12 +201,15 @@ class Animations {
  */
 class GameRoom {
   public roomId: string;
+  public intervalId: any;
+  public intervalPeriod: number;
   public users: GamePlayer[];
   public gameObj: GameData;
   public latency: number[];
   public animation: Animations;
   public keyPress: KeyPress[];
   public history: GameRecord[];
+  public gamePhase: GamePhase;
 
   constructor(
     id: string,
@@ -149,16 +218,35 @@ class GameRoom {
     histories: GameRecord[],
   ) {
     this.roomId = id;
+
     this.users = users;
+
     this.gameObj.gameType = options.gameType;
     this.gameObj.gameSpeed = options.speed;
     this.gameObj.gameMapNumber = options.mapNumber;
+    this.gameObj.score1 = 0;
+    this.gameObj.score2 = 0;
+    this.gameObj.paddle1MinMax = [20, 20];
+    this.gameObj.paddle2MinMax = [20, 20];
+
     this.animation = new Animations();
+
     this.keyPress[0] = new KeyPress();
     this.keyPress[1] = new KeyPress();
+
     this.history = histories;
-    this.keyPress[0].setMaxUnit(100);
-    this.keyPress[1].setMaxUnit(100);
+
+    this.keyPress.map((item) => item.setMaxUnit(100));
+
+    this.gamePhase = GamePhase.MAKE_ROOM;
+  }
+
+  public setNewGame() {
+    this.gamePhase = GamePhase.SET_NEW_GAME;
+    this.resetBall();
+    this.resetPaddle();
+    this.setRandomStandardCoordinates();
+    this.setNewLinearEquation();
   }
 
   public resetBall() {
@@ -171,13 +259,27 @@ class GameRoom {
     this.gameObj.paddle2 = 0;
   }
 
-  public setLatency() {
+  public setLatency(value: number) {
     // TODO logic
-    const latency = 60;
+    this.animation.setMaxFps(value);
     const maxFps = this.animation.getMaxFps();
-    this.animation.setMaxFps(latency);
-    this.keyPress[0].setPressedNumberByMaxFps(maxFps);
-    this.keyPress[1].setPressedNumberByMaxFps(maxFps);
+    if (maxFps == 60) this.intervalPeriod = 15;
+    else if (maxFps == 30) this.intervalPeriod = 30;
+    else if (maxFps == 24) this.intervalPeriod = 40;
+    else this.intervalPeriod = 50;
+    this.keyPress.map((data) => data.setPressedNumberByMaxFps(maxFps));
+  }
+
+  public setIntervalId(id: any) {
+    this.intervalId = id;
+  }
+
+  public getIntervalId(): any {
+    return this.intervalId;
+  }
+
+  public stopInterval() {
+    clearInterval(this.intervalId);
   }
 
   public keyPressed(userIdx: number, value: number) {
@@ -186,5 +288,55 @@ class GameRoom {
     } else if (this.users[1].getUserObject().userIdx === userIdx) {
       this.keyPress[1].pushKey(value);
     }
+  }
+
+  public getNextFrame() {
+    this.animation.makeFrame(this.gameObj, this.keyPress);
+    return this.animation.currentDatas;
+  }
+
+  public setRandomStandardCoordinates() {
+    this.gameObj.currentPosX = 0;
+    this.gameObj.currentPosY = 0;
+    this.gameObj.standardX = this.getRandomInt(-2, 2);
+    this.gameObj.standardY = this.getRandomInt(-2, 2);
+    let up = true;
+    let right = true;
+    this.gameObj.vector = null;
+
+    if (this.gameObj.standardX < 0) right = false;
+    if (this.gameObj.standardY < 0) up = false;
+
+    if (right == true && up == true) {
+      this.gameObj.vector = Vector.UPRIGHT;
+    } else if (right == true && up == false) {
+      this.gameObj.vector = Vector.DOWNRIGHT;
+    } else if (right == false && up == true) {
+      this.gameObj.vector = Vector.UPLEFT;
+    } else {
+      this.gameObj.vector = Vector.DWONLEFT;
+    }
+  }
+
+  public setNewLinearEquation() {
+    this.gameObj.angle =
+      (this.gameObj.standardY - 0) / (this.gameObj.standardX - 0);
+    this.gameObj.yIntercept =
+      this.gameObj.standardY - this.gameObj.angle * this.gameObj.standardX;
+  }
+
+  public getRandomInt(min: number, max: number): number {
+    let randomValue = Math.floor(Math.random() * (max - min + 1)) + min;
+    if (randomValue == 0) randomValue = 1;
+    return randomValue;
+  }
+
+  public getGamePhase(): GamePhase {
+    return this.gamePhase;
+  }
+
+  public setGamePhase(value: GamePhase): GamePhase {
+    this.gamePhase = value;
+    return this.gamePhase;
   }
 }
