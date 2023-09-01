@@ -642,21 +642,30 @@ export class ChatService {
       }),
     );
     const totalMsgCount = dmMessageList.length;
+    console.log('dmMessageList: ', dmMessageList);
     // // 전체 개수를 5로 나눈다. 나눈 값이 10이라고 하면  7 + i, 8 + i, 9 + i, 10 + i 인텍스의 메시지를 더한다. (i는 0부터 5까지)
     const dmMessageListWhenEnterRoom = [];
-    let pageForStart = Math.floor(totalMsgCount / 5) - 3;
-    for (let i = 0; i < 5; i++) {
-      const num = i + pageForStart * 5;
-      if (dmMessageList[num]) {
-        dmMessageListWhenEnterRoom.push(dmMessageList[num]);
-      } else {
-        break;
+    let totalPage = Math.floor(totalMsgCount / 5);
+    if ((totalMsgCount % 5) != 0) {
+      totalPage += 1;
+    }
+    console.log('totalPage: ', totalPage);
+    let pageForStart = totalPage - 4;
+    console.log('pageForStart: ', pageForStart);
+    for (let j = 0; j < 4; j++) {
+      console.log(pageForStart);
+      for (let i = 0; i < 5; i++) {
+        let num = i + (pageForStart * 5);
+        if (dmMessageList[num]) {
+          dmMessageListWhenEnterRoom.push(dmMessageList[num]);
+        }
       }
       pageForStart += 1;
     }
+    console.log("의심되는 부분입니다: ", dmMessageListWhenEnterRoom);
     const targetUser = this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
     const messageInfo = {
-      message: dmMessageList,
+      message: dmMessageListWhenEnterRoom,
       totalMsgCount: totalMsgCount,
       userIdx1: channel.userIdx1,
       userIdx2: channel.userIdx2,
