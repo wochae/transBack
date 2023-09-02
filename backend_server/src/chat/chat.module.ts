@@ -23,7 +23,6 @@ import { GameModule } from 'src/game/game.module';
   ],
   providers: [ChatGateway, ChatService, Chat, InMemoryUsers, UsersService],
   controllers: [ChatController],
-  exports: [ChatGateway],
 })
 export class ChatModule {
   private logger: Logger = new Logger('ChatModule');
