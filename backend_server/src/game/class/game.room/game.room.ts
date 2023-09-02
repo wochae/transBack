@@ -13,8 +13,8 @@ export interface GameData {
   currentPosY: number;
   standardX: number;
   standardY: number;
-  angle: number;
-  yIntercept: number;
+  angle: number; // y = ax + b, 'a'
+  yIntercept: number; // y = ax + b, 'b'
   vector: Vector;
   paddle1: number;
   paddle1MinMax: [number, number];
@@ -101,8 +101,10 @@ export class KeyPress {
 }
 
 class Animations {
-  private readonly MAX_WIDTH = 1000;
-  private readonly MAX_HEIGHT = 600;
+  private readonly MAX_WIDTH = 500;
+  private readonly min_WIDTH = -500;
+  private readonly MAX_HEIGHT = 300;
+  private readonly min_HEIGHT = -300;
   private readonly PADDLE_LINE_1 = -470;
   private readonly PADDLE_LINE_2 = 470;
 
@@ -141,33 +143,69 @@ class Animations {
   }
 
   public makeFrame(currentData: GameData, key: KeyPress[]) {
+    // 기존 데이터 이관
     if (this.currentDatas != null) {
       this.prevDatas = this.currentDatas;
       this.currentDatas = null;
     }
-    const nextX = currentData.currentPosX + this.unitDistance;
-    const nextY = currentData.angle * nextX + currentData.yIntercept;
+
+    // 좌표 계산
+    const nextX = parseFloat(
+      (currentData.currentPosX + this.unitDistance).toFixed(2),
+    );
+    const nextY = parseFloat(
+      (currentData.angle * nextX + currentData.yIntercept).toFixed(2),
+    );
+
+    // 페들 데이터 바꿈
     const paddle1 = currentData.paddle1 + key[0].popKeyValue();
     const paddle2 = currentData.paddle2 + key[1].popKeyValue();
+
+    // 프레임 값 갱신
     currentData.currentPosX = nextX;
     currentData.currentPosY = nextY;
     currentData.paddle1 = paddle1;
     currentData.paddle2 = paddle2;
+
+    // 프레임 값 갱신 #2 paddle 최대, 최소 값 정리
     currentData.paddle1MinMax = [
       (currentData.paddle1MinMax[0] += paddle1),
       (currentData.paddle1MinMax[1] += paddle1),
     ];
+    if (currentData.paddle1 > 0) {
+      // 패들 좌표 수정
+      if (currentData.paddle1MinMax[0] >= this.MAX_HEIGHT) {
+        currentData.paddle1 = this.MAX_HEIGHT - 20;
+        currentData.paddle1MinMax[0] = this.MAX_HEIGHT;
+        currentData.paddle1MinMax[1] = this.MAX_HEIGHT - 20;
+      }
+    } else {
+      if (currentData.paddle1MinMax[1] <= this.MAX_HEIGHT) {
+        currentData.paddle1 = this.min_HEIGHT + 20;
+        currentData.paddle1MinMax[0] = this.min_HEIGHT + 20;
+        currentData.paddle1MinMax[1] = this.min_HEIGHT;
+      }
+    }
     currentData.paddle2MinMax = [
       (currentData.paddle2MinMax[0] += paddle1),
       (currentData.paddle2MinMax[1] += paddle1),
     ];
-    // TODO: 충돌 확인
-    //	// TODO: 충돌 시 보정
-    //	// TODO: 충돌 시 랜덤 각도 호출(다음 부딪힐 각도 확인) 위아래 벽인경우, 좌우 벽인경우
-    //	//	// TODO: 좌우 벽인 경우 점수 반영
-    //	//	// TODO: 상하 벽인 경우 점수
-    //	//	TODO:
+    if (currentData.paddle2 > 0) {
+      // 패들 좌표 수정
+      if (currentData.paddle2MinMax[0] >= this.MAX_HEIGHT) {
+        currentData.paddle2 = this.MAX_HEIGHT - 20;
+        currentData.paddle2MinMax[0] = this.MAX_HEIGHT;
+        currentData.paddle2MinMax[1] = this.MAX_HEIGHT - 20;
+      }
+    } else {
+      if (currentData.paddle2MinMax[1] <= this.MAX_HEIGHT) {
+        currentData.paddle2 = this.min_HEIGHT + 20;
+        currentData.paddle2MinMax[0] = this.min_HEIGHT + 20;
+        currentData.paddle2MinMax[1] = this.min_HEIGHT;
+      }
+    }
 
+    // 현재 게임 상태 갱신
     if (this.currentFps + 1 == this.maxFps || this.currentFps + 1 < this.maxFps)
       this.currentFps = 1;
     else {
@@ -182,6 +220,27 @@ class Animations {
       maxFrameRate: this.maxFps,
     };
   }
+
+  public checkWallStrike(currentData: GameData): boolean {
+    switch (currentData.vector) {
+      case Vector.UPLEFT:
+        if (currentData.currentPosY + 20 >= this.MAX_HEIGHT) {
+          currentData.currentPosY = 280;
+          return true;
+        }
+        break;
+      case Vector.UPRIGHT:
+        break;
+      case Vector.DWONLEFT:
+        break;
+      case Vector.DOWNRIGHT:
+        break;
+    }
+
+    return false;
+  }
+
+  public changeVector() {}
 }
 
 export enum GamePhase {
@@ -199,17 +258,17 @@ export enum GamePhase {
 /**
  * 연산의 핵심. 간단한 데이터를 제외하곤 여기서 연산이 이루어 진다.
  */
-class GameRoom {
-  public roomId: string;
-  public intervalId: any;
-  public intervalPeriod: number;
-  public users: GamePlayer[];
-  public gameObj: GameData;
-  public latency: number[];
-  public animation: Animations;
-  public keyPress: KeyPress[];
-  public history: GameRecord[];
-  public gamePhase: GamePhase;
+export class GameRoom {
+  roomId: string;
+  intervalId: any;
+  intervalPeriod: number;
+  users: GamePlayer[];
+  gameObj: GameData;
+  latency: number[];
+  animation: Animations;
+  keyPress: KeyPress[];
+  history: GameRecord[];
+  gamePhase: GamePhase;
 
   constructor(
     id: string,
