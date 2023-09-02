@@ -34,7 +34,6 @@ export class LoginController {
   private messanger: LoggerWithRes = new LoggerWithRes('LoginController');
 
   @Post('login/auth')
-
   async codeCallback(
     @Headers('token') authHeader: any,
     @Req() req: Request,
@@ -55,20 +54,24 @@ export class LoginController {
     let intraSimpleInfoDto: IntraSimpleInfoDto;
     intraInfo = await this.loginService.getIntraInfo(query.code);
     const user = await this.usersService.findOneUser(intraInfo.userIdx);
+    console.log('codeCallback user : ', user);
     if (!user) {
+      console.log('codeCallback user not exist : ', user);
       intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
       this.loginService.downloadProfileImg(intraInfo);
     } else {
-      intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.imgUri, user.check2Auth);
+      console.log('codeCallback user exist : ', user);
+      intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
     }
     const payload = { id: intraInfo.userIdx, email: intraInfo.email };
     const jwt = await this.loginService.issueToken(payload);
     intraInfo.token = (jwt).toString();
     intraInfo.check2Auth = intraSimpleInfoDto.check2Auth;
     intraInfo.imgUri = intraSimpleInfoDto.imgUri;
+    intraInfo.nickname = intraSimpleInfoDto.nickname;
 
     res.cookie('authorization', (await jwt).toString(), { httpOnly: true, path: '*' });
-
+    res.header('Cache-Control', 'no-store');
     console.log(`codeCallback intraInfo : `, intraInfo);
 
     console.log("success");

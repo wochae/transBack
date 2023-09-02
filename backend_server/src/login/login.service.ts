@@ -69,6 +69,7 @@ export class LoginService {
         token: token,
         email: userInfo.email,
         check2Auth: false,
+        nickname: userInfo.login,
       };
     } catch (error) {
       // 에러 핸들링

@@ -21,13 +21,7 @@ export class UserEditprofileDto {
 //   imgData: any
 // }
 export class IntraInfoDto {
-  constructor(
-    userIdx: number,
-    intra: string,
-    imgUri: string,
-    token: string,
-    email: string,
-    check2Auth: boolean,
+  constructor(userIdx: number, intra: string, imgUri: string, token: string, email: string, check2Auth: boolean, nickname: string
   ) {
     this.userIdx = userIdx;
     this.intra = intra;
@@ -35,6 +29,7 @@ export class IntraInfoDto {
     this.token = token;
     this.email = email;
     this.check2Auth = check2Auth;
+    this.nickname = nickname;
   }
   userIdx: number;
   intra: string;
@@ -42,7 +37,9 @@ export class IntraInfoDto {
   token: string;
   email: string;
   check2Auth: boolean;
-}
+  nickname: string;
+};
+
 
 /* response body
 {

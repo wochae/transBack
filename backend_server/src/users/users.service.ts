@@ -69,7 +69,7 @@ export class UsersService {
     const isNicknameExist = await this.userObjectRepository.findOneBy({ nickname: userNickname });
     if (!isNicknameExist) { // 닉네임이 존재하지 않는다면
       user.nickname = userNickname;
-      return await this.userObjectRepository.save(user);
+      return await this.userObjectRepository.save(user);  
     } else { return false; } // 닉네임이 이미 존재한다면
   }
 
@@ -123,22 +123,23 @@ export class UsersService {
   /*
   filepath: string, filename: string, imgData: any
   */
-  async updateUser(userEditImgDto: UserEditprofileDto): Promise<any> {
+  async updateUser(userEditImgDto: UserEditprofileDto): Promise<UserObject> {
     const { userIdx, userNickname, imgData } = userEditImgDto;
   
     const user = await this.findOneUser(userIdx);
+    console.log('update user : ', user);
     if (userNickname !== '') {
       user.nickname = userNickname;
       try {
         await this.updateUserNick({ userIdx, userNickname: userNickname, imgData: user.imgUri });
+        return await this.userObjectRepository.findOneBy({ userIdx });
       } catch (err) {
         throw new HttpException('update user error', HttpStatus.FORBIDDEN);
       }
     } else {
       await this.updateImgFile(`public/img`, `${userIdx}`, imgData); // 이미지 파일 비동기 저장
+      return await this.userObjectRepository.findOneBy({ userIdx });
     }
-    
-    return user;
   }
   
   async saveToken(
@@ -289,7 +290,7 @@ export class UsersService {
   
   async validateUser(intraInfo: IntraInfoDto): Promise<IntraSimpleInfoDto> {
     let user = await this.createUser(intraInfo);
-    return new IntraSimpleInfoDto(user.userIdx, user.imgUri, user.check2Auth);
+    return new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
   }
 
   async getAllUsersFromDB(): Promise<UserObject[]> {
@@ -360,6 +361,12 @@ export class UsersService {
         console.log('Error occured: ' + err);
         throw new BadRequestException();
       });
+  }
+
+  async patchUserTFA(userIdx: number, check2Auth: boolean){
+    const auth = await this.userObjectRepository.findOneBy({ userIdx });
+    auth.check2Auth = check2Auth;
+    return await this.userObjectRepository.save(auth);
   }
 
   async getTFA(userIdx: number): Promise<TFAUserDto> {
