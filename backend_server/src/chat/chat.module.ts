@@ -21,7 +21,7 @@ import { GameModule } from 'src/game/game.module';
     ]),
     GameModule,
   ],
-  providers: [ChatGateway, ChatService, Chat, InMemoryUsers],
+  providers: [ChatGateway, ChatService, Chat, InMemoryUsers, UsersService],
   controllers: [ChatController],
 })
 export class ChatModule {
@@ -36,7 +36,7 @@ export class ChatModule {
     await this.initializeInMemoryDataFromDatabase();
   }
 
-  private async initializeInMemoryDataFromDatabase() {
+  async initializeInMemoryDataFromDatabase() {
     const usersFromDatabase = await this.usersService.getAllUsersFromDB();
     this.inMemoryUsers.inMemoryUsers = await usersFromDatabase;
 
@@ -44,5 +44,9 @@ export class ChatModule {
       await this.usersService.getAllBlockedListFromDB();
     this.inMemoryUsers.inMemoryBlockList = blockListFromDatabase;
     console.log('111111', this.inMemoryUsers.inMemoryUsers);
+  }
+
+  public get getInMemoryUsers(): InMemoryUsers {
+    return this.inMemoryUsers;
   }
 }
