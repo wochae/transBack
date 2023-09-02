@@ -29,6 +29,7 @@ import {
 } from 'src/shared/class/shared.response.msg/shared.response.msg';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { connect } from 'http2';
+import { InMemoryUsers } from 'src/users/users.provider';
 
 @WebSocketGateway({
   namespace: 'game/playroom',
@@ -48,6 +49,7 @@ export class GameGateway
   constructor(
     private readonly gameService: GameService,
     private readonly uerService: UsersService,
+    private readonly inMemory: InMemoryUsers,
   ) {}
 
   handleDisconnect(client: Socket) {
@@ -57,13 +59,18 @@ export class GameGateway
     // TODO: online 멤버에서 나가기 처리
   }
 
-  handleConnection(client: any, ...args: any[]) {
+  handleConnection(client: Socket) {
     const userIdx: number = parseInt(
       client.handshake.query.userId as string,
       10,
     );
     if (Number.isNaN(userIdx)) return;
     const date = Date.now();
+    this.messanger.logWithMessage("handleConnection", "", "", "check here!!!");
+
+    this.messanger.logWithMessage("handleConnection", "", "", this.inMemory.getUserByIdFromIM(userIdx).nickname);
+    this.messanger.logWithMessage("handleConnection", "", "", "check here!!!");
+   
     //TODO: userObject 가져오기
     //TODO: userObject online 관리 대상으로 만들기
   }
