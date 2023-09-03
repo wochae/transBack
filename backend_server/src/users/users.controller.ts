@@ -143,11 +143,6 @@ export class UsersController {
     // const { myIdx, targetNickname, targetIdx } = req.jwtPayload;
     const userIdx = body.myIdx;
     const myUser = await this.usersService.findOneUser(userIdx);
-    myUser.friendList.map((friend) => {
-      if (friend.friendIdx === body.targetIdx) {
-        return res.status(HttpStatus.OK).json({ message: '이미 친구입니다.' });
-      }
-    });
     const result = await this.usersService.addFriend(body, myUser);
     console.log('res', result);
     return res.status(HttpStatus.OK).json({ result });
