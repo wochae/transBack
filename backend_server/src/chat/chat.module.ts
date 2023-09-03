@@ -32,20 +32,6 @@ export class ChatModule {
     private readonly usersService: UsersService,
   ) {}
 
-  async onModuleInit() {
-    await this.initializeInMemoryDataFromDatabase();
-  }
-
-  async initializeInMemoryDataFromDatabase() {
-    const usersFromDatabase = await this.usersService.getAllUsersFromDB();
-    this.inMemoryUsers.inMemoryUsers = await usersFromDatabase;
-
-    const blockListFromDatabase =
-      await this.usersService.getAllBlockedListFromDB();
-    this.inMemoryUsers.inMemoryBlockList = blockListFromDatabase;
-    console.log('111111', this.inMemoryUsers.inMemoryUsers);
-  }
-
   public get getInMemoryUsers(): InMemoryUsers {
     return this.inMemoryUsers;
   }

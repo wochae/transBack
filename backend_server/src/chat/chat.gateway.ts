@@ -71,6 +71,7 @@ export class ChatGateway
 
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    this.messanger.logWithMessage('handle Connection', `user`, `${user}`, '');
     if (!user) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -1241,15 +1242,17 @@ export class ChatGateway
   }
 
   @SubscribeMessage('set_user_status')
-  async updateUserStatus(@ConnectedSocket() client: Socket, @MessageBody() userStatus: UserStatusDto) {
+  async updateUserStatus(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userStatus: UserStatusDto,
+  ) {
     const userId: number = parseInt(client.handshake.query.userId as string);
-    
+
     if (Number.isNaN(userId)) return;
     const savedUser = await this.usersService.findOneUser(userId);
-    
+
     this.inMemoryUsers.setUserByIdFromIM(savedUser);
-    
-    
-    console.log("inMem : ", this.inMemoryUsers.inMemoryUsers);
+
+    console.log('inMem : ', this.inMemoryUsers.inMemoryUsers);
   }
 }
