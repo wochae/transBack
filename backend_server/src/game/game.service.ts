@@ -9,7 +9,7 @@ import { GameOptionDto } from './dto/game.option.dto';
 import { OnlineStatus } from 'src/entity/users.entity';
 import { GameType, RecordResult, RecordType } from './enum/game.type.enum';
 import { GameQueue } from './class/game.queue/game.queue';
-import { GameRoom } from './class/game.room/game.room';
+import { GamePhase, GameRoom } from './class/game.room/game.room';
 import { Socket, Server } from 'socket.io';
 import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameRecord } from 'src/entity/gameRecord.entity';
@@ -58,6 +58,7 @@ export class GameService {
     return records;
   }
 
+  // player 만들기
   async makePlayer(data: GameOptionDto): Promise<GamePlayer | null> {
     const target = this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
     if (target === undefined) return null;
@@ -70,6 +71,7 @@ export class GameService {
     return player;
   }
 
+  // 큐에 플레이어를 넣어둔다.
   putInQueue(player: GamePlayer) {
     const type = player.getOption().gameType;
     let targetQueue;
@@ -88,6 +90,7 @@ export class GameService {
     this.onLinePlayer.push([player, player.getOption().gameType]);
   }
 
+  // 플레이어가 커넥션이 연결됨에 따라, 소켓을 설정해준다.
   setSocketToPlayer(clientSocket: Socket, userIdx: number): boolean {
     for (const member of this.onLinePlayer) {
       if (member[0].getUserObject().userIdx === userIdx) {
@@ -98,6 +101,7 @@ export class GameService {
     return false;
   }
 
+  // 큐 내부를 파악하고, 게임 상대가 준비되었는지 확인한다.
   checkQueue(userIdx: number): GamePlayer[] | boolean {
     let target: [GamePlayer, GameType];
     for (const member of this.onLinePlayer) {
@@ -125,6 +129,7 @@ export class GameService {
     } else return false;
   }
 
+  // 플레이어의 온라인 상태를 게임 중으로 바꾼다.
   async changeStatusForPlayer(userIdx: number) {
     let target: [GamePlayer, GameType];
     for (const member of this.onLinePlayer) {
@@ -138,6 +143,7 @@ export class GameService {
     await this.inMemoryUsers.saveUserByUdFromIM(userIdx);
   }
 
+  // play room 을 구성한다.
   async makePlayerRoom(players: GamePlayer[], server: Server) {
     const roomName = this.makeRoomName();
     const option = this.setOptions(players);
@@ -151,6 +157,7 @@ export class GameService {
     this.playRoom.push(room);
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
+    room.setGamePhase(GamePhase.MAKE_ROOM);
     server
       .to(roomName)
       .emit(
@@ -159,22 +166,26 @@ export class GameService {
       );
   }
 
+  // play room 의 이름을 설정한다.
   private makeRoomName(): string {
     const ret = `room_${this.today}_${this.nameCnt++}`;
     return ret;
   }
 
+  // 옵션을 랜덤하게 정해준다.
   private setOptions(players: GamePlayer[]): GameOptionDto {
     const randomInt = this.getRandomInt(1, 2) - 1;
     return players[randomInt].getOption();
   }
 
+  // 랜덤 값을 얻기 위한 메소드
   private getRandomInt(min: number, max: number): number {
     let randomValue = Math.floor(Math.random() * (max - min + 1)) + min;
     if (randomValue == 0) randomValue = 1;
     return randomValue;
   }
 
+  // DB 저장을 위한 channel 객체를 생성한다.
   private makeGameChennl(players: GamePlayer[]): GameChannel {
     let type;
     if (players[0].getOption().gameType === GameType.RANK)
@@ -191,6 +202,7 @@ export class GameService {
     return ret;
   }
 
+  // DB 저장을 위한 Record 객체를 생성한다.
   private makeGameHistory(
     players: GamePlayer[],
     channel: GameChannel,
@@ -221,14 +233,17 @@ export class GameService {
     return histories;
   }
 
+  // game_queue_success 를 진행하면서, 들어오는 반환값들이 정상 처리가 되느지를 확인한다. true 가 나오면 플레이어 1, 2가 모두 준비된 상태를 의미하다.
   checkReady(userIdx: number): boolean | null {
     const room = this.findGameRoomById(userIdx);
     if (room === null) return null;
-    room.users[0].setReady(userIdx);
-    room.users[1].setReady(userIdx);
+    if (room.users[0].getUserObject().userIdx === userIdx)
+      room.users[0].setReady(userIdx);
+    else room.users[1].setReady(userIdx);
     return room.users[0].getReady() && room.users[1].getReady();
   }
 
+  // play room 을 userIdx 를 활용해서 탐색해낸다.
   private findGameRoomById(userIdx: number): GameRoom | null {
     for (const room of this.playRoom) {
       if (room.users[0].getUserObject().userIdx === userIdx) {
