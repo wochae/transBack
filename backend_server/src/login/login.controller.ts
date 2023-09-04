@@ -21,6 +21,7 @@ import { plainToClass } from 'class-transformer';
 import { CertificateObject } from 'src/entity/certificate.entity';
 import { UserObject } from 'src/entity/users.entity';
 import { IntraSimpleInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
+import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
 @Controller()
 export class LoginController {
@@ -30,9 +31,9 @@ export class LoginController {
   ) {}
 
   private logger: Logger = new Logger('LoginController');
+  private messanger: LoggerWithRes = new LoggerWithRes('LoginController');
 
   @Post('login/auth')
-
   async codeCallback(
     @Headers('token') authHeader: any,
     @Req() req: Request,
@@ -52,19 +53,25 @@ export class LoginController {
     let intraInfo: IntraInfoDto;
     let intraSimpleInfoDto: IntraSimpleInfoDto;
     intraInfo = await this.loginService.getIntraInfo(query.code);
-    console.log(`codeCallback intraInfo : `, intraInfo);
-    // const user = await this.usersService.findOneUser(intraInfo.userIdx);
-    // if (!user)
+    const user = await this.usersService.findOneUser(intraInfo.userIdx);
+    console.log('codeCallback user : ', user);
+    if (!user) {
+      console.log('codeCallback user not exist : ', user);
       intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
-    // else
-    //   intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.imgUri, user.check2Auth);
-    console.log(`codeCallback intraSimpleInfoDto : `, intraSimpleInfoDto);
+      this.loginService.downloadProfileImg(intraInfo);
+    } else {
+      console.log('codeCallback user exist : ', user);
+      intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
+    }
     const payload = { id: intraInfo.userIdx, email: intraInfo.email };
     const jwt = await this.loginService.issueToken(payload);
-    intraInfo.token = (jwt).toString()
+    intraInfo.token = (jwt).toString();
+    intraInfo.check2Auth = intraSimpleInfoDto.check2Auth;
+    intraInfo.imgUri = intraSimpleInfoDto.imgUri;
+    intraInfo.nickname = intraSimpleInfoDto.nickname;
 
     res.cookie('authorization', (await jwt).toString(), { httpOnly: true, path: '*' });
-
+    res.header('Cache-Control', 'no-store');
     console.log(`codeCallback intraInfo : `, intraInfo);
 
     console.log("success");

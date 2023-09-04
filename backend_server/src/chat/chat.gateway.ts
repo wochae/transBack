@@ -36,6 +36,7 @@ import {
   ChatSendMsgReqDto,
   chatGetProfileDto,
 } from './dto/chat.transaction.dto';
+import { UserStatusDto } from './dto/update-chat.dto';
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -1241,5 +1242,18 @@ export class ChatGateway
     inviteSocket.emit('chat_receive_answer', answerCard);
     targetSocket.emit('chat_receive_answer', answerCard);
     return new ReturnMsgDto(200, 'Ok!');
+  }
+
+  @SubscribeMessage('set_user_status')
+  async updateUserStatus(@ConnectedSocket() client: Socket, @MessageBody() userStatus: UserStatusDto) {
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    
+    if (Number.isNaN(userId)) return;
+    const savedUser = await this.usersService.findOneUser(userId);
+    
+    this.inMemoryUsers.setUserByIdFromIM(savedUser);
+    
+    
+    console.log("inMem : ", this.inMemoryUsers.inMemoryUsers);
   }
 }

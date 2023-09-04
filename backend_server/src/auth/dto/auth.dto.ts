@@ -1,10 +1,12 @@
 export class IntraSimpleInfoDto {
-  constructor(userIdx: number, imgUri: string, check2Auth: boolean) {
+  constructor(userIdx: number, nickname: string, imgUri: string, check2Auth: boolean) {
     this.userIdx = userIdx;
+    this.nickname = nickname;
     this.imgUri = imgUri;
     this.check2Auth = check2Auth;
   }
     userIdx : number;
+    nickname: string;
     imgUri: string;
     check2Auth: boolean;
   }
