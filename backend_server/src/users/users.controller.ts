@@ -11,14 +11,14 @@ import {
   Logger,
   UseGuards,
   Headers,
-  HttpStatus, 
+  HttpStatus,
   Req,
   Put,
   Param,
   Patch,
   Delete,
   UploadedFile,
-  UseInterceptors 
+  UseInterceptors,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { UsersService } from './users.service';
@@ -36,12 +36,10 @@ import { Express } from 'express';
 import { UserStatusDto } from 'src/chat/dto/update-chat.dto';
 @Controller('users')
 export class UsersController {
-  constructor(
-    private usersService: UsersService,
-    ) { }
+  constructor(private usersService: UsersService) {}
   logger: Logger = new Logger('UsersController');
   messanger: LoggerWithRes = new LoggerWithRes('UsersController');
-  
+
   @UseGuards(AuthGuard)
   @Get('profile')
   async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) {
@@ -57,17 +55,21 @@ export class UsersController {
         rank: user.rankpoint,
         email: email,
       };
-      this.messanger.setResponseMsgWithLogger(200, "ok", "getUserProfile");
+      this.messanger.setResponseMsgWithLogger(200, 'ok', 'getUserProfile');
       return res.status(HttpStatus.OK).json(userProfile);
     } catch (err) {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
     }
   }
 
-
   @Post('profile')
   @UseInterceptors(FileInterceptor('imgData'))
-  async updateUserProfile(@Req() req, @Res() res: Response, @Body() body: any, @UploadedFile() imgData: Express.Multer.File,) {
+  async updateUserProfile(
+    @Req() req,
+    @Res() res: Response,
+    @Body() body: any,
+    @UploadedFile() imgData: Express.Multer.File,
+  ) {
     try {
       const changedUser = body;
       console.log('changedUser : ', changedUser);
@@ -79,12 +81,15 @@ export class UsersController {
       };
 
       if (result) {
-        console.log("success result :", result);
-        console.log("userStatusDto :", userStatusDto);
-        return res.status(HttpStatus.OK).json({ message: '유저 정보가 업데이트 되었습니다.', result });
-      }
-      else
-        return res.status(HttpStatus.OK).json({ message: '이미 존재하는 유저 닉네임입니다.' });
+        console.log('success result :', result);
+        console.log('userStatusDto :', userStatusDto);
+        return res
+          .status(HttpStatus.OK)
+          .json({ message: '유저 정보가 업데이트 되었습니다.', result });
+      } else
+        return res
+          .status(HttpStatus.OK)
+          .json({ message: '이미 존재하는 유저 닉네임입니다.' });
     } catch (err) {
       this.logger.error(err);
       return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
@@ -112,21 +117,20 @@ export class UsersController {
     }
     return res
       .status(HttpStatus.OK)
-      .json({ message: '인증번호가 전송되었습니다.' , result: true });
+      .json({ message: '인증번호가 전송되었습니다.', result: true });
   }
 
-  
   @Patch('profile/second')
   async userTFA(@Req() req, @Res() res: Response, @Body() body: any) {
-    const { userIdx, check2Auth }= body;
-    
+    const { userIdx, check2Auth } = body;
+
     console.log('userTFA', userIdx, check2Auth);
-    const result = await this.usersService.patchUserTFA(userIdx, check2Auth); 
+    const result = await this.usersService.patchUserTFA(userIdx, check2Auth);
     console.log('result', result);
     return res
       .status(HttpStatus.OK)
       .json({ message: '유저 정보가 업데이트 되었습니다.', result });
-  };
+  }
 
   @Patch('second')
   async patchTFA(@Req() req, @Res() res: Response, @Body() body: any) {
@@ -139,15 +143,14 @@ export class UsersController {
 
   // @UseGuards(AuthGuard)
   @Post('follow')
-  async followFriend(@Req() req, @Res() res: Response, @Body() body: FollowFriendDto) {
+  async followFriend(
+    @Req() req,
+    @Res() res: Response,
+    @Body() body: FollowFriendDto,
+  ) {
     // const { myIdx, targetNickname, targetIdx } = req.jwtPayload;
     const userIdx = body.myIdx;
     const myUser = await this.usersService.findOneUser(userIdx);
-    myUser.friendList.map((friend) => {
-      if (friend.friendIdx === body.targetIdx) {
-        return res.status(HttpStatus.OK).json({ message: '이미 친구입니다.' });
-      }
-    });
     const result = await this.usersService.addFriend(body, myUser);
     console.log('res', result);
     return res.status(HttpStatus.OK).json({ result });
@@ -155,7 +158,11 @@ export class UsersController {
 
   // @UseGuards(AuthGuard)
   @Delete('unfollow')
-  async unfollowFriend(@Req() req, @Res() res: Response, @Body() body: FollowFriendDto) {
+  async unfollowFriend(
+    @Req() req,
+    @Res() res: Response,
+    @Body() body: FollowFriendDto,
+  ) {
     // const { myIdx, targetNickname, targetIdx } = req.jwtPayload;
     const userIdx = body.myIdx;
     // logic

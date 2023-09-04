@@ -43,14 +43,9 @@ export class GameGateway
 {
   @WebSocketServer()
   server: Server;
-
   messanger: LoggerWithRes = new LoggerWithRes('GameGateway');
 
-  constructor(
-    private readonly gameService: GameService,
-    private readonly uerService: UsersService,
-    private readonly inMemory: InMemoryUsers,
-  ) {}
+  constructor(private readonly gameService: GameService) {}
 
   handleDisconnect(client: Socket) {
     const userIdx: number = parseInt(client.handshake.query.userId as string);
@@ -66,14 +61,31 @@ export class GameGateway
     );
     if (Number.isNaN(userIdx)) return;
     const date = Date.now();
-    this.messanger.logWithMessage("handleConnection", "", "", "check here!!!");
+    this.messanger.logWithMessage('handleConnection', '', '', 'check here!!!');
 
-    this.messanger.logWithMessage("handleConnection", "", "", this.inMemory.getUserByIdFromIM(userIdx).nickname);
-    this.messanger.logWithMessage("handleConnection", "", "", "check here!!!");
-   
+    this.messanger.logWithMessage('handleConnection', '', '', '');
+    this.messanger.logWithMessage('handleConnection', '', '', 'check here!!!');
+
     //TODO: userObject 가져오기
     //TODO: userObject online 관리 대상으로 만들기
   }
 
   afterInit(server: any) {}
+
+  @SubscribeMessage('game_queue_success')
+  getReadyForGame(@MessageBody() userIdx: number) {}
+
+  @SubscribeMessage('game_ping')
+  //   getUserPing(@MessageBody() data: PingDto) {}
+  getUserPing(@MessageBody() data: any) {}
+
+  @SubscribeMessage('game_move_paddle')
+  //   getKeyPressData(@MessageBody() data: KeyPressDto) {}
+  getKeyPressData(@MessageBody() data: any) {}
+
+  @SubscribeMessage('game_pause_score')
+  getPauseStatus(@MessageBody() userIdx: number) {}
+
+  @SubscribeMessage('game_force_quit')
+  getQuitSignal(@MessageBody() userIdx: number) {}
 }

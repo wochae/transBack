@@ -17,10 +17,9 @@ import { GameController } from './game.controller';
       GameChannelRepository,
     ]),
     SharedModule,
-
   ],
   providers: [GameGateway, GameService],
-  exports: [GameModule, SharedModule],
   controllers: [GameController],
+  exports: [GameModule],
 })
 export class GameModule {}
