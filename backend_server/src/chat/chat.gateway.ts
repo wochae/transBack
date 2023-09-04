@@ -307,8 +307,8 @@ export class ChatGateway
     const { targetNickname, targetIdx, msg } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     // 오프라인일 수도 있기 때문에 db 에서 가져옴
-    const targetUser: UserObject = await this.usersService.getUserInfoFromDB(
-      targetNickname,
+    const targetUser: UserObject = await this.usersService.getUserInfoFromDBById(
+      targetIdx,
     );
     if (targetUser.userIdx !== targetIdx) {
       client.disconnect();
