@@ -4,6 +4,7 @@ import { GamePlayer } from '../game.player/game.player';
 import { GameSpeed, GameType, MapNumber } from 'src/game/enum/game.type.enum';
 import { GameOptionDto } from 'src/game/dto/game.option.dto';
 import { Vector } from 'src/game/enum/game.vector.enum';
+import { GameChannel } from 'src/entity/gameChannel.entity';
 
 /**
  * 게임 구성요소를 나타내는 용도
@@ -268,6 +269,7 @@ export class GameRoom {
   animation: Animations;
   keyPress: KeyPress[];
   history: GameRecord[];
+  channel: GameChannel;
   gamePhase: GamePhase;
 
   constructor(
@@ -275,6 +277,7 @@ export class GameRoom {
     users: GamePlayer[],
     options: GameOptionDto,
     histories: GameRecord[],
+    channel: GameChannel,
   ) {
     this.roomId = id;
 
@@ -294,6 +297,7 @@ export class GameRoom {
     this.keyPress[1] = new KeyPress();
 
     this.history = histories;
+    this.channel = channel;
 
     this.keyPress.map((item) => item.setMaxUnit(100));
 

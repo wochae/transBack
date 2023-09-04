@@ -30,6 +30,8 @@ import {
 import { AuthGuard } from 'src/auth/auth.guard';
 import { connect } from 'http2';
 import { InMemoryUsers } from 'src/users/users.provider';
+import { GamePlayer } from './class/game.player/game.player';
+import { GameBasicAnswerDto } from './dto/game.basic.answer.dto';
 
 @WebSocketGateway({
   namespace: 'game/playroom',
@@ -60,20 +62,43 @@ export class GameGateway
       10,
     );
     if (Number.isNaN(userIdx)) return;
-    const date = Date.now();
-    this.messanger.logWithMessage('handleConnection', '', '', 'check here!!!');
-
-    this.messanger.logWithMessage('handleConnection', '', '', '');
-    this.messanger.logWithMessage('handleConnection', '', '', 'check here!!!');
-
-    //TODO: userObject 가져오기
-    //TODO: userObject online 관리 대상으로 만들기
+    if (!this.gameService.setSocketToPlayer(client, userIdx)) {
+      this.messanger.logWithWarn(
+        'handleConnection',
+        'userIdx',
+        `${userIdx}`,
+        'not proper access',
+      );
+      client.disconnect(true);
+    }
+    this.gameService.changeStatusForPlayer(userIdx);
+    const players = this.gameService.checkQueue(userIdx);
+    if (players === false || players === true) return;
+    else this.gameService.makePlayerRoom(players, this.server);
   }
 
-  afterInit(server: any) {}
+  afterInit() {
+    this.messanger.logWithMessage('afterInit', 'GameGatway', 'Initialize!');
+  }
 
   @SubscribeMessage('game_queue_success')
-  getReadyForGame(@MessageBody() userIdx: number) {}
+  getReadyForGame(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: GameBasicAnswerDto,
+  ) {
+    const userIdx = data.userIdx;
+    const ret = this.gameService.checkReady(userIdx);
+    if (ret === null) client.disconnect(true);
+    else if (ret === true) {
+      // next Phase
+    } else {
+    }
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'game is ready',
+      'game_queue_susccess',
+    );
+  }
 
   @SubscribeMessage('game_ping')
   //   getUserPing(@MessageBody() data: PingDto) {}

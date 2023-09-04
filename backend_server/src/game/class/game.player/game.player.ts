@@ -6,11 +6,13 @@ export class GamePlayer {
   private userObject: UserObject;
   private socket: Socket | null;
   private options: GameOptionDto | null;
+  private ready: boolean;
 
   constructor(user: UserObject) {
     this.userObject = user;
     this.socket = null;
     this.options = null;
+    this.ready = null;
   }
 
   setSocket(socket: Socket) {
@@ -23,6 +25,23 @@ export class GamePlayer {
 
   getUserObject() {
     return this.userObject;
+  }
+
+  getOption() {
+    return this.options;
+  }
+
+  getSocket() {
+    return this.socket;
+  }
+
+  setReady(userIdx: number) {
+    if (this.userObject.userIdx === userIdx) this.ready = true;
+    else this.ready = false;
+  }
+
+  getReady(): boolean {
+    return this.ready;
   }
 
   emitToClient(event: string, data: any) {

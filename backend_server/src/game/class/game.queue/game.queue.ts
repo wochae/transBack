@@ -1,3 +1,4 @@
+import { queue } from 'rxjs';
 import { GamePlayer } from '../game.player/game.player';
 
 export class GameQueue {
@@ -7,8 +8,31 @@ export class GameQueue {
     this.playerList = [];
   }
 
+  getLength(): number {
+    return this.playerList.length;
+  }
+
   pushPlayer(player: GamePlayer): number {
     return this.playerList.push(player);
+  }
+
+  popPlayer(userIdx: number): GamePlayer[] {
+    const user1Idx = this.playerList.findIndex(
+      (user) => user.getUserObject().userIdx === userIdx,
+    );
+    const list = this.playerList.splice(user1Idx, 1);
+    const target = this.playerList.splice(0, 1)[0];
+    list.push(target);
+    return list;
+  }
+
+  deletePlayer(userIdx: number) {
+    let i = 0;
+    for (const queueMember of this.playerList) {
+      if (queueMember.getUserObject().userIdx === userIdx)
+        this.playerList.splice(i, 1);
+      i++;
+    }
   }
 
   findPlayerById(userIdx: number): GamePlayer | null {
@@ -20,14 +44,5 @@ export class GameQueue {
       }
     }
     return target;
-  }
-
-  isQueueReady(): [GamePlayer, GamePlayer] | null {
-    let ret: [GamePlayer, GamePlayer] | null;
-    ret = null;
-    if (this.playerList.length >= 2) {
-      ret = [this.playerList[0], this.playerList[1]];
-      return ret;
-    }
   }
 }
