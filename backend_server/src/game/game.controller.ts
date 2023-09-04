@@ -1,6 +1,5 @@
 import { Controller } from '@nestjs/common';
 import { Get, Post, Query, Body, HttpStatus, Req, Res } from '@nestjs/common';
-import { Response } from '@nestjs/common';
 import { GameService } from './game.service';
 import { Logger } from '@nestjs/common';
 import { UserProfileGameRecordDto } from './dto/game.record.dto';
@@ -37,7 +36,7 @@ export class GameController {
     return userProfileGameRecordDto;
   }
 
-  @Post('regin-options')
+  @Post()
   async postGameOptions(@Req() req, @Res() res, @Body() option: GameOptionDto) {
     const message = '플레이어가 큐에 등록 되었습니다.';
     const errorMessage = '플레이어가 큐에 등록되지 못하였습니다.';

@@ -88,4 +88,7 @@ export class GameGateway
 
   @SubscribeMessage('game_force_quit')
   getQuitSignal(@MessageBody() userIdx: number) {}
+
+  @SubscribeMessage('game_queue_quit')
+  quitQueue(@MessageBody() userIdx: number) {}
 }

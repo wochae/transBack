@@ -4,6 +4,9 @@ import { GameChannelRepository } from './game.channel.repository';
 import { UserObjectRepository } from 'src/users/users.repository';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { UsersService } from 'src/users/users.service';
+import { GamePlayer } from './class/game.player/game.player';
+import { GameOptionDto } from './dto/game.option.dto';
+import { OnlineStatus } from 'src/entity/users.entity';
 
 @Injectable()
 export class GameService {
@@ -25,6 +28,18 @@ export class GameService {
     });
 
     return records;
+  }
+
+  async makePlayer(data: GameOptionDto): Promise<GamePlayer | null> {
+    const target = this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
+    if (target === undefined) return null;
+
+    const player = new GamePlayer(target);
+    player.setOptions(data);
+    if (target.isOnline === OnlineStatus.ONLINE)
+      target.isOnline = OnlineStatus.ONGAME;
+    this.inMemoryUsers.saveUserByUdFromIM(target.userIdx);
+    return player;
   }
 
   //GameOption
