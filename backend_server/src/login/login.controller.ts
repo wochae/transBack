@@ -63,6 +63,12 @@ export class LoginController {
       console.log('codeCallback user exist : ', user);
       intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
     }
+    const anyImg = await this.usersService.checkFileExists(user.imgUri);
+    if (!anyImg)
+    {
+      intraSimpleInfoDto.imgUri = "http://paulryu9309.ddns.net:4000/img/0.png";
+      await this.usersService.setUserImg(intraSimpleInfoDto.userIdx, intraSimpleInfoDto.imgUri);
+    }
     const payload = { id: intraInfo.userIdx, email: intraInfo.email };
     const jwt = await this.loginService.issueToken(payload);
     intraInfo.token = (jwt).toString();
