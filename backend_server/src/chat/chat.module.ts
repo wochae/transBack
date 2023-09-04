@@ -20,6 +20,7 @@ import { GameModule } from 'src/game/game.module';
       DirectMessageRepository,
     ]),
     GameModule,
+    SharedModule,
   ],
   providers: [ChatGateway, ChatService, Chat, SharedModule],
   controllers: [ChatController],
