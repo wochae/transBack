@@ -14,10 +14,7 @@ import { GameService } from './game.service';
 import { Logger, UseFilters, UseGuards } from '@nestjs/common';
 import { WsExceptionFilter } from 'src/ws.exception.filter';
 import { UsersService } from 'src/users/users.service';
-import { GameOptionDto } from './dto/game.option.dto';
-import { GameRegiDto } from './dto/game.regi.dto';
 import { GameLatencyGetDto } from './dto/game.latency.get.dto';
-import { GameCancleDto } from './dto/game.cancle.dto';
 import { GamePaddleMoveDto } from './dto/game.paddle.move.dto';
 import { GameScoreDto } from './dto/game.score.dto';
 import { GameBallEventDto } from './dto/game.ball.event.dto';
@@ -32,6 +29,8 @@ import { connect } from 'http2';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { GamePlayer } from './class/game.player/game.player';
 import { GameBasicAnswerDto } from './dto/game.basic.answer.dto';
+import { GamePingReceiveDto } from './dto/game.ping.dto';
+import { GameStartDto } from './dto/game.start.dto';
 
 @WebSocketGateway({
   namespace: 'game/playroom',
@@ -52,7 +51,7 @@ export class GameGateway
   handleDisconnect(client: Socket) {
     const userIdx: number = parseInt(client.handshake.query.userId as string);
     if (Number.isNaN(userIdx)) return;
-    // TODO: 큐, 방에서 모두 나가도록 처리
+    // TODO: 큐, 방에서 모두 나가도록 처리(게임중이라면)
     // TODO: online 멤버에서 나가기 처리
   }
 
@@ -90,7 +89,8 @@ export class GameGateway
     const ret = this.gameService.checkReady(userIdx);
     if (ret === null) client.disconnect(true);
     else if (ret === true) {
-      // next Phase
+      const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
+      setTimeout(this.gameService.readyToSendPing, 1000, roomId, this.server);
     } else {
     }
     return this.messanger.setResponseMsgWithLogger(
@@ -101,8 +101,25 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_ping')
-  //   getUserPing(@MessageBody() data: PingDto) {}
-  getUserPing(@MessageBody() data: any) {}
+  getUserPong(@MessageBody() data: GamePingReceiveDto) {
+    if (this.gameService.receivePing(data)) {
+      const targetRoom = this.gameService.findGameRoomById(data.userIdx);
+      this.server
+        .to(targetRoom.roomId)
+        .emit('game_start', new GameStartDto(targetRoom));
+      setTimeout(this.gameService.startGame, 3000, data.userIdx, this.server);
+      return this.messanger.setResponseMsgWithLogger(
+        this.gameService.sendSetFrameRate(data.userIdx),
+        'Your max fps is checked',
+        'getUserPong',
+      );
+    } else
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'pong is received successfully',
+        'getUserPong',
+      );
+  }
 
   @SubscribeMessage('game_move_paddle')
   //   getKeyPressData(@MessageBody() data: KeyPressDto) {}

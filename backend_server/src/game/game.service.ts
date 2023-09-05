@@ -9,11 +9,13 @@ import { GameOptionDto } from './dto/game.option.dto';
 import { OnlineStatus } from 'src/entity/users.entity';
 import { GameType, RecordResult, RecordType } from './enum/game.type.enum';
 import { GameQueue } from './class/game.queue/game.queue';
-import { GamePhase, GameRoom } from './class/game.room/game.room';
+import { GameRoom } from './class/game.room/game.room';
+import { GamePhase } from './enum/game.phase';
 import { Socket, Server } from 'socket.io';
 import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { GameQueueSuccessDto } from './dto/game.queue.suceess.dto';
+import { GamePingDto, GamePingReceiveDto } from './dto/game.ping.dto';
 
 @Injectable()
 export class GameService {
@@ -37,10 +39,10 @@ export class GameService {
     this.friendQueue = new GameQueue();
     this.onLinePlayer = [];
     this.nameCnt = 0;
-    const currentData = new Date();
-    const year = currentData.getFullYear();
-    const month = currentData.getMonth() + 1;
-    const day = currentData.getDate();
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+    const day = currentDate.getDate();
     const formattedDate = `${year}-${month}-${day}`;
     this.today = formattedDate;
   }
@@ -237,14 +239,14 @@ export class GameService {
   checkReady(userIdx: number): boolean | null {
     const room = this.findGameRoomById(userIdx);
     if (room === null) return null;
-    if (room.users[0].getUserObject().userIdx === userIdx)
+    if (room.users[0].getUserObject().userIdx.toString() === userIdx.toString())
       room.users[0].setReady(userIdx);
     else room.users[1].setReady(userIdx);
     return room.users[0].getReady() && room.users[1].getReady();
   }
 
   // play room 을 userIdx 를 활용해서 탐색해낸다.
-  private findGameRoomById(userIdx: number): GameRoom | null {
+  public findGameRoomById(userIdx: number): GameRoom | null {
     for (const room of this.playRoom) {
       if (room.users[0].getUserObject().userIdx === userIdx) {
         return room;
@@ -253,5 +255,114 @@ export class GameService {
       }
     }
     return null;
+  }
+
+  // 게임 룸을 usrId 로 확인된 방을 전달한다.
+  public findGameRoomIdByUserId(userIdx: number): string {
+    for (const room of this.playRoom) {
+      if (
+        room.users[0].getUserObject().userIdx.toString() === userIdx.toString()
+      ) {
+        return room.roomId;
+      } else if (
+        room.users[1].getUserObject().userIdx.toString() === userIdx.toString()
+      ) {
+        return room.roomId;
+      }
+    }
+  }
+
+  // Room 의 이름으로 룸을 가
+  private findGameRoomByRoomId(roomId: string): GameRoom {
+    return this.playRoom.find(
+      (room) => room.roomId.toString() === roomId.toString(),
+    );
+  }
+
+  // 1차 핑 보내기 준비하는 용도
+  public readyToSendPing(roomId: string, server: Server) {
+    const target = this.findGameRoomByRoomId(roomId);
+    target.intervalId = setInterval(this.sendPingToRoom, 15, target, server);
+  }
+
+  // 실제 초반 레이턴시 확정을 위한 핑 보내는 메서드
+  public sendPingToRoom(room: GameRoom, server: Server) {
+    server.to(room.roomId).emit('game_ping', new GamePingDto());
+  }
+
+  // 핑의 수신 용도
+  public receivePing(data: GamePingReceiveDto): boolean {
+    const targetRoom = this.findGameRoomById(data.userIdx);
+    if (targetRoom.gamePhase != GamePhase.MAKE_ROOM) return false;
+    let latencyCnt;
+    let latencyIdx;
+    if (
+      targetRoom.users[0].getUserObject().userIdx.valueOf() ===
+      data.userIdx.valueOf()
+    )
+      latencyIdx = 0;
+    else latencyIdx = 1;
+
+    latencyCnt[latencyIdx] += 1;
+    targetRoom.latency[latencyIdx] += data.clientTime - data.serverTime;
+    targetRoom.latency[latencyIdx] = Math.round(
+      targetRoom.latency[latencyIdx] / 2,
+    );
+    if (latencyCnt == 120) {
+      if (targetRoom.latencyCnt[0] >= 120 && targetRoom.latencyCnt[1] >= 120) {
+        targetRoom.stopInterval();
+        targetRoom.latencyCnt.splice(0, 2);
+        targetRoom.latencyCnt.push(0);
+        targetRoom.latencyCnt.push(0);
+        targetRoom.gamePhase = GamePhase.SET_NEW_GAME;
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // 받은 핑을 통해 프레임 Max 값을 설정하고, 레이턴시를 지정한다.
+  public sendSetFrameRate(userIdx: number): number {
+    const targetRoom = this.findGameRoomById(userIdx);
+    const targetLatency =
+      targetRoom.latency[0] >= targetRoom.latency[1]
+        ? targetRoom.latency[0]
+        : targetRoom.latency[1];
+    return targetRoom.setLatency(targetLatency);
+  }
+
+  // 최초 게임 시작시, 여기서 게임이 시작된다.
+  public startGame(userIdx: number, server: Server) {
+    const targetRoom = this.findGameRoomById(userIdx);
+    if (targetRoom.gamePhase != GamePhase.SET_NEW_GAME) return;
+    targetRoom.setNewGame();
+    targetRoom.setGamePhase(GamePhase.ON_PLAYING);
+    targetRoom.setIntervalId(
+      setInterval(
+        this.makeFrame,
+        targetRoom.getIntervalMs(),
+        targetRoom,
+        server,
+      ),
+    );
+  }
+
+  // 프레임을 전달하는 함수
+  private makeFrame(room: GameRoom, server: Server) {
+    const status: GamePhase = room.scoreStatus();
+    if (status !== GamePhase.ON_PLAYING) {
+      //TODO: frame data
+      server.to(room.roomId).emit('game_pause_score', room.getCurrentFrame());
+      room.stopInterval();
+      if (status === GamePhase.HIT_THE_GOAL_POST) {
+        // TODO: get Score but not end;
+      } else if (status === GamePhase.MATCH_END) {
+        // TODO: get Score and match is end;
+      }
+      //TODO: 조건에 맞춰서 바꾸기
+    } else {
+      server.to(room.roomId).emit('game_frame', room.getNextFrame());
+    }
   }
 }
