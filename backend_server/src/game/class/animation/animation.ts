@@ -56,40 +56,40 @@ export class Animations {
     paddle1: number,
     paddle2: number,
   ) {
-    currentData.paddle1MinMax = [
-      (currentData.paddle1MinMax[0] += paddle1),
-      (currentData.paddle1MinMax[1] += paddle1),
+    currentData.paddle1MaxMin = [
+      (currentData.paddle1MaxMin[0] += paddle1),
+      (currentData.paddle1MaxMin[1] += paddle1),
     ];
     if (currentData.paddle1 > 0) {
       // 패들 좌표 수정
-      if (currentData.paddle1MinMax[0] >= this.MAX_HEIGHT) {
+      if (currentData.paddle1MaxMin[0] >= this.MAX_HEIGHT) {
         currentData.paddle1 = this.MAX_HEIGHT - 20;
-        currentData.paddle1MinMax[0] = this.MAX_HEIGHT;
-        currentData.paddle1MinMax[1] = this.MAX_HEIGHT - 20;
+        currentData.paddle1MaxMin[0] = this.MAX_HEIGHT;
+        currentData.paddle1MaxMin[1] = this.MAX_HEIGHT - 40;
       }
     } else {
-      if (currentData.paddle1MinMax[1] <= this.min_HEIGHT) {
+      if (currentData.paddle1MaxMin[1] <= this.min_HEIGHT) {
         currentData.paddle1 = this.min_HEIGHT + 20;
-        currentData.paddle1MinMax[0] = this.min_HEIGHT + 20;
-        currentData.paddle1MinMax[1] = this.min_HEIGHT;
+        currentData.paddle1MaxMin[0] = this.min_HEIGHT + 40;
+        currentData.paddle1MaxMin[1] = this.min_HEIGHT;
       }
     }
-    currentData.paddle2MinMax = [
-      (currentData.paddle2MinMax[0] += paddle2),
-      (currentData.paddle2MinMax[1] += paddle2),
+    currentData.paddle2MaxMin = [
+      (currentData.paddle2MaxMin[0] += paddle2),
+      (currentData.paddle2MaxMin[1] += paddle2),
     ];
     if (currentData.paddle2 > 0) {
       // 패들 좌표 수정
-      if (currentData.paddle2MinMax[0] >= this.MAX_HEIGHT) {
+      if (currentData.paddle2MaxMin[0] >= this.MAX_HEIGHT) {
         currentData.paddle2 = this.MAX_HEIGHT - 20;
-        currentData.paddle2MinMax[0] = this.MAX_HEIGHT;
-        currentData.paddle2MinMax[1] = this.MAX_HEIGHT - 20;
+        currentData.paddle2MaxMin[0] = this.MAX_HEIGHT;
+        currentData.paddle2MaxMin[1] = this.MAX_HEIGHT - 40;
       }
     } else {
-      if (currentData.paddle2MinMax[1] <= this.min_HEIGHT) {
+      if (currentData.paddle2MaxMin[1] <= this.min_HEIGHT) {
         currentData.paddle2 = this.min_HEIGHT + 20;
-        currentData.paddle2MinMax[0] = this.min_HEIGHT + 20;
-        currentData.paddle2MinMax[1] = this.min_HEIGHT;
+        currentData.paddle2MaxMin[0] = this.min_HEIGHT + 40;
+        currentData.paddle2MaxMin[1] = this.min_HEIGHT;
       }
     }
   }
@@ -177,22 +177,166 @@ export class Animations {
     return this.gameStatus;
   }
 
-  public handleSituationWallStrike(currentData: GameData) {
+  private reverseVectorY(currentData: GameData) {
     currentData.standardY *= -1;
-    currentData.angle =
-      (currentData.standardY - 0) / (currentData.standardX - 0);
-    currentData.yIntercept =
-      currentData.standardY - currentData.angle * currentData.standardX;
+    if (currentData.vector === Vector.UPLEFT) {
+      currentData.vector = Vector.DOWNLEFT;
+    } else if (currentData.vector === Vector.DOWNLEFT) {
+      currentData.vector = Vector.UPLEFT;
+    } else if (currentData.vector === Vector.UPRIGHT) {
+      currentData.vector = Vector.DOWNRIGHT;
+    } else {
+      currentData.vector = Vector.DOWNRIGHT;
+    }
+  }
+
+  private reverseVectorX(currentData: GameData) {
+    if (currentData.vector === Vector.UPLEFT) {
+      currentData.vector = Vector.UPRIGHT;
+    } else if (currentData.vector === Vector.DOWNLEFT) {
+      currentData.vector = Vector.DOWNRIGHT;
+    } else if (currentData.vector === Vector.UPRIGHT) {
+      currentData.vector = Vector.UPLEFT;
+    } else {
+      currentData.vector = Vector.DOWNLEFT;
+    }
+  }
+
+  public handleSituationWallStrike(currentData: GameData) {
+    this.reverseVectorY(currentData);
+    this.setNewlinearEquation(currentData);
+    // currentData.angle =
+    //   (currentData.standardY - 0) / (currentData.standardX - 0);
+    // currentData.yIntercept =
+    //   currentData.standardY - currentData.angle * currentData.standardX;
     return;
   }
 
-  public handleSituationPaddleStrike(currentData: GameData) {}
+  private changeAngleForPaddle(currentData: GameData) {
+    switch (currentData.vector) {
+      case Vector.UPLEFT:
+        if (currentData.standardX === -1 && currentData.standardY === 2) {
+          currentData.standardX = 2;
+          currentData.standardY = 1;
+        } else if (
+          currentData.standardX === -1 &&
+          currentData.standardY == -1
+        ) {
+          currentData.standardX = 1;
+          currentData.standardY = 1;
+        } else {
+          currentData.standardX = 1;
+          currentData.standardY = 2;
+        }
+        break;
+      case Vector.UPRIGHT:
+        if (currentData.standardX === 1 && currentData.standardY === 2) {
+          currentData.standardX = -2;
+          currentData.standardY = 1;
+        } else if (currentData.standardX === 1 && currentData.standardY === 1) {
+          currentData.standardX = -1;
+          currentData.standardY = 1;
+        } else {
+          currentData.standardX = -1;
+          currentData.standardY = 2;
+        }
+        break;
+      case Vector.DOWNLEFT:
+        if (currentData.standardX === -2 && currentData.standardY === -1) {
+          currentData.standardX = 1;
+          currentData.standardY = -2;
+        } else if (
+          currentData.standardX === -1 &&
+          currentData.standardY === -1
+        ) {
+          currentData.standardX = 1;
+          currentData.standardY = -1;
+        } else {
+          currentData.standardX = 2;
+          currentData.standardY = -1;
+        }
+        break;
+      case Vector.DOWNRIGHT:
+        if (currentData.standardX === 1 && currentData.standardY === -2) {
+          currentData.standardX = -2;
+          currentData.standardY = -1;
+        } else if (
+          currentData.standardX === 1 &&
+          currentData.standardY === -1
+        ) {
+          currentData.standardX = -1;
+          currentData.standardY = -1;
+        } else {
+          currentData.standardX = -1;
+          currentData.standardY = -2;
+        }
+        break;
+    }
+  }
+
+  public handleSituationPaddleStrike(currentData: GameData) {
+    const type: Vector = currentData.vector;
+    if (type === Vector.DOWNLEFT || type === Vector.UPLEFT) {
+      this.reverseVectorX(currentData);
+      const y = currentData.currentPosY;
+      const maxY = currentData.paddle1MaxMin[0];
+      const minY = currentData.paddle1MaxMin[1];
+      const rangeSize = Math.round((maxY - minY + 1) / 3);
+      if (y > maxY - rangeSize) {
+        //상단
+        this.changeAngleForPaddle(currentData);
+      } else if (y >= minY + rangeSize && y <= maxY - rangeSize) {
+        //중간
+        currentData.standardX *= -1;
+      } else {
+        //하단
+        this.changeAngleForPaddle(currentData);
+      }
+    } else {
+      this.reverseVectorX(currentData);
+      const y = currentData.currentPosY;
+      const maxY = currentData.paddle2MaxMin[0];
+      const minY = currentData.paddle2MaxMin[1];
+      const rangeSize = Math.round((maxY - minY + 1) / 3);
+      if (y > maxY - rangeSize) {
+        //상단
+        this.changeAngleForPaddle(currentData);
+      } else if (y >= minY + rangeSize && y <= maxY - rangeSize) {
+        //중간
+        currentData.standardX *= -1;
+      } else {
+        //하단
+        this.changeAngleForPaddle(currentData);
+      }
+    }
+    this.setNewlinearEquation(currentData);
+  }
 
   public handleSituationGoalPostStrike(currentData: GameData): GamePhase {
-    const ret: GamePhase = GamePhase.MATCH_END;
-    return ret;
+    const type = currentData.vector;
+    if (type === Vector.UPLEFT || type === Vector.DOWNLEFT) {
+      currentData.score2++;
+      if (currentData.score2 === 5) {
+        const ret: GamePhase = GamePhase.MATCH_END;
+        return ret;
+      }
+      const ret: GamePhase = GamePhase.HIT_THE_GOAL_POST;
+      return ret;
+    } else {
+      currentData.score1++;
+      if (currentData.score1 === 5) {
+        const ret: GamePhase = GamePhase.MATCH_END;
+        return ret;
+      }
+      const ret: GamePhase = GamePhase.HIT_THE_GOAL_POST;
+      return ret;
+    }
   }
-  public handleSituationWallAndPaddleStrike(currentData: GameData) {}
+
+  public handleSituationWallAndPaddleStrike(currentData: GameData) {
+    this.handleSituationWallStrike(currentData);
+    this.handleSituationPaddleStrike(currentData);
+  }
 
   public handleSituationWallAndGoalPostStrike(
     currentData: GameData,
@@ -212,24 +356,24 @@ export class Animations {
   private checkPaddleStrike(vector: Vector, currentData: GameData): boolean {
     let condition1;
     let condition2;
-    if (vector === Vector.UPLEFT || vector === Vector.DWONLEFT) {
+    if (vector === Vector.UPLEFT || vector === Vector.DOWNLEFT) {
       const max = currentData.currentPosY + 20;
       const min = currentData.currentPosY - 20;
       condition1 =
-        max <= currentData.paddle1MinMax[0] ||
-        currentData.paddle1MinMax[1] <= min;
+        max <= currentData.paddle1MaxMin[0] ||
+        currentData.paddle1MaxMin[1] <= min;
       condition2 =
-        min >= currentData.paddle1MinMax[1] ||
-        currentData.paddle1MinMax[0] >= max;
+        min >= currentData.paddle1MaxMin[1] ||
+        currentData.paddle1MaxMin[0] >= max;
     } else {
       const max = currentData.currentPosY + 20;
       const min = currentData.currentPosY - 20;
       condition1 =
-        max <= currentData.paddle2MinMax[0] ||
-        currentData.paddle2MinMax[1] <= min;
+        max <= currentData.paddle2MaxMin[0] ||
+        currentData.paddle2MaxMin[1] <= min;
       condition2 =
-        min >= currentData.paddle2MinMax[1] ||
-        currentData.paddle2MinMax[0] >= max;
+        min >= currentData.paddle2MaxMin[1] ||
+        currentData.paddle2MaxMin[0] >= max;
     }
     return condition1 || condition2;
   }
@@ -276,7 +420,7 @@ export class Animations {
           ret.push(GamePhase.HIT_THE_GOAL_POST);
         }
         break;
-      case Vector.DWONLEFT:
+      case Vector.DOWNLEFT:
         // 벽에 부딪히는지를 확인
         if (currentData.currentPosY + 20 <= this.min_HEIGHT) {
           currentData.currentPosY = -280;
@@ -284,7 +428,7 @@ export class Animations {
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
         if (currentData.currentPosX - 20 <= this.PADDLE_LINE_1) {
-          if (this.checkPaddleStrike(Vector.DWONLEFT, currentData)) {
+          if (this.checkPaddleStrike(Vector.DOWNLEFT, currentData)) {
             currentData.currentPosX = this.PADDLE_LINE_1;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }

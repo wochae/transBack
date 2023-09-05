@@ -10,6 +10,7 @@ import { FrameData, Fps } from 'src/game/enum/frame.data.enum';
 import { KeyPress } from 'src/game/class/key.press/key.press';
 import { Animations } from 'src/game/class/animation/animation';
 import { GamePhase } from 'src/game/enum/game.phase';
+import { RecordResult } from 'src/game/enum/game.type.enum';
 
 /**
  * 연산의 핵심. 간단한 데이터를 제외하곤 여기서 연산이 이루어 진다.
@@ -44,8 +45,8 @@ export class GameRoom {
     this.gameObj.gameMapNumber = options.mapNumber;
     this.gameObj.score1 = 0;
     this.gameObj.score2 = 0;
-    this.gameObj.paddle1MinMax = [20, 20];
-    this.gameObj.paddle2MinMax = [20, 20];
+    this.gameObj.paddle1MaxMin = [20, -20];
+    this.gameObj.paddle2MaxMin = [20, -20];
 
     this.latency = [];
     this.latencyCnt = [];
@@ -148,7 +149,7 @@ export class GameRoom {
     } else if (right == false && up == true) {
       this.gameObj.vector = Vector.UPLEFT;
     } else {
-      this.gameObj.vector = Vector.DWONLEFT;
+      this.gameObj.vector = Vector.DOWNLEFT;
     }
   }
 
@@ -174,11 +175,23 @@ export class GameRoom {
     return this.gamePhase;
   }
 
-  public scoreStatus(): GamePhase {
+  public getScoreStatus(): GamePhase {
     return this.gamePhase;
   }
 
   public getCurrentFrame(): FrameData {
     return this.animation.currentDatas;
+  }
+
+  public syncronizeResult() {
+    this.channel.score1 = this.gameObj.score1;
+    this.channel.score2 = this.gameObj.score2;
+    this.history[0].score = `${this.channel.score1} : ${this.channel.score2}`;
+    this.history[1].score = `${this.channel.score2} : ${this.channel.score1}`;
+    if (this.gamePhase === GamePhase.SET_NEW_GAME) {
+      this.channel.status = RecordResult.PLAYING;
+    } else {
+      this.channel.status = RecordResult.DONE;
+    }
   }
 }

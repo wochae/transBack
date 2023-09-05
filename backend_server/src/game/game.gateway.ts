@@ -25,12 +25,12 @@ import {
   ReturnMsgDto,
 } from 'src/shared/class/shared.response.msg/shared.response.msg';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { connect } from 'http2';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { GamePlayer } from './class/game.player/game.player';
 import { GameBasicAnswerDto } from './dto/game.basic.answer.dto';
 import { GamePingReceiveDto } from './dto/game.ping.dto';
 import { GameStartDto } from './dto/game.start.dto';
+import { KeyPressDto } from './dto/key.press.dto';
 
 @WebSocketGateway({
   namespace: 'game/playroom',
@@ -122,11 +122,14 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_move_paddle')
-  //   getKeyPressData(@MessageBody() data: KeyPressDto) {}
-  getKeyPressData(@MessageBody() data: any) {}
+  getKeyPressData(@MessageBody() data: KeyPressDto) {}
 
   @SubscribeMessage('game_pause_score')
-  getPauseStatus(@MessageBody() userIdx: number) {}
+  getPauseStatus(@MessageBody() data: GameBasicAnswerDto) {
+    // TODO: ready check
+    // TODO: reset Game
+    // TODO: Start Game
+  }
 
   @SubscribeMessage('game_force_quit')
   getQuitSignal(@MessageBody() userIdx: number) {}

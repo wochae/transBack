@@ -12,9 +12,9 @@ export interface GameData {
   yIntercept: number; // y = ax + b, 'b'
   vector: Vector;
   paddle1: number;
-  paddle1MinMax: [number, number];
+  paddle1MaxMin: [number, number];
   paddle2: number;
-  paddle2MinMax: [number, number];
+  paddle2MaxMin: [number, number];
   gameType: GameType;
   gameSpeed: GameSpeed;
   gameMapNumber: MapNumber;

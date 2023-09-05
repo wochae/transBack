@@ -32,7 +32,6 @@ export enum RecordResult {
 
 export enum GameStatus {
   ONGOING = 0,
-  JUDGEMENT,
-  TERMINATION,
-  DRAW,
+  END,
+  JUDGE,
 }

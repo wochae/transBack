@@ -7,7 +7,12 @@ import { UsersService } from 'src/users/users.service';
 import { GamePlayer } from './class/game.player/game.player';
 import { GameOptionDto } from './dto/game.option.dto';
 import { OnlineStatus } from 'src/entity/users.entity';
-import { GameType, RecordResult, RecordType } from './enum/game.type.enum';
+import {
+  GameStatus,
+  GameType,
+  RecordResult,
+  RecordType,
+} from './enum/game.type.enum';
 import { GameQueue } from './class/game.queue/game.queue';
 import { GameRoom } from './class/game.room/game.room';
 import { GamePhase } from './enum/game.phase';
@@ -16,6 +21,7 @@ import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { GameQueueSuccessDto } from './dto/game.queue.suceess.dto';
 import { GamePingDto, GamePingReceiveDto } from './dto/game.ping.dto';
+import { GamePauseScpreDto } from './dto/game.pause.score.dto';
 
 @Injectable()
 export class GameService {
@@ -349,20 +355,42 @@ export class GameService {
   }
 
   // 프레임을 전달하는 함수
-  private makeFrame(room: GameRoom, server: Server) {
-    const status: GamePhase = room.scoreStatus();
+  private async makeFrame(room: GameRoom, server: Server) {
+    const status: GamePhase = room.getScoreStatus();
     if (status !== GamePhase.ON_PLAYING) {
       //TODO: frame data
-      server.to(room.roomId).emit('game_pause_score', room.getCurrentFrame());
       room.stopInterval();
-      if (status === GamePhase.HIT_THE_GOAL_POST) {
+      if (status === GamePhase.SET_NEW_GAME) {
         // TODO: get Score but not end;
+        server
+          .to(room.roomId)
+          .emit(
+            'game_pause_score',
+            new GamePauseScpreDto(room.users, room.gameObj, GameStatus.ONGOING),
+          );
       } else if (status === GamePhase.MATCH_END) {
+        server
+          .to(room.roomId)
+          .emit(
+            'game_pause_score',
+            new GamePauseScpreDto(room.users, room.gameObj, GameStatus.END),
+          );
         // TODO: get Score and match is end;
       }
+      room.syncronizeResult();
+      await this.gameChannelRepository.save(room.channel).then(async () => {
+        await this.gameRecordRepository.save(room.history[0]).then(async () => {
+          await this.gameRecordRepository.save(room.history[1]);
+        });
+      });
       //TODO: 조건에 맞춰서 바꾸기
     } else {
-      server.to(room.roomId).emit('game_frame', room.getNextFrame());
+      server
+        .to(room.roomId)
+        .emit(
+          'game_frame',
+          new GamePauseScpreDto(room.users, room.gameObj, GameStatus.ONGOING),
+        );
     }
   }
 }
