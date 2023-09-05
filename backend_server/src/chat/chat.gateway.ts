@@ -95,7 +95,6 @@ export class ChatGateway
   }
 
   async handleDisconnect(client: Socket) {
-    console.log('!!!!', client.handshake.query.userId);
     const userId: number = parseInt(client.handshake.query.userId as string);
 
     // FIXME: 함수로 빼기
@@ -114,9 +113,14 @@ export class ChatGateway
     this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
     const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
     const channelForLeave: Channel[] = notDmChannelList?.filter((channel) =>
-      channel.getMember.includes(user),
+      channel.getMember.some((member) => member.userIdx === user.userIdx),
     );
-    channelForLeave.forEach((channel) => {
+    channelForLeave?.forEach((channel) => {
+      channel.removeMember(user);
+      const roomIsEmpty = this.chatService.checkEmptyChannel(channel);
+      if (roomIsEmpty) {
+        const channels = this.chatService.removeEmptyChannel(channel);
+      }
       client.leave(`chat_room_${channel.getChannelIdx}`);
     });
     const dmChannelList: Promise<DMChannel[]> =
@@ -762,11 +766,11 @@ export class ChatGateway
     }
     const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
     if (!isOwner) {
-      return this.messanger.logWithWarn(
+      return this.messanger.setResponseErrorMsgWithLogger(
+        401,
+        'Not Owner',
         'BR_chat_room_password',
         'user',
-        user.nickname,
-        'Not Owner',
       );
     }
     const channelInfo = this.chatService.changePassword(
