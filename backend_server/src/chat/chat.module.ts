@@ -20,8 +20,9 @@ import { GameModule } from 'src/game/game.module';
       DirectMessageRepository,
     ]),
     GameModule,
+    SharedModule,
   ],
-  providers: [ChatGateway, ChatService, Chat, InMemoryUsers, UsersService],
+  providers: [ChatGateway, ChatService, Chat, SharedModule],
   controllers: [ChatController],
 })
 export class ChatModule {
@@ -33,18 +34,18 @@ export class ChatModule {
   ) {}
 
   async onModuleInit() {
-    await this.initializeInMemoryDataFromDatabase();
+    // await this.initializeInMemoryDataFromDatabase();
   }
 
-  async initializeInMemoryDataFromDatabase() {
-    const usersFromDatabase = await this.usersService.getAllUsersFromDB();
-    this.inMemoryUsers.inMemoryUsers = await usersFromDatabase;
+  //   async initializeInMemoryDataFromDatabase() {
+  //     const usersFromDatabase = await this.usersService.getAllUsersFromDB();
+  //     this.inMemoryUsers.inMemoryUsers = await usersFromDatabase;
 
-    const blockListFromDatabase =
-      await this.usersService.getAllBlockedListFromDB();
-    this.inMemoryUsers.inMemoryBlockList = blockListFromDatabase;
-    console.log('111111', this.inMemoryUsers.inMemoryUsers);
-  }
+  //     const blockListFromDatabase =
+  //       await this.usersService.getAllBlockedListFromDB();
+  //     this.inMemoryUsers.inMemoryBlockList = blockListFromDatabase;
+  //     console.log('111111', this.inMemoryUsers.inMemoryUsers);
+  //   }
 
   public get getInMemoryUsers(): InMemoryUsers {
     return this.inMemoryUsers;

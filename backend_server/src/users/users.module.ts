@@ -24,7 +24,7 @@ import { InMemoryUsers } from './users.provider';
     AuthModule,
   ],
   controllers: [UsersController],
-  providers: [UsersService, InMemoryUsers,],
-  exports: [UsersService, TypeOrmExModule,],
+  providers: [UsersService, InMemoryUsers],
+  exports: [UsersService, TypeOrmExModule, InMemoryUsers],
 })
 export class UsersModule {}
