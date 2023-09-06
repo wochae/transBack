@@ -72,7 +72,7 @@ export class GameGateway
       10,
     );
     if (Number.isNaN(userId))
-    return;
+      return;
     const date = Date.now();
     // this.logger.log(`시작 일시 : ${date}`);
     // this.logger.log(userId + ' is connected');
@@ -83,6 +83,8 @@ export class GameGateway
       `${userId} is connected`,
     );
     const user = await this.usersService.getUserObjectFromDB(userId);
+    if (!user)
+      return;
     // this.logger.log(user.nickname);
     const OnUser = new GameOnlineMember(user, client);
     // this.logger.log(OnUser.user.nickname);

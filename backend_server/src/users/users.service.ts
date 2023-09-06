@@ -61,6 +61,13 @@ export class UsersService {
     return this.userObjectRepository.findOneBy({ userIdx });
   }
 
+  async setUserImg(userIdx: number, img: string)
+  {
+    const user = await this.userObjectRepository.findOneBy({userIdx})
+    user.imgUri = img;
+    return this.userObjectRepository.save(user);
+  }
+
   async updateUserNick(updateUsersDto: UserEditprofileDto) {
     const { userIdx, userNickname, imgData } = updateUsersDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
@@ -82,7 +89,7 @@ export class UsersService {
     }
   }
 
-  private async checkFileExists(filePath) {
+  async checkFileExists(filePath) {
     try {
       await fs.access(filePath);
       console.log('File exists:', filePath);
@@ -127,7 +134,6 @@ export class UsersService {
     const { userIdx, userNickname, imgData } = userEditImgDto;
   
     const user = await this.findOneUser(userIdx);
-    console.log('update user : ', user);
     if (userNickname !== '') {
       user.nickname = userNickname;
       try {
@@ -275,7 +281,8 @@ export class UsersService {
       userIdx: userIdx,
       intra: intra,
       nickname: intra,
-      imgUri: `http://localhost:4000/img/${userIdx}.png`,
+      // imgUri: `http://localhost:4000/img/${userIdx}.png`,
+      imgUri: `http://paulryu9309.ddns.net:4000/img/${userIdx}.png`,
       rankpoint: 0,
       isOnline: OnlineStatus.ONLINE,
       available: true,
