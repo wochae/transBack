@@ -22,6 +22,7 @@ import { GameRecord } from 'src/entity/gameRecord.entity';
 import { GameQueueSuccessDto } from './dto/game.queue.suceess.dto';
 import { GamePingDto, GamePingReceiveDto } from './dto/game.ping.dto';
 import { GamePauseScpreDto } from './dto/game.pause.score.dto';
+import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
 @Injectable()
 export class GameService {
@@ -32,6 +33,7 @@ export class GameService {
   private onLinePlayer: [GamePlayer, GameType][];
   private nameCnt: number;
   private today: string;
+ messanger: LoggerWithRes = new LoggerWithRes('GameService');
 
   constructor(
     private gameRecordRepository: GameRecordRepository,
@@ -156,12 +158,17 @@ export class GameService {
     const roomName = this.makeRoomName();
     const option = this.setOptions(players);
     const channel = this.makeGameChennl(players);
-    await this.gameRecordRepository.save(channel);
-    const gameRecord = this.makeGameHistory(players, channel);
+	console.log("option", option)
+	this.messanger.logWithMessage("makePlayerRoom", "", "", `${players.length}`)
+	
+    await this.gameChannelRepository.save(channel);
+	this.messanger.logWithMessage("makePlayerRoom", "", "", `${channel.userIdx1} ${channel.userIdx2} / ${channel.matchDate}`)
+    const gameRecord = await this.makeGameHistory(players, channel);;
+	// TODO: FIX here
     await this.gameRecordRepository.save(gameRecord[0]).then(async () => {
-      await this.gameRecordRepository.save(gameRecord[1]);
-    });
-    const room =  new GameRoom(roomName, players, option, await gameRecord, channel);
+      await this.gameRecordRepository.save(gameRecord[1]).then(
+	async () => {
+		const room =  new GameRoom(roomName, players, option, await gameRecord, channel);
     this.playRoom.push(room);
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
@@ -172,6 +179,10 @@ export class GameService {
         'game_queue_succes',
         new GameQueueSuccessDto(channel.gameIdx, players),
       );
+	}
+   )
+    });
+    
   }
 
   // play room 의 이름을 설정한다.
