@@ -641,9 +641,33 @@ export class ChatService {
         };
       }),
     );
+    const totalMsgCount = dmMessageList.length;
+    console.log('dmMessageList: ', dmMessageList);
+    // // 전체 개수를 5로 나눈다. 나눈 값이 10이라고 하면  7 + i, 8 + i, 9 + i, 10 + i 인텍스의 메시지를 더한다. (i는 0부터 5까지)
+    const dmMessageListWhenEnterRoom = [];
+    let totalPage = Math.floor(totalMsgCount / 5);
+    if ((totalMsgCount % 5) != 0) {
+      totalPage += 1;
+    }
+    console.log('totalPage: ', totalPage);
+    let pageForStart = totalPage - 4;
+    console.log('pageForStart: ', pageForStart);
+    for (let j = 0; j < 4; j++) {
+      console.log(pageForStart);
+      for (let i = 0; i < 5; i++) {
+        let num = i + (pageForStart * 5);
+        if (dmMessageList[num]) {
+          dmMessageListWhenEnterRoom.push(dmMessageList[num]);
+        }
+      }
+      pageForStart += 1;
+    }
+    dmMessageListWhenEnterRoom.reverse();
+    console.log("의심되는 부분입니다: ", dmMessageListWhenEnterRoom);
     const targetUser = this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
     const messageInfo = {
-      message: dmMessageList,
+      message: dmMessageListWhenEnterRoom,
+      totalMsgCount: totalMsgCount,
       userIdx1: channel.userIdx1,
       userIdx2: channel.userIdx2,
       userNickname1: channel.userNickname1,
@@ -655,18 +679,21 @@ export class ChatService {
   }
 
   // MAIN_CHAT_INFINITY
-  async getChatMessagesByInfinity(channelIdx: number, msgDate: string) {
-    // 일단 channelIdx 로 채널을 꾸려야한다.
+  async getChatMessagesByInfinity(channelIdx: number, page: string) {
     const messages = await this.directMessagesRepository.find({
-      where: [{ channelIdx: channelIdx, msgDate: LessThan(msgDate) }],
-      order: {
-        msgDate: 'DESC',
-      },
-      take: 5,
+      where: [{ channelIdx: channelIdx }],
     });
-
+    console.log('page : ', page);
+    const messageList = [];
+    for (let i = 0; i < 5; i++) {
+      const num = i + (Number(page) - 1) * 5;
+      if (messages[num]) {
+        messageList.push(messages[num]);
+      } 
+    }
+    messageList.reverse();
     const messageInfo = await Promise.all(
-      messages.map(async (message) => {
+      messageList.map(async (message) => {
         const senderIdx = this.inMemoryUsers.getUserByIntraFromIM(
           message.sender,
         ).userIdx;
@@ -674,11 +701,9 @@ export class ChatService {
           channelIdx: message.channelIdx,
           senderIdx: senderIdx,
           msg: message.msg,
-          msgDate: message.msgDate,
         };
       }),
     );
-    console.log(messageInfo);
     return messageInfo;
   }
 }
