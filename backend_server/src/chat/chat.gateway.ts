@@ -108,7 +108,6 @@ export class ChatGateway
         userId,
       );
     }
-    //
     // FIXME: 함수로 빼기
     this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
     const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
@@ -130,7 +129,11 @@ export class ChatGateway
         client.leave(`chat_room_${channel.channelIdx}`);
       });
     });
-    //
+    if (user.isOnline === OnlineStatus.ONGAME) {
+      setTimeout(async () => {
+        await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
+      }, 100);
+    }
     await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
     return this.messanger.setResponseMsgWithLogger(
       200,
@@ -256,7 +259,7 @@ export class ChatGateway
       );
     }
     //
-    // FIXME: game 기록도 인메모리에서 관리하기로 했었나?? 전적 데이터 추가 필요
+    // FIXME: 전적 데이터 추가 필요
     const target_profile = new chatGetProfileDto(
       target.nickname,
       target.imgUri,
@@ -307,9 +310,8 @@ export class ChatGateway
     const { targetNickname, targetIdx, msg } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     // 오프라인일 수도 있기 때문에 db 에서 가져옴
-    const targetUser: UserObject = await this.usersService.getUserInfoFromDBById(
-      targetIdx,
-    );
+    const targetUser: UserObject =
+      await this.usersService.getUserInfoFromDBById(targetIdx);
     if (targetUser.userIdx !== targetIdx) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -1245,15 +1247,17 @@ export class ChatGateway
   }
 
   @SubscribeMessage('set_user_status')
-  async updateUserStatus(@ConnectedSocket() client: Socket, @MessageBody() userStatus: UserStatusDto) {
+  async updateUserStatus(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userStatus: UserStatusDto,
+  ) {
     const userId: number = parseInt(client.handshake.query.userId as string);
-    
+
     if (Number.isNaN(userId)) return;
     const savedUser = await this.usersService.findOneUser(userId);
-    
+
     this.inMemoryUsers.setUserByIdFromIM(savedUser);
-    
-    
-    console.log("inMem : ", this.inMemoryUsers.inMemoryUsers);
+
+    console.log('inMem : ', this.inMemoryUsers.inMemoryUsers);
   }
 }
