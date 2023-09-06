@@ -25,6 +25,7 @@ export class KeyPress {
     } else if (maxFps == 30) {
       return Fps.HALF;
     } else if (maxFps == 24) {
+      return Fps.LOW;
     } else if (maxFps == 10) {
       return Fps.SUPERLOW;
     } else {

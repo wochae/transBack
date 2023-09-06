@@ -74,8 +74,8 @@ export class GameService {
     const player = new GamePlayer(target);
     player.setOptions(data);
     if (target.isOnline === OnlineStatus.ONLINE)
-      target.isOnline = OnlineStatus.ONGAME;
-    this.inMemoryUsers.saveUserByUdFromIM(target.userIdx);
+      target.isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
+    this.inMemoryUsers.saveUserByUserIdFromIM(target.userIdx);
     return player;
   }
 
@@ -148,7 +148,7 @@ export class GameService {
     }
     if (target === undefined) return;
     target[0].getUserObject().isOnline = OnlineStatus.ONGAME;
-    await this.inMemoryUsers.saveUserByUdFromIM(userIdx);
+    await this.inMemoryUsers.saveUserByUserIdFromIM(userIdx);
   }
 
   // play room 을 구성한다.
@@ -310,16 +310,21 @@ export class GameService {
     else latencyIdx = 1;
 
     latencyCnt[latencyIdx] += 1;
-    targetRoom.latency[latencyIdx] += data.clientTime - data.serverTime;
-    targetRoom.latency[latencyIdx] = Math.round(
-      targetRoom.latency[latencyIdx] / 2,
-    );
+    if (targetRoom.latency[latencyIdx] == 0) {
+      targetRoom.latency[latencyIdx] += data.clientTime - data.serverTime;
+    } else {
+      targetRoom.latency[latencyIdx] += data.clientTime - data.serverTime;
+      targetRoom.latency[latencyIdx] = Math.round(
+        targetRoom.latency[latencyIdx] / 2,
+      );
+    }
     if (latencyCnt == 120) {
       if (targetRoom.latencyCnt[0] >= 120 && targetRoom.latencyCnt[1] >= 120) {
         targetRoom.stopInterval();
         targetRoom.latencyCnt.splice(0, 2);
         targetRoom.latencyCnt.push(0);
         targetRoom.latencyCnt.push(0);
+        // TODO: FPS 체크 어디서 되지?
         targetRoom.gamePhase = GamePhase.SET_NEW_GAME;
         return true;
       }
@@ -356,6 +361,7 @@ export class GameService {
 
   // 프레임을 전달하는 함수
   private async makeFrame(room: GameRoom, server: Server) {
+    room.getNextFrame();
     const status: GamePhase = room.getScoreStatus();
     if (status !== GamePhase.ON_PLAYING) {
       //TODO: frame data

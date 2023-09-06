@@ -107,6 +107,7 @@ export class Animations {
       (currentData.currentPosX + this.unitDistance).toFixed(2),
     );
     const nextY = parseFloat(
+      // y = ax + b, a, b의 값을 미리 설정
       (currentData.angle * nextX + currentData.yIntercept).toFixed(2),
     );
 
@@ -117,11 +118,12 @@ export class Animations {
     // 프레임 값 갱신
     currentData.currentPosX = nextX;
     currentData.currentPosY = nextY;
-    currentData.paddle1 = paddle1;
-    currentData.paddle2 = paddle2;
 
     // 프레임 값 갱신 #2 paddle 최대, 최소 값 정리
     this.setPaddleNotOverLimit(currentData, paddle1, paddle2);
+
+    currentData.paddle1 = paddle1;
+    currentData.paddle2 = paddle2;
 
     // 현재 게임 상태 갱신
     if (this.currentFps + 1 == this.maxFps || this.currentFps + 1 < this.maxFps)
@@ -205,10 +207,6 @@ export class Animations {
   public handleSituationWallStrike(currentData: GameData) {
     this.reverseVectorY(currentData);
     this.setNewlinearEquation(currentData);
-    // currentData.angle =
-    //   (currentData.standardY - 0) / (currentData.standardX - 0);
-    // currentData.yIntercept =
-    //   currentData.standardY - currentData.angle * currentData.standardX;
     return;
   }
 

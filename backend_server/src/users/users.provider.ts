@@ -34,7 +34,7 @@ export class InMemoryUsers {
     return this.inMemoryUsers.find((user) => user.userIdx === userId);
   }
 
-  async saveUserByUdFromIM(userId: number): Promise<boolean> {
+  async saveUserByUserIdFromIM(userId: number): Promise<boolean> {
     try {
       const targetUser = this.inMemoryUsers.find(
         (user) => user.userIdx === userId,

@@ -107,7 +107,7 @@ export class GameGateway
       this.server
         .to(targetRoom.roomId)
         .emit('game_start', new GameStartDto(targetRoom));
-      setTimeout(this.gameService.startGame, 3000, data.userIdx, this.server);
+      setTimeout(this.gameService.startGame, 2000, data.userIdx, this.server);
       return this.messanger.setResponseMsgWithLogger(
         this.gameService.sendSetFrameRate(data.userIdx),
         'Your max fps is checked',
@@ -122,7 +122,10 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_move_paddle')
-  getKeyPressData(@MessageBody() data: KeyPressDto) {}
+  getKeyPressData(@MessageBody() data: KeyPressDto) {
+    //TODO: key 입력 넣기
+    //TODO: latency check
+  }
 
   @SubscribeMessage('game_pause_score')
   getPauseStatus(@MessageBody() data: GameBasicAnswerDto) {

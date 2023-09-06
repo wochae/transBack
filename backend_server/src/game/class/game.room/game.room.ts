@@ -18,7 +18,7 @@ import { RecordResult } from 'src/game/enum/game.type.enum';
 export class GameRoom {
   roomId: string;
   intervalId: any;
-  intervalPeriod: number;
+  intervalPeriod: number; // 서버 -(좌표)-> 클라이언트 -(키 입력)-> 서버  -(좌표, 키 입력)-> 클라이언트
   users: GamePlayer[];
   gameObj: GameData;
   latency: number[];
