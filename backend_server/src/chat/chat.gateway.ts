@@ -109,7 +109,6 @@ export class ChatGateway
         userId,
       );
     }
-    //
     // FIXME: 함수로 빼기
     this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
     const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
@@ -131,8 +130,13 @@ export class ChatGateway
         client.leave(`chat_room_${channel.channelIdx}`);
       });
     });
-    //
-    await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
+    if (user.isOnline === OnlineStatus.ONGAME) {
+      setTimeout(async () => {
+        await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE), 100;
+      });
+    } else {
+      await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
+    }
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Disconnect Done',
@@ -274,31 +278,6 @@ export class ChatGateway
     );
   }
 
-  // // API: MAIN_CHAT_0
-  // @SubscribeMessage('check_dm')
-  // async handleCheckDM(
-  //   @ConnectedSocket() client: Socket,
-  //   @MessageBody() chatGeneralReqDto: ChatGeneralReqDto,
-  // ) {
-  //   const { targetIdx } = chatGeneralReqDto;
-  //   const userId: number = parseInt(client.handshake.query.userId as string);
-  //   const check_dm: MessageInfo | boolean = await this.chatService.checkDM(
-  //     userId,
-  //     targetIdx,
-  //   );
-  //   if (check_dm === false) {
-  //     client.emit('check_dm', []);
-  //     return false;
-  //   } else {
-  //     client.emit('check_dm', check_dm);
-  //   }
-  //   return this.messanger.setResponseMsgWithLogger(
-  //     200,
-  //     'Done Check DM',
-  //     'check_dm',
-  //   );
-  // }
-
   // API: MAIN_CHAT_1.
   @SubscribeMessage('create_dm')
   async createDM(
@@ -308,9 +287,8 @@ export class ChatGateway
     const { targetNickname, targetIdx, msg } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     // 오프라인일 수도 있기 때문에 db 에서 가져옴
-    const targetUser: UserObject = await this.usersService.getUserInfoFromDB(
-      targetNickname,
-    );
+    const targetUser: UserObject =
+      await this.usersService.getUserInfoFromDBById(targetIdx);
     if (targetUser.userIdx !== targetIdx) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
