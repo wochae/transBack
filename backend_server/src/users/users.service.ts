@@ -190,6 +190,14 @@ export class UsersService {
         user,
         this.userObjectRepository,
       );
+      const friend = await this.friendListRepository.findOneBy({
+        userIdx: user.userIdx,
+        friendNickname: targetNickname,
+      });
+      // 친구일 경우, 지워주고, 채팅방에 멤버인 경우엔 그 경우를 지나지 않는다.
+      if (friend) {
+        await this.friendListRepository.delete(friend.idx);
+      }
       // check inmemory
       const checkTarget = await this.blockedListRepository.findOne({
         where: {
