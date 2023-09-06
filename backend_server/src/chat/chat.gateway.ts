@@ -133,8 +133,9 @@ export class ChatGateway
       setTimeout(async () => {
         await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE), 100;
       });
+    } else {
+      await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
     }
-    await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Disconnect Done',
