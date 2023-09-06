@@ -220,8 +220,8 @@ export class UsersService {
     const blockList = inMemory.getBlockListByIdFromIM(user.userIdx);
     const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
       return {
-        userNickname: res.blockedNickname,
-        userIdx: res.blockedUserIdx,
+        blockedNickname: res.blockedNickname,
+        blockedUserIdx: res.blockedUserIdx,
       };
     });
     return blockInfoList;
