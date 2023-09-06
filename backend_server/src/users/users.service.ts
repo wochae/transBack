@@ -177,7 +177,7 @@ export class UsersService {
   };
 
   async setBlock(
-    targetNickname: string,
+    targetIdx: number,
     user: UserObject,
     inMemory: InMemoryUsers,
   ): Promise<BlockInfoDto[]> {
@@ -186,13 +186,13 @@ export class UsersService {
       await queryRunner.connect();
       await queryRunner.startTransaction();
       const blockInfo = await this.blockedListRepository.blockTarget(
-        targetNickname,
+        targetIdx,
         user,
         this.userObjectRepository,
       );
       const friend = await this.friendListRepository.findOneBy({
         userIdx: user.userIdx,
-        friendNickname: targetNickname,
+        friendIdx: targetIdx,
       });
       // 친구일 경우, 지워주고, 채팅방에 멤버인 경우엔 그 경우를 지나지 않는다.
       if (friend) {
@@ -202,14 +202,17 @@ export class UsersService {
       const checkTarget = await this.blockedListRepository.findOne({
         where: {
           userIdx: user.userIdx,
-          blockedNickname: targetNickname,
+          blockedUserIdx: targetIdx,
         },
       });
+      // 이런 경우 이전에 내가 누군가를 블락해서 디비에 저장을 했는데, 그 사람이 닉네임을 변경하면, 그 사람을 닉네임으로 찾을 수가 없다.
       if (!checkTarget) {
-        inMemory.removeBlockListByNicknameFromIM(targetNickname);
+        inMemory.removeBlockListByIntraFromIM(blockInfo.blockedIntra);
       } else {
         inMemory.setBlockListByIdFromIM(blockInfo);
       }
+      inMemory.setBlockListByIdFromIM(blockInfo);
+      
       await queryRunner.commitTransaction();
     } catch (err) {
       await queryRunner.rollbackTransaction();
@@ -220,7 +223,7 @@ export class UsersService {
     const blockList = inMemory.getBlockListByIdFromIM(user.userIdx);
     const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
       return {
-        userNickname: res.blockedNickname,
+        userNickname: res.blockedIntra,
         userIdx: res.blockedUserIdx,
       };
     });
