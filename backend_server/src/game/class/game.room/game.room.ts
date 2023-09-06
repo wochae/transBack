@@ -32,7 +32,9 @@ export class GameRoom {
   constructor(
     id: string,
     users: GamePlayer[],
-    options: GameOptionDto,
+    type: GameType,
+	speed: GameSpeed,
+	mapNumber: MapNumber,
     histories: GameRecord[],
     channel: GameChannel,
   ) {
@@ -40,19 +42,33 @@ export class GameRoom {
 
     this.users = users;
 
-    this.gameObj.gameType = options.gameType;
-    this.gameObj.gameSpeed = options.speed;
-    this.gameObj.gameMapNumber = options.mapNumber;
-    this.gameObj.score1 = 0;
-    this.gameObj.score2 = 0;
-    this.gameObj.paddle1MaxMin = [20, -20];
-    this.gameObj.paddle2MaxMin = [20, -20];
+
+    this.gameObj = {
+		currentPosX: 0,
+		currentPosY: 0,
+		standardX: 0,
+		standardY: 0,
+		angle: 0,
+		yIntercept: 0,
+		vector: Vector.UPLEFT,
+		paddle1: 0,
+		paddle1MaxMin: [20, -20],
+		paddle2: 0,
+		paddle2MaxMin: [20, -20],
+		gameType: type,
+		gameSpeed: speed,
+		gameMapNumber: mapNumber,
+		score1: 0,
+		score2: 2,	
+	}
+
 
     this.latency = [];
     this.latencyCnt = [];
 
     this.animation = new Animations();
 
+	this.keyPress = [];
     this.keyPress[0] = new KeyPress();
     this.keyPress[1] = new KeyPress();
 

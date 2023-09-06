@@ -158,22 +158,22 @@ export class GameService {
     const roomName = this.makeRoomName();
     const option = this.setOptions(players);
     const channel = this.makeGameChennl(players);
-	console.log("option", option)
-	this.messanger.logWithMessage("makePlayerRoom", "", "", `${players.length}`)
+	console.log("option", option.gameType);
+	this.messanger.logWithMessage("makePlayerRoom", "", "", `${players.length}`);
 	
     await this.gameChannelRepository.save(channel);
 	this.messanger.logWithMessage("makePlayerRoom", "", "", `${channel.userIdx1} ${channel.userIdx2} / ${channel.matchDate}`)
-    const gameRecord = await this.makeGameHistory(players, channel);;
+    const gameRecord = await this.makeGameHistory(players, channel);
 	// TODO: FIX here
     await this.gameRecordRepository.save(gameRecord[0]).then(async () => {
       await this.gameRecordRepository.save(gameRecord[1]).then(
 	async () => {
-		const room =  new GameRoom(roomName, players, option, await gameRecord, channel);
-    this.playRoom.push(room);
-    players[0].getSocket().join(roomName);
-    players[1].getSocket().join(roomName);
-    room.setGamePhase(GamePhase.MAKE_ROOM);
-    server
+		const room =  new GameRoom(roomName, players, option.gameType, option.speed, option.mapNumber, await gameRecord, channel);
+    	this.playRoom.push(room);
+   		 players[0].getSocket().join(roomName);
+   		 players[1].getSocket().join(roomName);
+    	room.setGamePhase(GamePhase.MAKE_ROOM);
+    	server
       .to(roomName)
       .emit(
         'game_queue_succes',
