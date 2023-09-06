@@ -108,112 +108,121 @@ export class ChatGateway
         userId,
       );
     }
-    //
-    // FIXME: 함수로 빼기
-    this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
-    const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
-    const channelForLeave: Channel[] = notDmChannelList?.filter((channel) =>
-      channel.getMember.some((member) => member.userIdx === user.userIdx),
-    );
-    channelForLeave?.forEach((channel) => {
-      channel.removeMember(user);
-      const roomIsEmpty = this.chatService.checkEmptyChannel(channel);
-      if (roomIsEmpty) {
-        const channels = this.chatService.removeEmptyChannel(channel);
-      }
-      client.leave(`chat_room_${channel.getChannelIdx}`);
-    });
-    const dmChannelList: Promise<DMChannel[]> =
-      this.chatService.findPrivateChannelByUserIdx(user.userIdx);
-    dmChannelList.then((channels) => {
-      channels.forEach((channel) => {
-        client.leave(`chat_room_${channel.channelIdx}`);
+    if (user.isOnline === OnlineStatus.ONGAME) {
+      setTimeout(() => {
+        this.messanger.logWithMessage(
+          'ChatGateway HandleDisconnect',
+          'user',
+          user.nickname,
+          'Wait until game socket is over',
+        ), 100
       });
-    });
-    //
-    await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Disconnect Done',
-      'handleDisconnect',
-    );
-  }
-
-  /***************************** SOCKET API  *****************************/
-  // FIXME: 매개변수 DTO 로 Json.parse 대체하기
-  // API: MAIN_ENTER_0
-  @SubscribeMessage('main_enter')
-  async enterMainPage(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() chatMainEnterReqDto: ChatMainEnterReqDto,
-  ) {
-    const { intra } = chatMainEnterReqDto;
-
-    // FIXME: 1. connect 된 소켓의 유저 인트라와 요청한 인트라가 일치하는지 확인하는 함수 추가 필요
-    const userId: number = parseInt(client.handshake.query.userId as string);
-    const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
-    if (checkUser.intra !== intra) {
-      client.disconnect();
-      return this.messanger.setResponseErrorMsgWithLogger(
-        400,
-        'Improper Access',
-        'main_enter',
-        userId,
+      // FIXME: 함수로 빼기
+      this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
+      const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
+      const channelForLeave: Channel[] = notDmChannelList?.filter((channel) =>
+        channel.getMember.some((member) => member.userIdx === user.userIdx),
+      );
+      channelForLeave?.forEach((channel) => {
+        channel.removeMember(user);
+        const roomIsEmpty = this.chatService.checkEmptyChannel(channel);
+        if (roomIsEmpty) {
+          const channels = this.chatService.removeEmptyChannel(channel);
+        }
+        client.leave(`chat_room_${channel.getChannelIdx}`);
+      });
+      const dmChannelList: Promise<DMChannel[]> =
+        this.chatService.findPrivateChannelByUserIdx(user.userIdx);
+      dmChannelList.then((channels) => {
+        channels.forEach((channel) => {
+          client.leave(`chat_room_${channel.channelIdx}`);
+        });
+      });
+      //
+      await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'Disconnect Done',
+        'handleDisconnect',
       );
     }
-    //
-    const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
-    // FIXME: 2. 예외처리 함수 만들기
-    if (!user) {
-      client.disconnect();
-      return this.messanger.logWithWarn(
-        'enterMainPage',
-        'intra',
-        intra,
-        'Not Found',
+
+    /***************************** SOCKET API  *****************************/
+    // FIXME: 매개변수 DTO 로 Json.parse 대체하기
+    // API: MAIN_ENTER_0
+    @SubscribeMessage('main_enter')
+    async enterMainPage(
+      @ConnectedSocket() client: Socket,
+      @MessageBody() chatMainEnterReqDto: ChatMainEnterReqDto,
+    ) {
+      const { intra } = chatMainEnterReqDto;
+
+      // FIXME: 1. connect 된 소켓의 유저 인트라와 요청한 인트라가 일치하는지 확인하는 함수 추가 필요
+      const userId: number = parseInt(client.handshake.query.userId as string);
+      const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
+      if (checkUser.intra !== intra) {
+        client.disconnect();
+        return this.messanger.setResponseErrorMsgWithLogger(
+          400,
+          'Improper Access',
+          'main_enter',
+          userId,
+        );
+      }
+      //
+      const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
+      // FIXME: 2. 예외처리 함수 만들기
+      if (!user) {
+        client.disconnect();
+        return this.messanger.logWithWarn(
+          'enterMainPage',
+          'intra',
+          intra,
+          'Not Found',
+        );
+      }
+      //
+      // FIXME: 3. emit value 만드는 함수로 빼기, DTO 만들기?
+      const userObject = {
+        imgUri: user.imgUri,
+        nickname: user.nickname,
+        userIdx: user.userIdx,
+      };
+      const friendList = await this.usersService.getFriendList(intra);
+      const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
+        user.userIdx,
+      );
+      const channelList = await this.chat.getProtectedChannels?.map(
+        ({ getOwner: owner, getChannelIdx: channelIdx, getMode: mode }) => ({
+          owner: owner.nickname,
+          channelIdx,
+          mode,
+        }),
+      );
+      const main_enter = {
+        friendList,
+        channelList,
+        blockList,
+        userObject,
+      };
+      //
+      client.emit('main_enter', main_enter);
+
+      // API: MAIN_ENTER_1
+      // FIXME: DTO 만들기?
+      await this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
+      const BR_main_enter = {
+        targetNickname: user.nickname,
+        targetIdx: user.userIdx,
+        isOnline: user.isOnline,
+      };
+      this.server.emit('BR_main_enter', BR_main_enter);
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'Done Enter Main Page and Notice to Others',
+        'BR_main_enter',
       );
     }
-    //
-    // FIXME: 3. emit value 만드는 함수로 빼기, DTO 만들기?
-    const userObject = {
-      imgUri: user.imgUri,
-      nickname: user.nickname,
-      userIdx: user.userIdx,
-    };
-    const friendList = await this.usersService.getFriendList(intra);
-    const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
-      user.userIdx,
-    );
-    const channelList = await this.chat.getProtectedChannels?.map(
-      ({ getOwner: owner, getChannelIdx: channelIdx, getMode: mode }) => ({
-        owner: owner.nickname,
-        channelIdx,
-        mode,
-      }),
-    );
-    const main_enter = {
-      friendList,
-      channelList,
-      blockList,
-      userObject,
-    };
-    //
-    client.emit('main_enter', main_enter);
-
-    // API: MAIN_ENTER_1
-    // FIXME: DTO 만들기?
-    await this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
-    const BR_main_enter = {
-      targetNickname: user.nickname,
-      targetIdx: user.userIdx,
-      isOnline: user.isOnline,
-    };
-    this.server.emit('BR_main_enter', BR_main_enter);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done Enter Main Page and Notice to Others',
-      'BR_main_enter',
-    );
   }
 
   // API: MAIN_PROFILE
@@ -256,7 +265,6 @@ export class ChatGateway
       );
     }
     //
-    // FIXME: game 기록도 인메모리에서 관리하기로 했었나?? 전적 데이터 추가 필요
     const target_profile = new chatGetProfileDto(
       target.nickname,
       target.imgUri,
@@ -273,30 +281,6 @@ export class ChatGateway
     );
   }
 
-  // // API: MAIN_CHAT_0
-  // @SubscribeMessage('check_dm')
-  // async handleCheckDM(
-  //   @ConnectedSocket() client: Socket,
-  //   @MessageBody() chatGeneralReqDto: ChatGeneralReqDto,
-  // ) {
-  //   const { targetIdx } = chatGeneralReqDto;
-  //   const userId: number = parseInt(client.handshake.query.userId as string);
-  //   const check_dm: MessageInfo | boolean = await this.chatService.checkDM(
-  //     userId,
-  //     targetIdx,
-  //   );
-  //   if (check_dm === false) {
-  //     client.emit('check_dm', []);
-  //     return false;
-  //   } else {
-  //     client.emit('check_dm', check_dm);
-  //   }
-  //   return this.messanger.setResponseMsgWithLogger(
-  //     200,
-  //     'Done Check DM',
-  //     'check_dm',
-  //   );
-  // }
 
   // API: MAIN_CHAT_1.
   @SubscribeMessage('create_dm')
@@ -307,9 +291,8 @@ export class ChatGateway
     const { targetNickname, targetIdx, msg } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     // 오프라인일 수도 있기 때문에 db 에서 가져옴
-    const targetUser: UserObject = await this.usersService.getUserInfoFromDBById(
-      targetIdx,
-    );
+    const targetUser: UserObject =
+      await this.usersService.getUserInfoFromDBById(targetIdx);
     if (targetUser.userIdx !== targetIdx) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -1245,15 +1228,17 @@ export class ChatGateway
   }
 
   @SubscribeMessage('set_user_status')
-  async updateUserStatus(@ConnectedSocket() client: Socket, @MessageBody() userStatus: UserStatusDto) {
+  async updateUserStatus(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() userStatus: UserStatusDto,
+  ) {
     const userId: number = parseInt(client.handshake.query.userId as string);
-    
+
     if (Number.isNaN(userId)) return;
     const savedUser = await this.usersService.findOneUser(userId);
-    
+
     this.inMemoryUsers.setUserByIdFromIM(savedUser);
-    
-    
-    console.log("inMem : ", this.inMemoryUsers.inMemoryUsers);
+
+    console.log('inMem : ', this.inMemoryUsers.inMemoryUsers);
   }
 }
