@@ -161,7 +161,7 @@ export class GameService {
     await this.gameRecordRepository.save(gameRecord[0]).then(async () => {
       await this.gameRecordRepository.save(gameRecord[1]);
     });
-    const room = new GameRoom(roomName, players, option, gameRecord, channel);
+    const room =  new GameRoom(roomName, players, option, await gameRecord, channel);
     this.playRoom.push(room);
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
@@ -206,15 +206,21 @@ export class GameService {
       score1: 0,
       score2: 0,
       status: RecordResult.DEFAULT,
+	  matchDate: new Date(),
     });
     return ret;
   }
 
   // DB 저장을 위한 Record 객체를 생성한다.
-  private makeGameHistory(
+  private async makeGameHistory(
     players: GamePlayer[],
     channel: GameChannel,
-  ): GameRecord[] {
+  ): Promise<GameRecord[]> {
+	channel = await this.gameChannelRepository.findOneBy({
+		userIdx1: channel.userIdx1,
+		userIdx2: channel.userIdx2,
+		matchDate: channel.matchDate,
+	});
     const player1 = players[0].getUserObject();
     const player2 = players[1].getUserObject();
     const history1 = this.gameRecordRepository.create({

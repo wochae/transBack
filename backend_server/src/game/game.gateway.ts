@@ -69,6 +69,7 @@ export class GameGateway
         'not proper access',
       );
       client.disconnect(true);
+	    return;
     }
     this.gameService.changeStatusForPlayer(userIdx);
     const players = this.gameService.checkQueue(userIdx);
