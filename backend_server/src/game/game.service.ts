@@ -23,6 +23,8 @@ import { GameQueueSuccessDto } from './dto/game.queue.suceess.dto';
 import { GamePingDto, GamePingReceiveDto } from './dto/game.ping.dto';
 import { GamePauseScpreDto } from './dto/game.pause.score.dto';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
+import { GameFrameDataDto } from './dto/game.frame.data.dto';
+import { KeyPressDto } from './dto/key.press.dto';
 
 @Injectable()
 export class GameService {
@@ -33,6 +35,7 @@ export class GameService {
   private onLinePlayer: [GamePlayer, GameType][];
   private nameCnt: number;
   private today: string;
+  private frameData: GameFrameDataDto;
   messanger: LoggerWithRes = new LoggerWithRes('GameService');
 
   constructor(
@@ -53,6 +56,7 @@ export class GameService {
     const day = currentDate.getDate();
     const formattedDate = `${year}-${month}-${day}`;
     this.today = formattedDate;
+    this.frameData = new GameFrameDataDto(null, null);
   }
 
   // PROFILE_INFINITY
@@ -188,7 +192,7 @@ export class GameService {
             option.gameType,
             option.speed,
             option.mapNumber,
-            await gameRecord,
+            gameRecord,
             channel,
           );
           this.playRoom.push(room);
@@ -289,6 +293,14 @@ export class GameService {
     return room.users[0].getReady() && room.users[1].getReady();
   }
 
+  uncheckReady(userIdx: number) {
+    const room = this.findGameRoomById(userIdx);
+    if (room === null) return;
+    room.users[0].setReady(-1);
+    room.users[1].setReady(-1);
+    return;
+  }
+
   // play room 을 userIdx 를 활용해서 탐색해낸다.
   public findGameRoomById(userIdx: number): GameRoom | null {
     for (const room of this.playRoom) {
@@ -340,10 +352,7 @@ export class GameService {
     if (targetRoom.gamePhase != GamePhase.MAKE_ROOM) return false;
     let latencyCnt;
     let latencyIdx;
-    if (
-      targetRoom.users[0].getUserObject().userIdx.valueOf() ===
-      data.userIdx.valueOf()
-    )
+    if (targetRoom.users[0].getUserObject().userIdx === data.userIdx)
       latencyIdx = 0;
     else latencyIdx = 1;
 
@@ -356,18 +365,46 @@ export class GameService {
         targetRoom.latency[latencyIdx] / 2,
       );
     }
-    if (latencyCnt == 120) {
+    if (latencyCnt[latencyIdx] == 120) {
       if (targetRoom.latencyCnt[0] >= 120 && targetRoom.latencyCnt[1] >= 120) {
         targetRoom.stopInterval();
+        this.sendSetFrameRate(data.userIdx);
         targetRoom.latencyCnt.splice(0, 2);
         targetRoom.latencyCnt.push(0);
         targetRoom.latencyCnt.push(0);
-        // TODO: FPS 체크 어디서 되지?
         targetRoom.gamePhase = GamePhase.SET_NEW_GAME;
         return true;
       }
     }
+    return false;
+  }
 
+  public checkLatencyOnPlay(target: GameRoom, keyData: KeyPressDto) {
+    let latencyCnt;
+    let latencyIdx;
+    if (target.users[0].getUserObject().userIdx === keyData.userIdx)
+      latencyIdx = 0;
+    else latencyIdx = 1;
+    latencyCnt[latencyIdx] += 1;
+    if (target.latency[latencyIdx] == 0) {
+      target.latency[latencyIdx] += keyData.clientTime - keyData.serverTime;
+    } else {
+      target.latency[latencyIdx] += keyData.clientTime - keyData.serverTime;
+      target.latency[latencyIdx] = Math.round(target.latency[latencyIdx] / 2);
+    }
+    if (latencyCnt[latencyIdx] == target.getMaxFps()) {
+      if (
+        target.latencyCnt[0] >= target.getMaxFps() &&
+        target.latency[1] >= target.getMaxFps()
+      ) {
+        this.sendSetFrameRate(keyData.userIdx);
+        target.latencyCnt.splice(0, 2);
+        target.latencyCnt.push(0);
+        target.latencyCnt.push(0);
+        // target.gamePhase = GamePhase.SET_NEW_GAME;
+        return true;
+      }
+    }
     return false;
   }
 
@@ -399,13 +436,11 @@ export class GameService {
 
   // 프레임을 전달하는 함수
   private async makeFrame(room: GameRoom, server: Server) {
-    room.getNextFrame();
+    const frame = room.getNextFrame();
     const status: GamePhase = room.getScoreStatus();
     if (status !== GamePhase.ON_PLAYING) {
-      //TODO: frame data
       room.stopInterval();
       if (status === GamePhase.SET_NEW_GAME) {
-        // TODO: get Score but not end;
         server
           .to(room.roomId)
           .emit(
@@ -419,7 +454,6 @@ export class GameService {
             'game_pause_score',
             new GamePauseScpreDto(room.users, room.gameObj, GameStatus.END),
           );
-        // TODO: get Score and match is end;
       }
       room.syncronizeResult();
       await this.gameChannelRepository.save(room.channel).then(async () => {
@@ -427,14 +461,10 @@ export class GameService {
           await this.gameRecordRepository.save(room.history[1]);
         });
       });
-      //TODO: 조건에 맞춰서 바꾸기
     } else {
       server
         .to(room.roomId)
-        .emit(
-          'game_frame',
-          new GamePauseScpreDto(room.users, room.gameObj, GameStatus.ONGOING),
-        );
+        .emit('game_frame', this.frameData.setData(frame, Date.now()));
     }
   }
 }

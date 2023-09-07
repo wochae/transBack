@@ -17,6 +17,14 @@ export class KeyPress {
     this.maxFrame = -1;
     this.pressedNumber = 0;
     this.moveUnit = 1;
+    this.keyAccumulatedValue = 0;
+  }
+
+  public setRenewKeypress() {
+    this.maxFrame = -1;
+    this.pressedNumber = 0;
+    this.moveUnit = 1;
+    this.keyAccumulatedValue = 0;
   }
 
   public setPressedNumberByMaxFps(maxFps: number): Fps {

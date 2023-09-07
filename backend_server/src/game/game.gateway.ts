@@ -69,7 +69,7 @@ export class GameGateway
         'not proper access',
       );
       client.disconnect(true);
-	    return;
+      return;
     }
     this.gameService.changeStatusForPlayer(userIdx);
     const players = this.gameService.checkQueue(userIdx);
@@ -92,7 +92,7 @@ export class GameGateway
     else if (ret === true) {
       const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
       setTimeout(this.gameService.readyToSendPing, 1000, roomId, this.server);
-    } else {
+      this.gameService.uncheckReady(userIdx);
     }
     return this.messanger.setResponseMsgWithLogger(
       200,
@@ -124,12 +124,42 @@ export class GameGateway
 
   @SubscribeMessage('game_move_paddle')
   getKeyPressData(@MessageBody() data: KeyPressDto) {
+    const targetRoom = this.gameService.findGameRoomById(data.userIdx);
+    targetRoom.keyPressed(data.userIdx, data.paddle);
+    if (this.gameService.checkLatencyOnPlay(targetRoom, data)) {
+      return this.messanger.setResponseMsgWithLogger(
+        202,
+        'Frame is changed',
+        'game_move_paddle',
+      );
+    } else
+      return this.messanger.setResponseMsgWithLogger(
+        202,
+        'Frame is changed',
+        'game_move_paddle',
+      );
     //TODO: key 입력 넣기
     //TODO: latency check
   }
 
   @SubscribeMessage('game_pause_score')
-  getPauseStatus(@MessageBody() data: GameBasicAnswerDto) {
+  getPauseStatus(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: GameBasicAnswerDto,
+  ) {
+    const userIdx = data.userIdx;
+    const ret = this.gameService.checkReady(userIdx);
+    if (ret === null) client.disconnect(true);
+    else if (ret === true) {
+      const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
+      setTimeout(this.gameService.readyToSendPing, 1000, roomId, this.server);
+      this.gameService.uncheckReady(userIdx);
+    }
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'please Wait. Both Player is ready',
+      'game_pause_score',
+    );
     // TODO: ready check
     // TODO: reset Game
     // TODO: Start Game

@@ -61,7 +61,11 @@ export class GameRoom {
     };
 
     this.latency = [];
+    this.latency.push(0);
+    this.latency.push(0);
     this.latencyCnt = [];
+    this.latencyCnt.push(0);
+    this.latencyCnt.push(0);
 
     this.animation = new Animations();
 
@@ -84,6 +88,22 @@ export class GameRoom {
     this.resetPaddle();
     this.setRandomStandardCoordinates();
     this.setNewLinearEquation();
+    this.keyPress[0].setRenewKeypress();
+    this.keyPress[1].setRenewKeypress();
+    this.gameObj.currentPosX = 0;
+    this.gameObj.currentPosY = 0;
+    this.gameObj.standardX = 0;
+    this.gameObj.standardY = 0;
+    this.gameObj.angle = 0;
+    this.gameObj.yIntercept = 0;
+    this.gameObj.vector = Vector.UPLEFT;
+    this.gameObj.paddle1 = 0;
+    this.gameObj.paddle1MaxMin = [20, -20];
+    this.gameObj.paddle2 = 0;
+    this.gameObj.paddle2MaxMin = [20, -20];
+    this.gameObj.score1 = 0;
+    this.gameObj.score2 = 2;
+    this.gamePhase = GamePhase.SET_NEW_GAME;
     // TODO: 애니메이션 객체를 새롭게 만들어야 하는가?
     //
   }
@@ -105,6 +125,7 @@ export class GameRoom {
     else if (maxFps == 30) this.intervalPeriod = 30;
     else if (maxFps == 24) this.intervalPeriod = 40;
     else this.intervalPeriod = 100;
+    // TODO: 정상 가동 여부 판단 필요
     this.keyPress.map((data) => data.setPressedNumberByMaxFps(maxFps));
     return maxFps;
   }
