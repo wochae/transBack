@@ -98,7 +98,7 @@ export class ChatGateway
     const userId: number = parseInt(client.handshake.query.userId as string);
 
     // FIXME: 함수로 빼기
-    const user = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -498,8 +498,8 @@ export class ChatGateway
   ) {
     const { channelIdx, senderIdx, msg, targetIdx } = chatSendMsgReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
-    const target: UserObject = this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    const target = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
     const channel: Channel | DMChannel =
       await this.chatService.findChannelByRoomId(channelIdx);
     if (user.userIdx !== senderIdx) {
@@ -585,7 +585,7 @@ export class ChatGateway
   ) {
     const { password = '' } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    const user = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -1066,9 +1066,8 @@ export class ChatGateway
     // FIXME: targetIdx 가 본인인지 확인
     const { targetNickname, targetIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
-    const targetUser: UserObject =
-      this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    const targetUser = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
     if (targetUser.nickname !== targetNickname) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -1115,7 +1114,7 @@ export class ChatGateway
   @SubscribeMessage('chat_get_DMList')
   async getPrivateChannels(@ConnectedSocket() client: Socket) {
     const userId = parseInt(client.handshake.query.userId as string);
-    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     const channels = await this.chatService.getPrivateChannels(user);
     client.emit('chat_get_DMList', channels);
     return this.messanger.setResponseMsgWithLogger(
@@ -1151,7 +1150,7 @@ export class ChatGateway
     @MessageBody() chatGeneralReqDto: ChatGeneralReqDto,
   ) {
     const { userIdx, channelIdx } = chatGeneralReqDto;
-    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userIdx);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userIdx);
     const userId: number = parseInt(client.handshake.query.userId as string);
     if (user.userIdx !== userId) {
       client.disconnect();
@@ -1182,7 +1181,7 @@ export class ChatGateway
       return new ReturnMsgDto(400, 'Bad Request, target user is not online');
     }
     // in memory 로 바꿀까?
-    const target = this.inMemoryUsers.getUserByIdFromIM(targetTuple[0].userIdx);
+    const target = await this.inMemoryUsers.getUserByIdFromIM(targetTuple[0].userIdx);
     // const target = await this.usersService.getUserInfoFromDBById(
     //   targetTuple[0].userIdx,
     // );

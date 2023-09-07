@@ -303,7 +303,7 @@ export class ChatService {
 
   /******************* Save Message Funcions *******************/
 
-  saveMessageInIM(channelIdx: number, senderIdx: number, msg: string) {
+  async saveMessageInIM(channelIdx: number, senderIdx: number, msg: string) {
     const channel = this.chat.getProtectedChannels.find(
       (channel) => channel.getChannelIdx === channelIdx,
     );
@@ -315,10 +315,11 @@ export class ChatService {
       console.log('Channel not found.');
       return;
     }
-    // const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
+    const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
+    
     const message = {
       channelIdx: channelIdx,
-      senderIdx: this.inMemoryUsers.getUserByIdFromIM(senderIdx).userIdx,
+      senderIdx: sender.userIdx,
       msg: msgInfo.getMessage,
       msgDate: msgInfo.getMsgDate,
     };
@@ -664,7 +665,7 @@ export class ChatService {
     }
     dmMessageListWhenEnterRoom.reverse();
     console.log("의심되는 부분입니다: ", dmMessageListWhenEnterRoom);
-    const targetUser = this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
+    const targetUser = await this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
     const messageInfo = {
       message: dmMessageListWhenEnterRoom,
       totalMsgCount: totalMsgCount,
@@ -694,9 +695,9 @@ export class ChatService {
     messageList.reverse();
     const messageInfo = await Promise.all(
       messageList.map(async (message) => {
-        const senderIdx = this.inMemoryUsers.getUserByIntraFromIM(
-          message.sender,
-        ).userIdx;
+        const senderIdx = (await this.inMemoryUsers.getUserByIntraFromIM(
+          message.sender
+        )).userIdx;
         return {
           channelIdx: message.channelIdx,
           senderIdx: senderIdx,

@@ -26,11 +26,13 @@ export class InMemoryUsers {
     });
   }
 
-  getUserByIntraFromIM(intra: string): UserObject {
+  async getUserByIntraFromIM(intra: string): Promise<UserObject> {
+    await this.initInMemoryUsers();
     return this.inMemoryUsers.find((user) => user.intra === intra);
   }
 
-  getUserByIdFromIM(userId: number): UserObject {
+  async getUserByIdFromIM(userId: number): Promise<UserObject> {
+    await this.initInMemoryUsers();
     return this.inMemoryUsers.find((user) => user.userIdx === userId);
   }
 
@@ -73,9 +75,9 @@ export class InMemoryUsers {
     }
   }
 
-  removeBlockListByIntraFromIM(intra: string): void {
+  removeBlockListByIntraFromIM(nickname: string): void {
     this.inMemoryBlockList = this.inMemoryBlockList.filter(
-      (user) => user.blockedIntra !== intra,
+      (user) => user.blockedNickname !== nickname,
     );
   }
 }

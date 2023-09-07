@@ -206,13 +206,11 @@ export class UsersService {
         },
       });
       // 이런 경우 이전에 내가 누군가를 블락해서 디비에 저장을 했는데, 그 사람이 닉네임을 변경하면, 그 사람을 닉네임으로 찾을 수가 없다.
-      if (!checkTarget) {
-        inMemory.removeBlockListByIntraFromIM(blockInfo.blockedIntra);
-      } else {
-        inMemory.setBlockListByIdFromIM(blockInfo);
-      }
-      inMemory.setBlockListByIdFromIM(blockInfo);
-      
+      // if (!checkTarget) {
+      //   inMemory.removeBlockListByIntraFromIM(targetNickname);
+      // } else {
+      //   inMemory.setBlockListByIdFromIM(blockInfo);
+      // }
       await queryRunner.commitTransaction();
     } catch (err) {
       await queryRunner.rollbackTransaction();
@@ -223,8 +221,8 @@ export class UsersService {
     const blockList = inMemory.getBlockListByIdFromIM(user.userIdx);
     const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
       return {
-        userNickname: res.blockedIntra,
-        userIdx: res.blockedUserIdx,
+        blockedNickname: res.blockedNickname,
+        blockedUserIdx: res.blockedUserIdx,
       };
     });
     return blockInfoList;
