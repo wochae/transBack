@@ -23,6 +23,10 @@ export class GamePlayer {
     this.options = data;
   }
 
+  setUserObject(target: UserObject) {
+    this.userObject = target;
+  }
+
   getUserObject() {
     return this.userObject;
   }

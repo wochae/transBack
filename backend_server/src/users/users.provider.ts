@@ -34,18 +34,18 @@ export class InMemoryUsers {
     return this.inMemoryUsers.find((user) => user.userIdx === userId);
   }
 
-  async saveUserByUserIdFromIM(userId: number): Promise<boolean> {
+  async saveUserByUserIdFromIM(userId: number): Promise<UserObject | null> {
     try {
       const targetUser = this.inMemoryUsers.find(
         (user) => user.userIdx === userId,
       );
-      this.userObjectRepository.save(targetUser).then(() => {
-        return true;
+      const ret = this.userObjectRepository.save(targetUser).then(() => {
+        return ret;
       });
     } catch (error) {
       if (error instanceof QueryFailedError)
         throw new NotFoundException(`Failed to create user: ` + error.message);
-      return false;
+      return null;
     }
   }
 

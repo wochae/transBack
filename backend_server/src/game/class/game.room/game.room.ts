@@ -33,42 +33,39 @@ export class GameRoom {
     id: string,
     users: GamePlayer[],
     type: GameType,
-	speed: GameSpeed,
-	mapNumber: MapNumber,
+    speed: GameSpeed,
+    mapNumber: MapNumber,
     histories: GameRecord[],
     channel: GameChannel,
   ) {
     this.roomId = id;
 
     this.users = users;
-
-
     this.gameObj = {
-		currentPosX: 0,
-		currentPosY: 0,
-		standardX: 0,
-		standardY: 0,
-		angle: 0,
-		yIntercept: 0,
-		vector: Vector.UPLEFT,
-		paddle1: 0,
-		paddle1MaxMin: [20, -20],
-		paddle2: 0,
-		paddle2MaxMin: [20, -20],
-		gameType: type,
-		gameSpeed: speed,
-		gameMapNumber: mapNumber,
-		score1: 0,
-		score2: 2,	
-	}
-
+      currentPosX: 0,
+      currentPosY: 0,
+      standardX: 0,
+      standardY: 0,
+      angle: 0,
+      yIntercept: 0,
+      vector: Vector.UPLEFT,
+      paddle1: 0,
+      paddle1MaxMin: [20, -20],
+      paddle2: 0,
+      paddle2MaxMin: [20, -20],
+      gameType: type,
+      gameSpeed: speed,
+      gameMapNumber: mapNumber,
+      score1: 0,
+      score2: 2,
+    };
 
     this.latency = [];
     this.latencyCnt = [];
 
     this.animation = new Animations();
 
-	this.keyPress = [];
+    this.keyPress = [];
     this.keyPress[0] = new KeyPress();
     this.keyPress[1] = new KeyPress();
 

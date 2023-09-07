@@ -33,7 +33,7 @@ export class GameService {
   private onLinePlayer: [GamePlayer, GameType][];
   private nameCnt: number;
   private today: string;
- messanger: LoggerWithRes = new LoggerWithRes('GameService');
+  messanger: LoggerWithRes = new LoggerWithRes('GameService');
 
   constructor(
     private gameRecordRepository: GameRecordRepository,
@@ -70,14 +70,18 @@ export class GameService {
 
   // player 만들기
   async makePlayer(data: GameOptionDto): Promise<GamePlayer | null> {
-    const target = this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
-    if (target === undefined) return null;
+    const getPerson = this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
+    if (getPerson === undefined) return null;
 
-    const player = new GamePlayer(target);
+    const player = new GamePlayer(getPerson);
     player.setOptions(data);
-    if (target.isOnline === OnlineStatus.ONLINE)
-      target.isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
-    this.inMemoryUsers.saveUserByUserIdFromIM(target.userIdx);
+    if (getPerson.isOnline === OnlineStatus.ONLINE)
+      getPerson.isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
+    // const target = await this.inMemoryUsers.saveUserByUserIdFromIM(
+    //   getPerson.userIdx,
+    // );
+    // if (target === null) return null;
+    // player.setUserObject(target);
     return player;
   }
 
@@ -150,7 +154,9 @@ export class GameService {
     }
     if (target === undefined) return;
     target[0].getUserObject().isOnline = OnlineStatus.ONGAME;
-    await this.inMemoryUsers.saveUserByUserIdFromIM(userIdx);
+    target[0].setUserObject(
+      await this.inMemoryUsers.saveUserByUserIdFromIM(userIdx),
+    );
   }
 
   // play room 을 구성한다.
@@ -158,31 +164,46 @@ export class GameService {
     const roomName = this.makeRoomName();
     const option = this.setOptions(players);
     const channel = this.makeGameChennl(players);
-	console.log("option", option.gameType);
-	this.messanger.logWithMessage("makePlayerRoom", "", "", `${players.length}`);
-	
-    await this.gameChannelRepository.save(channel);
-	this.messanger.logWithMessage("makePlayerRoom", "", "", `${channel.userIdx1} ${channel.userIdx2} / ${channel.matchDate}`)
-    const gameRecord = await this.makeGameHistory(players, channel);
-	// TODO: FIX here
-    await this.gameRecordRepository.save(gameRecord[0]).then(async () => {
-      await this.gameRecordRepository.save(gameRecord[1]).then(
-	async () => {
-		const room =  new GameRoom(roomName, players, option.gameType, option.speed, option.mapNumber, await gameRecord, channel);
-    	this.playRoom.push(room);
-   		 players[0].getSocket().join(roomName);
-   		 players[1].getSocket().join(roomName);
-    	room.setGamePhase(GamePhase.MAKE_ROOM);
-    	server
-      .to(roomName)
-      .emit(
-        'game_queue_succes',
-        new GameQueueSuccessDto(channel.gameIdx, players),
+    this.messanger.logWithMessage(
+      'makePlayerRoom',
+      '',
+      '',
+      `${players.length}`,
+    );
+
+    await this.gameChannelRepository.save(channel).then(async () => {
+      this.messanger.logWithMessage(
+        'makePlayerRoom',
+        '',
+        '',
+        `${channel.userIdx1} ${channel.userIdx2} / ${channel.matchDate}`,
       );
-	}
-   )
+      const gameRecord = await this.makeGameHistory(players, channel);
+      // TODO: FIX here
+      await this.gameRecordRepository.save(gameRecord[0]).then(async () => {
+        await this.gameRecordRepository.save(gameRecord[1]).then(async () => {
+          const room = new GameRoom(
+            roomName,
+            players,
+            option.gameType,
+            option.speed,
+            option.mapNumber,
+            await gameRecord,
+            channel,
+          );
+          this.playRoom.push(room);
+          players[0].getSocket().join(roomName);
+          players[1].getSocket().join(roomName);
+          room.setGamePhase(GamePhase.MAKE_ROOM);
+          server
+            .to(roomName)
+            .emit(
+              'game_queue_succes',
+              new GameQueueSuccessDto(channel.gameIdx, players),
+            );
+        });
+      });
     });
-    
   }
 
   // play room 의 이름을 설정한다.
@@ -217,7 +238,7 @@ export class GameService {
       score1: 0,
       score2: 0,
       status: RecordResult.DEFAULT,
-	  matchDate: new Date(),
+      matchDate: new Date(),
     });
     return ret;
   }
@@ -227,11 +248,11 @@ export class GameService {
     players: GamePlayer[],
     channel: GameChannel,
   ): Promise<GameRecord[]> {
-	channel = await this.gameChannelRepository.findOneBy({
-		userIdx1: channel.userIdx1,
-		userIdx2: channel.userIdx2,
-		matchDate: channel.matchDate,
-	});
+    channel = await this.gameChannelRepository.findOneBy({
+      userIdx1: channel.userIdx1,
+      userIdx2: channel.userIdx2,
+      matchDate: channel.matchDate,
+    });
     const player1 = players[0].getUserObject();
     const player2 = players[1].getUserObject();
     const history1 = this.gameRecordRepository.create({
