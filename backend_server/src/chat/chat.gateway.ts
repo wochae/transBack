@@ -1087,7 +1087,7 @@ export class ChatGateway
       );
     }
     const blockInfo = await this.usersService.setBlock(
-      targetNickname,
+      targetIdx,
       user,
       this.inMemoryUsers,
     );
