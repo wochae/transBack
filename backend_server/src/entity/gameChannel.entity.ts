@@ -20,7 +20,7 @@ export class GameChannel extends BaseEntity {
   @Column({ type: 'enum', enum: RecordType })
   type: RecordType;
 
-  @Column()
+  @Column({ nullable: true})
   matchDate: Date;
 
   @Column({ type: 'int' })
