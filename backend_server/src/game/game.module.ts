@@ -20,6 +20,9 @@ import { GameController } from './game.controller';
   ],
   providers: [GameGateway, GameService],
   controllers: [GameController],
-  exports: [GameModule],
+  exports: [TypeOrmExModule.forCustomRepository([
+      GameRecordRepository,
+      GameChannelRepository,
+    ]),],
 })
 export class GameModule {}

@@ -18,12 +18,10 @@ export class InMemoryUsers {
   }
 
   private async initInMemoryUsers(): Promise<void> {
-    await this.userObjectRepository.find().then((users) => {
-      this.inMemoryUsers = users;
-    });
-    await this.blockListRepository.find().then((lists) => {
-      this.inMemoryBlockList = lists;
-    });
+    const users = await this.userObjectRepository.find();
+    this.inMemoryUsers = users;
+    const lists = await this.blockListRepository.find();
+    this.inMemoryBlockList = lists;
   }
 
   getUserByIntraFromIM(intra: string): UserObject {
@@ -39,9 +37,8 @@ export class InMemoryUsers {
       const targetUser = this.inMemoryUsers.find(
         (user) => user.userIdx === userId,
       );
-      const ret = this.userObjectRepository.save(targetUser).then(() => {
-        return ret;
-      });
+      const ret = await this.userObjectRepository.save(targetUser);
+	  return ret;
     } catch (error) {
       if (error instanceof QueryFailedError)
         throw new NotFoundException(`Failed to create user: ` + error.message);

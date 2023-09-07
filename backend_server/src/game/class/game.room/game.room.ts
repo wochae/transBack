@@ -11,7 +11,7 @@ import { KeyPress } from 'src/game/class/key.press/key.press';
 import { Animations } from 'src/game/class/animation/animation';
 import { GamePhase } from 'src/game/enum/game.phase';
 import { RecordResult } from 'src/game/enum/game.type.enum';
-
+import { Socket, Server } from 'socket.io';
 /**
  * 연산의 핵심. 간단한 데이터를 제외하곤 여기서 연산이 이루어 진다.
  */
@@ -20,6 +20,8 @@ export class GameRoom {
   intervalId: any;
   intervalPeriod: number; // 서버 -(좌표)-> 클라이언트 -(키 입력)-> 서버  -(좌표, 키 입력)-> 클라이언트
   users: GamePlayer[];
+  sockets: Socket[];
+  server: Server;
   gameObj: GameData;
   latency: number[];
   latencyCnt: number[];

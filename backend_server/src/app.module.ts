@@ -51,6 +51,6 @@ const mailConfig = config.get('mail');
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, InMemoryUsers],
+  providers: [AppService, ],
 })
 export class AppModule {}
