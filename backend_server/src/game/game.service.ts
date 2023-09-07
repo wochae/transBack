@@ -25,6 +25,7 @@ import { GamePauseScpreDto } from './dto/game.pause.score.dto';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 import { GameFrameDataDto } from './dto/game.frame.data.dto';
 import { KeyPressDto } from './dto/key.press.dto';
+import { GameResultDto } from './dto/game.result.dto';
 
 @Injectable()
 export class GameService {
@@ -167,7 +168,7 @@ export class GameService {
   async makePlayerRoom(players: GamePlayer[], server: Server) {
     const roomName = this.makeRoomName();
     const option = this.setOptions(players);
-    const channel = this.makeGameChennl(players);
+    const channel = this.makeGameChannel(players);
     this.messanger.logWithMessage(
       'makePlayerRoom',
       '',
@@ -230,7 +231,7 @@ export class GameService {
   }
 
   // DB 저장을 위한 channel 객체를 생성한다.
-  private makeGameChennl(players: GamePlayer[]): GameChannel {
+  private makeGameChannel(players: GamePlayer[]): GameChannel {
     let type;
     if (players[0].getOption().gameType === GameType.RANK)
       type = RecordType.RANK;
@@ -506,5 +507,19 @@ export class GameService {
         .to(room.roomId)
         .emit('game_frame', this.frameData.setData(frame, Date.now()));
     }
+  }
+
+  public async getHistoryByGameId(
+    gameIdx: number,
+    userIdx: number,
+  ): Promise<GameResultDto> {
+    const record = await this.gameRecordRepository.findOneBy({
+      gameIdx: gameIdx,
+      userIdx: userIdx,
+    });
+
+    const result = new GameResultDto(record);
+
+    return result;
   }
 }

@@ -1,5 +1,14 @@
 import { Controller } from '@nestjs/common';
-import { Get, Post, Query, Body, HttpStatus, Req, Res } from '@nestjs/common';
+import {
+  Get,
+  Post,
+  Query,
+  Body,
+  HttpStatus,
+  Req,
+  Res,
+  Param,
+} from '@nestjs/common';
 import { GameService } from './game.service';
 import { UserProfileGameRecordDto } from './dto/game.record.dto';
 import { GameOptionDto } from './dto/game.option.dto';
@@ -60,8 +69,29 @@ export class GameController {
   }
 }
 
-// @Controller('game-result')
-// export class GameResultController {
-//   @Get()
-//   getHistory() {}
-// }
+@Controller('game-result')
+export class GameResultController {
+  messanger: LoggerWithRes = new LoggerWithRes('GameController');
+
+  constructor(private readonly gameService: GameService) {
+    this.messanger.logWithMessage(
+      'GameCostructor',
+      'GameController',
+      'Initialized!',
+    );
+  }
+
+  @Get()
+  getHistory(
+    @Req() req,
+    @Res() res,
+    @Param('gameKey') gameKey: string,
+    @Param('userIdx') userIdx: string,
+  ) {
+    const gIdx = parseInt(gameKey);
+    const uIdx = parseInt(userIdx);
+    return res
+      .status(HttpStatus.OK)
+      .json(this.gameService.getHistoryByGameId(gIdx, uIdx));
+  }
+}
