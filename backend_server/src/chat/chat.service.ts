@@ -695,7 +695,7 @@ export class ChatService {
     messageList.reverse();
     const messageInfo = await Promise.all(
       messageList.map(async (message) => {
-        const senderIdx = (await this.inMemoryUsers.getUserByIntraFromIM(
+        const senderIdx = (await this.inMemoryUsers.getUserByNicknameFromIM(
           message.sender
         )).userIdx;
         return {

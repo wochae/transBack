@@ -30,7 +30,7 @@ export class ChatGeneralReqDto {
 
 export class ChatMainEnterReqDto {
   @IsString()
-  intra: string;
+  userNickname: string;
 }
 
 export class ChatEnterReqDto {
