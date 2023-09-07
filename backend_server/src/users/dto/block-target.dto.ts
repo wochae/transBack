@@ -26,7 +26,7 @@ export class BlockListDto {
   blockedUserIdx: number;
 
   @IsNotEmpty()
-  blockedNickname: string;
+  blockedIntra: string;
 
   blockedTime: Date;
 }
