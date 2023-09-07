@@ -327,10 +327,10 @@ export class UsersService {
   }
 
   async getFriendList(
-    intra: string,
+    userIdx: number,
   ): Promise<{ friendNickname: string; friendIdx: number; isOnline: OnlineStatus }[]> {
     const user: UserObject = await this.userObjectRepository.findOne({
-      where: { intra: intra },
+      where: { userIdx },
     });
     return this.friendListRepository.getFriendList(
       user.userIdx,

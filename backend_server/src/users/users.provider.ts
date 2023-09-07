@@ -26,9 +26,9 @@ export class InMemoryUsers {
     });
   }
 
-  async getUserByIntraFromIM(intra: string): Promise<UserObject> {
+  async getUserByNicknameFromIM(nickname: string): Promise<UserObject> {
     await this.initInMemoryUsers();
-    return this.inMemoryUsers.find((user) => user.intra === intra);
+    return this.inMemoryUsers.find((user) => user.nickname === nickname);
   }
 
   async getUserByIdFromIM(userId: number): Promise<UserObject> {
