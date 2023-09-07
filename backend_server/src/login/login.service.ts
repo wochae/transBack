@@ -10,15 +10,21 @@ import { UserObject } from 'src/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
 import * as config from 'config';
 
+
 const authConfig = config.get('auth');
 
 
-export const apiUid = authConfig.clientid;
-export const apiSecret = authConfig.clientsecret;
-export const redirectUri = authConfig.redirecturi;
-export const frontcallback = authConfig.frontcallbackuri;
-export const callbackuri = authConfig.callbackuri;
-export const jwtSecret = authConfig.secret;
+// export const apiUid = authConfig.clientid;
+// export const apiSecret = authConfig.clientsecret;
+// export const redirectUri = authConfig.redirecturi;
+// export const frontcallback = authConfig.frontcallbackuri;
+// export const callbackuri = authConfig.callbackuri;
+// export const jwtSecret = authConfig.secret;
+export const apiUid = process.env.AUTH_CLIENTID;
+export const apiSecret = process.env.AUTH_SECRET;
+export const frontcallback = process.env.FRONT_CALLBACK_URI;
+export const callbackuri = process.env.FRONT_REDIRECT;
+export const jwtSecret = process.env.JWT_SECRET;
 
 export const intraApiTokenUri = 'https://api.intra.42.fr/oauth/token';
 export const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';

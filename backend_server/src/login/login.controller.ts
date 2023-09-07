@@ -22,6 +22,7 @@ import { CertificateObject } from 'src/entity/certificate.entity';
 import { UserObject } from 'src/entity/users.entity';
 import { IntraSimpleInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
+const backenduri = process.env.BACKEND_DOMAIN;
 
 @Controller()
 export class LoginController {
@@ -66,7 +67,7 @@ export class LoginController {
     const anyImg = await this.usersService.checkFileExists(intraSimpleInfoDto.imgUri);
     if (!anyImg)
     {
-      intraSimpleInfoDto.imgUri = "http://paulryu9309.ddns.net:4000/img/0.png";
+      intraSimpleInfoDto.imgUri = `${backenduri}/img/0.png`;
       await this.usersService.setUserImg(intraSimpleInfoDto.userIdx, intraSimpleInfoDto.imgUri);
     }
     const payload = { id: intraInfo.userIdx, email: intraInfo.email };

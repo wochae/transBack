@@ -41,8 +41,14 @@ import * as config from 'config';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 import * as fs from 'fs/promises'; // fs.promises를 사용하여 비동기적인 파일 처리
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
+import * as dotenv from 'dotenv';
 
 const mailConfig = config.get('mail');
+
+const mailId = process.env.MAIL_USER;
+const mailpw = process.env.MAIL_PW;
+const backenduri = process.env.BACKEND_DOMAIN;
+
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 @Injectable()
 export class UsersService {
@@ -291,8 +297,7 @@ export class UsersService {
       userIdx: userIdx,
       intra: intra,
       nickname: intra,
-      // imgUri: `http://localhost:4000/img/${userIdx}.png`,
-      imgUri: `http://paulryu9309.ddns.net:4000/img/${userIdx}.png`,
+      imgUri: `${backenduri}/${userIdx}.png`,
       rankpoint: 0,
       isOnline: OnlineStatus.ONLINE,
       available: true,

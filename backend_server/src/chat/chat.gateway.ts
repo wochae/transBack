@@ -156,15 +156,16 @@ export class ChatGateway
     // FIXME: 1. connect 된 소켓의 유저 인트라와 요청한 인트라가 일치하는지 확인하는 함수 추가 필요
     const userId: number = parseInt(client.handshake.query.userId as string);
     const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
-    if (checkUser.nickname !== userNickname) {
-      client.disconnect();
-      return this.messanger.setResponseErrorMsgWithLogger(
-        400,
-        'Improper Access',
-        'main_enter',
-        userId,
-      );
-    }
+    console.log(checkUser);
+    // if (checkUser.nickname !== userNickname) {
+    //   client.disconnect();
+    //   return this.messanger.setResponseErrorMsgWithLogger(
+    //     400,
+    //     'Improper Access',
+    //     'main_enter',
+    //     userId,
+    //   );
+    // }
     const user = checkUser;
     //  
     // const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);

@@ -14,8 +14,11 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import * as config from 'config';
+import * as dotenv from 'dotenv';
 
 const mailConfig = config.get('mail');
+const mailId = process.env.MAIL_USER;
+const mailPassword = process.env.MAIL_PW;
 @Module({
   imports: [
     AuthModule,
@@ -33,8 +36,8 @@ const mailConfig = config.get('mail');
           port: 587,
           secure: false,
           auth: {
-            user: mailConfig.userid,
-            pass: mailConfig.password,
+            user: mailId,
+            pass: mailPassword,
           },
         },
         defaults: {

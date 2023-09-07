@@ -4,8 +4,9 @@ import { JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import { Request } from 'express';
 import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import { jwtSecret } from 'src/login/login.service';
-
+// import { jwtSecret } from 'src/login/login.service';
+import * as dotenv from 'dotenv';
+const jwtSecret = process.env.JWT_SECRET;
 @Injectable()
 export class AuthService {
   constructor() {}
