@@ -207,8 +207,8 @@ export class ChatService {
     const userChannels: DMChannel[] =
       await this.dmChannelRepository.findDMChannelsByUserIdx(user.userIdx);
     for (const channel of userChannels) {
-      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
-        channel.userIdx1,
+      const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
+        channel.userIdx1
       );
       const isBlocked = blockList.some(
         (user) => user.blockedUserIdx === channel.userIdx2,
@@ -228,8 +228,8 @@ export class ChatService {
         targetUser.userIdx,
       );
     for (const channel of targetChannels) {
-      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
-        channel.userIdx2,
+      const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
+        channel.userIdx2
       );
       const isBlocked = blockList.some(
         (user) => user.blockedUserIdx === channel.userIdx2,
@@ -609,8 +609,8 @@ export class ChatService {
 
     const channelsInfo = [];
     for (const channel of channels) {
-      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
-        channel.userIdx1,
+      const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
+        channel.userIdx1
       );
       const isBlocked = blockList.some(
         (user) => user.blockedUserIdx === channel.userIdx2,
