@@ -195,16 +195,16 @@ export class UsersService {
         friendIdx: targetIdx,
       });
       // 친구일 경우, 지워주고, 채팅방에 멤버인 경우엔 그 경우를 지나지 않는다.
+      // 만약에 친구인 경우에 앞에서 블락된 후 친구가 사라졌을 거고, 언블락을 시도하면 친구리스트엔 없을테니 이 조건문엔 들어가지 않음. 그래서 언블락이 가능함.
       if (friend) {
         await this.friendListRepository.delete(friend.idx);
       }
       // check inmemory
-      const checkTarget = await this.blockedListRepository.findOne({
-        where: {
-          userIdx: user.userIdx,
-          blockedUserIdx: targetIdx,
-        },
-      });
+      // const checkTarget = await this.blockedListRepository.find({
+      //   where: {
+      //     userIdx: user.userIdx,
+      //   },
+      // });
       // 이런 경우 이전에 내가 누군가를 블락해서 디비에 저장을 했는데, 그 사람이 닉네임을 변경하면, 그 사람을 닉네임으로 찾을 수가 없다.
       // if (!checkTarget) {
       //   inMemory.removeBlockListByIntraFromIM(targetNickname);
@@ -212,13 +212,14 @@ export class UsersService {
       //   inMemory.setBlockListByIdFromIM(blockInfo);
       // }
       await queryRunner.commitTransaction();
+      
     } catch (err) {
       await queryRunner.rollbackTransaction();
       return;
     } finally {
       await queryRunner.release();
     }
-    const blockList = inMemory.getBlockListByIdFromIM(user.userIdx);
+    const blockList = await inMemory.getBlockListByIdFromIM(user.userIdx);
     const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
       return {
         blockedNickname: res.blockedNickname,
@@ -235,7 +236,7 @@ export class UsersService {
   ): Promise<boolean> {
     //  inmemory 에서 가져오기
     // jaekim 이 jeekim 을 차단, jeekim 이 jaekim 에게 문자
-    const blockList = inMemory.getBlockListByIdFromIM(target.userIdx);
+    const blockList = await inMemory.getBlockListByIdFromIM(target.userIdx);
     const check = blockList.find((res) => res.blockedUserIdx === user.userIdx);
     if (check) return true;
     else return false;

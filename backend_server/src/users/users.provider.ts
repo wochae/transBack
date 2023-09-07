@@ -61,10 +61,12 @@ export class InMemoryUsers {
     }
   }
 
-  getBlockListByIdFromIM(userId: number): BlockList[] {
+  async getBlockListByIdFromIM(userId: number): Promise<BlockList[]> {
+    await this.initInMemoryUsers();
     return this.inMemoryBlockList.filter((user) => user.userIdx === userId);
   }
 
+  // unused
   setBlockListByIdFromIM(blockList: BlockList): void {
     const blockListIndex = this.inMemoryBlockList.findIndex(
       (block) => block.idx === blockList.idx,
