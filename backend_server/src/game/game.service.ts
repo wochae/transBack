@@ -458,7 +458,47 @@ export class GameService {
       room.syncronizeResult();
       await this.gameChannelRepository.save(room.channel).then(async () => {
         await this.gameRecordRepository.save(room.history[0]).then(async () => {
-          await this.gameRecordRepository.save(room.history[1]);
+          await this.gameRecordRepository
+            .save(room.history[1])
+            .then(async () => {
+              const user1 = room.users[0].getUserObject();
+              const user2 = room.users[1].getUserObject();
+              if (room.channel.score1 === 5) {
+                user1.win += 1;
+                user2.lose += 1;
+                if (room.channel.type === RecordType.RANK) {
+                  let correctionValue1;
+                  let correctionValue2;
+                  if (user1.rankpoint > user2.rankpoint) {
+                    correctionValue1 = user2.rankpoint / user1.rankpoint;
+                    correctionValue2 = user1.rankpoint / user2.rankpoint;
+                  } else {
+                    correctionValue2 = user2.rankpoint / user1.rankpoint;
+                    correctionValue1 = user1.rankpoint / user2.rankpoint;
+                  }
+                  user1.rankpoint += 100 * correctionValue1;
+                  user2.rankpoint -= 100 * correctionValue2;
+                }
+              } else {
+                user2.win += 1;
+                user1.lose += 1;
+                if (room.channel.type === RecordType.RANK) {
+                  let correctionValue1;
+                  let correctionValue2;
+                  if (user1.rankpoint > user2.rankpoint) {
+                    correctionValue1 = user2.rankpoint / user1.rankpoint;
+                    correctionValue2 = user1.rankpoint / user2.rankpoint;
+                  } else {
+                    correctionValue2 = user2.rankpoint / user1.rankpoint;
+                    correctionValue1 = user1.rankpoint / user2.rankpoint;
+                  }
+                  user2.rankpoint += 100 * correctionValue1;
+                  user1.rankpoint -= 100 * correctionValue2;
+                }
+              }
+              await this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
+              await this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
+            });
         });
       });
     } else {
