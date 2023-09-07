@@ -33,8 +33,8 @@ export class BlockListDto {
 
 export class BlockInfoDto {
   @IsNotEmpty()
-  userNickname: string;
+  blockedNickname: string;
 
   @IsNotEmpty()
-  userIdx: number;
+  blockedUserIdx: number;
 }

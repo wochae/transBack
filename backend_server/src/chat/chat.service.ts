@@ -673,7 +673,7 @@ export class ChatService {
       userNickname1: channel.userNickname1,
       userNickname2: channel.userNickname2,
       channelIdx: channel.channelIdx,
-      imgUrl: targetUser.imgUri,
+      imgUri: targetUser.imgUri,
     };
     return messageInfo;
   }
