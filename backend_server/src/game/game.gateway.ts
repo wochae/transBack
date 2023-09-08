@@ -33,12 +33,13 @@ import {
 @WebSocketGateway({
   namespace: 'game',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://10.19.231.71:3000'],
   },
 })
 @UseFilters(new WsExceptionFilter())
 export class GameGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -47,14 +48,11 @@ export class GameGateway
   constructor(
     private readonly gameService: GameService,
     private readonly usersService: UsersService,
-  ) { }
+  ) {}
 
   handleDisconnect(client: Socket) {
-    const userId: number = parseInt(
-      client.handshake.query.userId as string,
-    );
-    if (Number.isNaN(userId))
-      return;
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    if (Number.isNaN(userId)) return;
     this.gameService.checkOnGameOrNOT(userId, this.server);
     this.gameService.popOnlineUser(userId);
     // TODO: 작성해야 할 부분₩
@@ -71,8 +69,7 @@ export class GameGateway
       client.handshake.query.userId as string,
       10,
     );
-    if (Number.isNaN(userId))
-      return;
+    if (Number.isNaN(userId)) return;
     const date = Date.now();
     // this.logger.log(`시작 일시 : ${date}`);
     // this.logger.log(userId + ' is connected');
@@ -83,8 +80,7 @@ export class GameGateway
       `${userId} is connected`,
     );
     const user = await this.usersService.getUserObjectFromDB(userId);
-    if (!user)
-      return;
+    if (!user) return;
     // this.logger.log(user.nickname);
     const OnUser = new GameOnlineMember(user, client);
     // this.logger.log(OnUser.user.nickname);
@@ -181,8 +177,12 @@ export class GameGateway
 
         const roomIdx = this.gameService.getRoomIdxWithRoom(room);
         // this.logger.log(`룸 작성 성공`);
-        setTimeout(() => { this.gameService.getReadyFirst(roomIdx, this.server); }, 1000);
-        setTimeout(() => { this.gameService.getReadySecond(roomIdx, this.server); }, 1000);
+        setTimeout(() => {
+          this.gameService.getReadyFirst(roomIdx, this.server);
+        }, 1000);
+        setTimeout(() => {
+          this.gameService.getReadySecond(roomIdx, this.server);
+        }, 1000);
         try {
           await this.gameService.setRoomToDB(roomIdx);
         } catch (exception) {
@@ -228,9 +228,18 @@ export class GameGateway
       );
     } else if (roomNumber >= 0) {
       //   this.logger.log(`룸 작성 성공`);
-      this.messanger.logWithMessage("game_queue_regist", "", "", `룸 제작 성공 : ${roomNumber}`)
-      setTimeout(() => { this.gameService.getReadyFirst(roomNumber, this.server); }, 1000);
-      setTimeout(() => { this.gameService.getReadySecond(roomNumber, this.server); }, 1000);
+      this.messanger.logWithMessage(
+        'game_queue_regist',
+        '',
+        '',
+        `룸 제작 성공 : ${roomNumber}`,
+      );
+      setTimeout(() => {
+        this.gameService.getReadyFirst(roomNumber, this.server);
+      }, 1000);
+      setTimeout(() => {
+        this.gameService.getReadySecond(roomNumber, this.server);
+      }, 1000);
       try {
         await this.gameService.setRoomToDB(roomNumber);
       } catch (exception) {

@@ -41,7 +41,7 @@ import { UserStatusDto } from './dto/update-chat.dto';
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://10.19.231.71:3000'],
   },
 })
 export class ChatGateway
@@ -152,7 +152,7 @@ export class ChatGateway
     @MessageBody() chatMainEnterReqDto: ChatMainEnterReqDto,
   ) {
     const { userNickname } = chatMainEnterReqDto;
-
+    console.log('userNickname : ', userNickname);
     // FIXME: 1. connect 된 소켓의 유저 인트라와 요청한 인트라가 일치하는지 확인하는 함수 추가 필요
     const userId: number = parseInt(client.handshake.query.userId as string);
     const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
@@ -166,7 +166,7 @@ export class ChatGateway
       );
     }
     const user = checkUser;
-    //  
+    //
     // const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
     // FIXME: 2. 예외처리 함수 만들기 // 유저 아이디로 찾아서 닉네임 대조만 하면 될 것 같다.
     // if (!user) {
@@ -1182,7 +1182,9 @@ export class ChatGateway
       return new ReturnMsgDto(400, 'Bad Request, target user is not online');
     }
     // in memory 로 바꿀까?
-    const target = await this.inMemoryUsers.getUserByIdFromIM(targetTuple[0].userIdx);
+    const target = await this.inMemoryUsers.getUserByIdFromIM(
+      targetTuple[0].userIdx,
+    );
     // const target = await this.usersService.getUserInfoFromDBById(
     //   targetTuple[0].userIdx,
     // );
