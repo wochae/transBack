@@ -108,11 +108,11 @@ export class GameService {
 
   // 플레이어가 커넥션이 연결됨에 따라, 소켓을 설정해준다.
   setSocketToPlayer(clientSocket: Socket, userIdx: number): boolean {
-	// console.log("setSocketToPlayer here start");
+	console.log("setSocketToPlayer here start");
     for (const member of this.onLinePlayer) {
       if (member[0].getUserObject().userIdx === userIdx) {
         member[0].setSocket(clientSocket);
-		// console.log("setSocketToPlayer here end");
+		console.log("setSocketToPlayer here end");
         return true;
       }
     }
@@ -226,8 +226,9 @@ export class GameService {
 	// setTimeout(() => {
 	// 	server.to(roomName).emit('game_queue_success', new GameQueueSuccessDto(channel.gameIdx, players))
 	// },500);
-	const data = new GameQueueSuccessDto(channel.gameIdx, players)
-	server.to(room.roomId).timeout(500).emit('game_queue_success', data);
+	
+	const data = new GameQueueSuccessDto(channel.gameIdx, players, room.gameObj.gameType, room.gameObj.gameSpeed, room.gameObj.gameMapNumber );
+	setTimeout(() => {server.to(room.roomId).emit('game_queue_success', data)}, 500);
 	// console.log('server', server);
 	// console.log('------------------------')
 	// this.messanger.logWithMessage("makePlyerRoom", "", "" ,"server emit to room");
@@ -416,7 +417,7 @@ export class GameService {
 	const target = new GamePingDto();
 	// room.sockets[0].emit('game_ping', target);
 	// room.sockets[1].emit('game_ping', target);
-  console.log('sendPingToRoom', room, server.sockets);
+//   console.log('sendPingToRoom', room, server.sockets);
   server.to(room.roomId).emit('game_ping', target);
   // console.log('room', room);
   // console.log('------------------------')
@@ -429,9 +430,9 @@ export class GameService {
   }
 
   // 핑의 수신 용도
-  public receivePing(data: GamePingReceiveDto): boolean {
+  public receivePing(userIdx: number, latency: number): boolean {
 	// this.messanger.logWithMessage("receive ping", "" , "" , "start here");
-    const targetRoom = this.findGameRoomById(data.userIdx);
+    const targetRoom = this.findGameRoomById(userIdx);
 	// this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.roomId}`);
 	// this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.gamePhase}`);
 
@@ -440,25 +441,29 @@ export class GameService {
 	// this.messanger.logWithMessage("receive ping", "" , "" , `user : ${targetRoom.users[0].getUserObject().userIdx}`);
 	// this.messanger.logWithMessage("receive ping", "" , "" , `user : ${targetRoom.users[1].getUserObject().userIdx}`);
 	// this.messanger.logWithMessage("receive ping", "" , "" , `data user : ${data.userIdx}`);
-    if (targetRoom.users[0].getUserObject().userIdx === data.userIdx)
+    if (targetRoom.users[0].getUserObject().userIdx === userIdx)
       latencyIdx = 0;
     else latencyIdx = 1;
 	// this.messanger.logWithMessage("receive ping", "" , "" ,`latency Idx : ${latencyIdx}`);
     targetRoom.latencyCnt[latencyIdx] += 1;
 
     if (targetRoom.latency[latencyIdx] === 0) {
-      targetRoom.latency[latencyIdx] += data.clientTime - data.serverTime;
+      targetRoom.latency[latencyIdx] += latency;
+
     } else {
-      targetRoom.latency[latencyIdx] += data.clientTime - data.serverTime;
+      targetRoom.latency[latencyIdx] += latency;
       targetRoom.latency[latencyIdx] = Math.round(
         targetRoom.latency[latencyIdx] / 2,
       );
+	  console.log(`data latency : ${latency}`);
+	//   console.log(`data clientTime : ${data.clientTime}`);
+	  console.log(`targetRoom latency : ${targetRoom.latency[latencyIdx]}`);
     }
 	// TODO: Lateyncy cnt to change
     if (targetRoom.latencyCnt[latencyIdx] === 3) {
       if (targetRoom.latencyCnt[0] >= 3 && targetRoom.latencyCnt[1] >= 3) {
         targetRoom.stopInterval();
-        this.sendSetFrameRate(data.userIdx);
+        this.sendSetFrameRate(userIdx);
         targetRoom.latencyCnt.splice(0, 2);
         targetRoom.latencyCnt.push(0);
         targetRoom.latencyCnt.push(0);
@@ -509,24 +514,32 @@ export class GameService {
   }
 
   // 최초 게임 시작시, 여기서 게임이 시작된다.
-  public startGame(userIdx: number, server: Server) {
-    const targetRoom = this.findGameRoomById(userIdx);
+  public startGame(userIdx: number, server: Server, gameService: GameService) {
+	let targetRoom: GameRoom;
+	for (const room of gameService.playRoom) {
+      if (room.users[0].getUserObject().userIdx === userIdx) {
+        targetRoom = room;
+		break ;
+      } else if (room.users[1].getUserObject().userIdx === userIdx) {
+        targetRoom = room;
+		break ;
+      }
+    }
     if (targetRoom.gamePhase != GamePhase.SET_NEW_GAME) return;
-    targetRoom.setNewGame();
+    targetRoom.setNewGame(targetRoom);
     targetRoom.setGamePhase(GamePhase.ON_PLAYING);
+	console.log(`target Interval Ms : ${targetRoom.getIntervalMs()}`)
     targetRoom.setIntervalId(
-      setInterval(
-        this.makeFrame,
-        targetRoom.getIntervalMs(),
-        targetRoom,
-        server,
+      setInterval(() => {
+        gameService.makeFrame(targetRoom, server, gameService)},targetRoom.getIntervalMs()
       ),
     );
   }
 
   // 프레임을 전달하는 함수
-  private async makeFrame(room: GameRoom, server: Server) {
-    const frame = room.getNextFrame();
+  private async makeFrame(room: GameRoom, server: Server, gameService: GameService) {
+    const frame = room.getNextFrame(room);
+	// console.log(`frame data : ${frame}`);
     const status: GamePhase = room.getScoreStatus();
     if (status !== GamePhase.ON_PLAYING) {
       room.stopInterval();
@@ -592,9 +605,10 @@ export class GameService {
         });
       });
     } else {
+		gameService.frameData.setData(frame, Date.now());
       server
         .to(room.roomId)
-        .emit('game_frame', this.frameData.setData(frame, Date.now()));
+        .emit('game_frame',gameService.frameData );
     }
   }
 

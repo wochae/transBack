@@ -3,6 +3,7 @@ import { GamePhase } from 'src/game/enum/game.phase';
 import { KeyPress } from '../key.press/key.press';
 import { GameData } from 'src/game/enum/game.data.enum';
 import { Vector } from 'src/game/enum/game.vector.enum';
+import { GameRoom } from '../game.room/game.room';
 
 export class Animations {
   private readonly MAX_WIDTH = 500;
@@ -15,23 +16,38 @@ export class Animations {
   prevDatas: FrameData | null;
   currentDatas: FrameData | null;
   gameStatus: GamePhase;
-  maxFps: number | null;
+  maxFps: number;
   currentFps: number;
   totalDistancePerSec: number;
   unitDistance: number;
 
   constructor() {
-    this.prevDatas = null;
-    this.currentDatas = null;
-    this.maxFps = null;
+    this.prevDatas = {
+		ballX: 0,
+  		ballY: 0,
+ 		paddle1: 0,
+  		paddle2: 0,
+  		maxFrameRate: 0,
+  		currentFrame: 0,
+	};
+	this.currentDatas = {
+		ballX: 0,
+  		ballY: 0,
+ 		paddle1: 0,
+  		paddle2: 0,
+  		maxFrameRate: 0,
+  		currentFrame: 0,
+	};
+    this.maxFps = 0;
     this.currentFps = 0;
-    this.totalDistancePerSec = 150;
+    this.totalDistancePerSec = 50;
     this.gameStatus = GamePhase.ON_PLAYING;
   }
 
   // 레이턴시를 가지고 최대 FPS를 확정짓는다.
   public setMaxFps(latency: number) {
     if (this.maxFps === null) this.maxFps = 0;
+	console.log(`latency : ${latency}`)
     if (latency < 8) {
       this.maxFps = 60;
     } else if (latency >= 8 && latency < 15) {
@@ -95,51 +111,70 @@ export class Animations {
   }
 
   // 기존 데이터를 기반으로 다음 프레임 연산을 진행한다.
-  public makeFrame(currentData: GameData, key: KeyPress[]): GamePhase {
+  public makeFrame(currentData: GameData, key: KeyPress[], room: GameRoom): GamePhase {
     // 기존 데이터 이관
-    if (this.currentDatas != null) {
-      this.prevDatas = this.currentDatas;
-      this.currentDatas = null;
+    if (room.animation.currentDatas != null) {
+      room.animation.prevDatas = room.animation.currentDatas;
+    //   room.animation.currentDatas = null;
     }
+	// console.log(`current data : ${room.animation.currentDatas}`);
+	room.animation.currentDatas.ballX = currentData.currentPosX;
+	room.animation.currentDatas.ballY = currentData.currentPosY;
+	room.animation.currentDatas.paddle1 = currentData.paddle1;
+	room.animation.currentDatas.paddle2 = currentData.paddle2;
+	room.animation.currentDatas.currentFrame = room.animation.prevDatas.currentFrame
+	room.animation.currentDatas.maxFrameRate = room.animation.prevDatas.maxFrameRate
+
 
     // 좌표 계산
     const nextX = parseFloat(
-      (currentData.currentPosX + this.unitDistance).toFixed(2),
+      (currentData.currentPosX + room.animation.unitDistance).toFixed(2),
     );
     const nextY = parseFloat(
       // y = ax + b, a, b의 값을 미리 설정
       (currentData.angle * nextX + currentData.yIntercept).toFixed(2),
     );
+	console.log(`next X : ${nextX}`);
+	console.log(`next Y : ${nextY}`);
+	console.log(`angle : ${currentData.angle}`);
+	console.log(`YUntercept : ${currentData.yIntercept}`);
+
 
     // 페들 데이터 바꿈
-    const paddle1 = currentData.paddle1 + key[0].popKeyValue();
-    const paddle2 = currentData.paddle2 + key[1].popKeyValue();
+    const paddle1 = room.animation.currentDatas.paddle1 + key[0].popKeyValue();
+    const paddle2 = room.animation.currentDatas.paddle2 + key[1].popKeyValue();
 
     // 프레임 값 갱신
     currentData.currentPosX = nextX;
     currentData.currentPosY = nextY;
 
     // 프레임 값 갱신 #2 paddle 최대, 최소 값 정리
-    this.setPaddleNotOverLimit(currentData, paddle1, paddle2);
+    room.animation.setPaddleNotOverLimit(currentData, paddle1, paddle2);
 
     currentData.paddle1 = paddle1;
     currentData.paddle2 = paddle2;
 
     // 현재 게임 상태 갱신
-    if (this.currentFps + 1 == this.maxFps || this.currentFps + 1 < this.maxFps)
-      this.currentFps = 1;
+	console.log(`room fps : ${room.animation.maxFps}`);
+    if (room.animation.currentFps + 1 <= room.animation.maxFps)
+      room.animation.currentFps = 1;
     else {
-      this.currentFps++;
+      room.animation.currentFps += 1;
     }
-    this.currentDatas = {
-      ballX: nextX,
-      ballY: nextY,
-      paddle1: paddle1,
-      paddle2: paddle2,
-      currentFrame: this.currentFps,
-      maxFrameRate: this.maxFps,
-    };
-    const type = this.checkStrike(currentData);
+	room.animation.currentDatas.ballX = nextX;
+	room.animation.currentDatas.ballY = nextY;
+	room.animation.currentDatas.paddle1 = paddle1;
+	room.animation.currentDatas.paddle2 = paddle2;
+	room.animation.currentDatas.currentFrame = room.animation.currentFps;
+	room.animation.currentDatas.maxFrameRate = room.animation.maxFps;
+
+	console.log(`frame data - ball X: ${room.animation.currentDatas.ballX}`);
+	console.log(`frame data - ball Y: ${room.animation.currentDatas.ballY}`);
+	console.log(`frame data - paddle 1 : ${room.animation.currentDatas.paddle1}`);
+	console.log(`frame data - paddle 2 : ${room.animation.currentDatas.paddle2}`);
+	console.log(`frame data - curent Frame: ${room.animation.currentDatas.currentFrame}`);
+
+    const type = room.animation.checkStrike(currentData, this);
     if (type.length === 2 || type.length === 3) {
       const cond1 = type.find((vec) => vec === GamePhase.HIT_THE_WALL);
       const cond2 = type.find((vec) => vec === GamePhase.HIT_THE_PADDLE);
@@ -148,35 +183,35 @@ export class Animations {
         cond1 === GamePhase.HIT_THE_WALL &&
         cond2 === GamePhase.HIT_THE_PADDLE
       ) {
-        this.handleSituationWallAndPaddleStrike(currentData);
-        this.gameStatus = GamePhase.HIT_THE_PADDLE;
-        return this.gameStatus;
+        room.animation.handleSituationWallAndPaddleStrike(currentData);
+        room.animation.gameStatus = GamePhase.HIT_THE_PADDLE;
+        return room.animation.gameStatus;
       } else if (
         cond1 === GamePhase.HIT_THE_WALL &&
         cond3 === GamePhase.HIT_THE_GOAL_POST
       ) {
-        this.gameStatus =
-          this.handleSituationWallAndGoalPostStrike(currentData);
-        return this.gameStatus;
+        room.animation.gameStatus =
+          room.animation.handleSituationWallAndGoalPostStrike(currentData);
+        return room.animation.gameStatus;
       }
       // TODO: 조건 두개 이상
     } else {
       if (type[0] === GamePhase.HIT_THE_WALL) {
-        this.handleSituationWallStrike(currentData);
-        this.gameStatus = GamePhase.HIT_THE_WALL;
-        return this.gameStatus;
+        room.animation.handleSituationWallStrike(currentData);
+        room.animation.gameStatus = GamePhase.HIT_THE_WALL;
+        return room.animation.gameStatus;
       } else if (type[0] === GamePhase.HIT_THE_PADDLE) {
-        this.handleSituationPaddleStrike(currentData);
-        this.gameStatus = GamePhase.HIT_THE_PADDLE;
-        return this.gameStatus;
+        room.animation.handleSituationPaddleStrike(currentData);
+        room.animation.gameStatus = GamePhase.HIT_THE_PADDLE;
+        return room.animation.gameStatus;
       } else if (type[0] === GamePhase.HIT_THE_GOAL_POST) {
-        this.gameStatus = this.handleSituationGoalPostStrike(currentData);
-        return this.gameStatus;
+        room.animation.gameStatus = room.animation.handleSituationGoalPostStrike(currentData);
+        return room.animation.gameStatus;
       }
       // TODO: 조건 한개 처리
     }
-    this.gameStatus = GamePhase.ON_PLAYING;
-    return this.gameStatus;
+    room.animation.gameStatus = GamePhase.ON_PLAYING;
+    return room.animation.gameStatus;
   }
 
   private reverseVectorY(currentData: GameData) {
@@ -377,82 +412,82 @@ export class Animations {
   }
 
   // 벽에 부딪히는지를 판단한다.
-  public checkStrike(currentData: GameData): GamePhase[] {
+  public checkStrike(currentData: GameData, aniData:Animations): GamePhase[] {
     const ret: GamePhase[] = [];
     switch (currentData.vector) {
       case Vector.UPLEFT:
         // 벽에 부딪히는지를 확인
-        if (currentData.currentPosY + 20 >= this.MAX_HEIGHT) {
+        if (currentData.currentPosY + 20 >= aniData.MAX_HEIGHT) {
           currentData.currentPosY = 280;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-        if (currentData.currentPosX - 20 <= this.PADDLE_LINE_1) {
-          if (this.checkPaddleStrike(Vector.UPLEFT, currentData)) {
-            currentData.currentPosX = this.PADDLE_LINE_1;
+        if (currentData.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
+          if (aniData.checkPaddleStrike(Vector.UPLEFT, currentData)) {
+            currentData.currentPosX = aniData.PADDLE_LINE_1;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
         }
         // 골대 라인에 부딪히는지 확인
-        if (currentData.currentPosX - 20 <= this.min_WIDTH) {
-          currentData.currentPosX = this.min_WIDTH;
+        if (currentData.currentPosX - 20 <= aniData.min_WIDTH) {
+          currentData.currentPosX = aniData.min_WIDTH;
           ret.push(GamePhase.HIT_THE_GOAL_POST);
         }
         break;
       case Vector.UPRIGHT:
         // 벽에 부딪히는지를 확인
-        if (currentData.currentPosY + 20 >= this.MAX_HEIGHT) {
+        if (currentData.currentPosY + 20 >= aniData.MAX_HEIGHT) {
           currentData.currentPosY = 280;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-        if (currentData.currentPosX + 20 >= this.PADDLE_LINE_2) {
-          if (this.checkPaddleStrike(Vector.UPRIGHT, currentData)) {
-            currentData.currentPosX = this.PADDLE_LINE_2;
+        if (currentData.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
+          if (aniData.checkPaddleStrike(Vector.UPRIGHT, currentData)) {
+            currentData.currentPosX = aniData.PADDLE_LINE_2;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
         }
         // 골대 라인에 부딪히는지 확인
-        if (currentData.currentPosX + 20 >= this.MAX_WIDTH) {
-          currentData.currentPosX = this.MAX_WIDTH;
+        if (currentData.currentPosX + 20 >= aniData.MAX_WIDTH) {
+          currentData.currentPosX = aniData.MAX_WIDTH;
           ret.push(GamePhase.HIT_THE_GOAL_POST);
         }
         break;
       case Vector.DOWNLEFT:
         // 벽에 부딪히는지를 확인
-        if (currentData.currentPosY + 20 <= this.min_HEIGHT) {
+        if (currentData.currentPosY + 20 <= aniData.min_HEIGHT) {
           currentData.currentPosY = -280;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-        if (currentData.currentPosX - 20 <= this.PADDLE_LINE_1) {
-          if (this.checkPaddleStrike(Vector.DOWNLEFT, currentData)) {
-            currentData.currentPosX = this.PADDLE_LINE_1;
+        if (currentData.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
+          if (aniData.checkPaddleStrike(Vector.DOWNLEFT, currentData)) {
+            currentData.currentPosX = aniData.PADDLE_LINE_1;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
         }
         // 골대 라인에 부딪히는지 확인
-        if (currentData.currentPosX - 20 <= this.min_WIDTH) {
-          currentData.currentPosX = this.min_WIDTH;
+        if (currentData.currentPosX - 20 <= aniData.min_WIDTH) {
+          currentData.currentPosX = aniData.min_WIDTH;
           ret.push(GamePhase.HIT_THE_GOAL_POST);
         }
         break;
       case Vector.DOWNRIGHT:
         // 벽에 부딪히는지를 확인
-        if (currentData.currentPosY + 20 <= this.min_HEIGHT) {
+        if (currentData.currentPosY + 20 <= aniData.min_HEIGHT) {
           currentData.currentPosY = -280;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-        if (currentData.currentPosX + 20 >= this.PADDLE_LINE_2) {
-          if (this.checkPaddleStrike(Vector.DOWNRIGHT, currentData)) {
-            currentData.currentPosX = this.PADDLE_LINE_2;
+        if (currentData.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
+          if (aniData.checkPaddleStrike(Vector.DOWNRIGHT, currentData)) {
+            currentData.currentPosX = aniData.PADDLE_LINE_2;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
         }
         // 골대 라인에 부딪히는지 확인
-        if (currentData.currentPosX + 20 >= this.MAX_WIDTH) {
-          currentData.currentPosX = this.MAX_WIDTH;
+        if (currentData.currentPosX + 20 >= aniData.MAX_WIDTH) {
+          currentData.currentPosX = aniData.MAX_WIDTH;
           ret.push(GamePhase.HIT_THE_GOAL_POST);
         }
         break;

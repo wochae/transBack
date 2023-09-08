@@ -84,28 +84,28 @@ export class GameRoom {
   }
 
   // 게임을 초기화한다.
-  public setNewGame() {
+  public setNewGame(room: GameRoom) {
     // this.gamePhase = GamePhase.SET_NEW_GAME;
-    this.resetBall();
-    this.resetPaddle();
-    this.setRandomStandardCoordinates();
-    this.setNewLinearEquation();
-    this.keyPress[0].setRenewKeypress();
-    this.keyPress[1].setRenewKeypress();
-    this.gameObj.currentPosX = 0;
-    this.gameObj.currentPosY = 0;
-    this.gameObj.standardX = 0;
-    this.gameObj.standardY = 0;
-    this.gameObj.angle = 0;
-    this.gameObj.yIntercept = 0;
-    this.gameObj.vector = Vector.UPLEFT;
-    this.gameObj.paddle1 = 0;
-    this.gameObj.paddle1MaxMin = [20, -20];
-    this.gameObj.paddle2 = 0;
-    this.gameObj.paddle2MaxMin = [20, -20];
-    this.gameObj.score1 = 0;
-    this.gameObj.score2 = 2;
-    this.gamePhase = GamePhase.SET_NEW_GAME;
+    room.resetBall();
+// room.resetPaddle();    
+    room.gameObj.currentPosX = 0;
+    room.gameObj.currentPosY = 0;
+    room.gameObj.standardX = 0;
+    room.gameObj.standardY = 0;
+    room.gameObj.angle = 0;
+    room.gameObj.yIntercept = 0;
+    room.gameObj.vector = Vector.UPLEFT;
+    room.gameObj.paddle1 = 0;
+    room.gameObj.paddle1MaxMin = [20, -20];
+    room.gameObj.paddle2 = 0;
+    room.gameObj.paddle2MaxMin = [20, -20];
+    room.gameObj.score1 = 0;
+    room.gameObj.score2 = 2;
+    room.gamePhase = GamePhase.SET_NEW_GAME;
+	room.setRandomStandardCoordinates();
+    room.setNewLinearEquation(room);
+    room.keyPress[0].setRenewKeypress();
+    room.keyPress[1].setRenewKeypress();
     // TODO: 애니메이션 객체를 새롭게 만들어야 하는가?
     //
   }
@@ -126,7 +126,7 @@ export class GameRoom {
     if (maxFps == 60) this.intervalPeriod = 15;
     else if (maxFps == 30) this.intervalPeriod = 30;
     else if (maxFps == 24) this.intervalPeriod = 40;
-    else this.intervalPeriod = 100;
+    else this.intervalPeriod = 80;
     // TODO: 정상 가동 여부 판단 필요
     this.keyPress.map((data) => data.setPressedNumberByMaxFps(maxFps));
     return maxFps;
@@ -161,9 +161,9 @@ export class GameRoom {
     }
   }
 
-  public getNextFrame(): FrameData {
-    this.gamePhase = this.animation.makeFrame(this.gameObj, this.keyPress);
-    return this.animation.currentDatas;
+  public getNextFrame(room:GameRoom): FrameData {
+    room.gamePhase = room.animation.makeFrame(room.gameObj, room.keyPress, room);
+    return room.animation.currentDatas;
   }
 
   public setRandomStandardCoordinates() {
@@ -189,11 +189,13 @@ export class GameRoom {
     }
   }
 
-  public setNewLinearEquation() {
+  public setNewLinearEquation(room: GameRoom) {
     this.gameObj.angle =
       (this.gameObj.standardY - 0) / (this.gameObj.standardX - 0);
     this.gameObj.yIntercept =
       this.gameObj.standardY - this.gameObj.angle * this.gameObj.standardX;
+	console.log(`angle : ${this.gameObj.angle}`);
+	console.log(`yIntercept : ${this.gameObj.yIntercept}`);
   }
 
   public getRandomInt(min: number, max: number): number {

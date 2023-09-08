@@ -128,14 +128,17 @@ export class GameGateway
   async getUserPong(@MessageBody() data: GamePingReceiveDto) {
 	// this.messanger.logWithMessage("game_ping", "", "","game_ping is started");
 	// this.messanger.logWithMessage("game_ping", "", "",`user : ${data.userIdx}`);
-    console.log("game_ping_receive", this.server.sockets);
-    if (this.gameService.receivePing(data)) {
+    // console.log("game_ping_receive", this.server.sockets);
+	const time = Date.now();
+	const latency = (time - data.serverTime) / 2;
+
+    if (this.gameService.receivePing(data.userIdx, latency)) {
       const targetRoom = this.gameService.findGameRoomById(data.userIdx);
       this.server
         .to(targetRoom.roomId)
         .emit('game_start', new GameStartDto(targetRoom));
 	  // this.messanger.logWithMessage("game_ping", "", "","game is start now");
-      setTimeout(this.gameService.startGame, 2000, data.userIdx, this.server);
+      setTimeout(() => {this.gameService.startGame(data.userIdx, this.server, this.gameService)}, 2000);
       return this.messanger.setResponseMsgWithLogger(
         this.gameService.sendSetFrameRate(data.userIdx),
         'Your max fps is checked',

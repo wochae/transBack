@@ -29,7 +29,7 @@ export class GameFrameDataDto {
     }
   }
 
-  setData(data: FrameData, serverTime: number) {
+  setData(data: FrameData, serverTime: number)  {
     this.ballX = data.ballX;
     this.ballY = data.ballY;
     this.paddle1 = data.paddle1;

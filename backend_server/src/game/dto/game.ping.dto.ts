@@ -6,7 +6,7 @@ export class GamePingDto {
 // 	console.log(`create for ${userIdx}`);
 //   }  
   constructor() {
-    this.serverTime = Date.now();
+    this.serverTime = new Date().getTime();
   }
 }
 
