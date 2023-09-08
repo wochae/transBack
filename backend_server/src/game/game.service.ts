@@ -209,17 +209,19 @@ export class GameService {
 	(await gameRecord).push(record1);
 	const room = new GameRoom(roomName, players, option.gameType, option.speed, option.mapNumber,
             await gameRecord, channel);
-	room.sockets = [];
-	room.sockets.push(players[0].getSocket());
-	room.sockets.push(players[1].getSocket());
-	room.server = server;
-	room.sockets[1].join(room.roomId);
-	room.sockets[0].join(room.roomId);
-	this.playRoom.push(room);
+	// room.sockets = [];
+	// room.sockets.push(players[0].getSocket());
+	// room.sockets.push(players[1].getSocket());
+	// room.server = server;
+	// room.sockets[0].leave('default');
+	// room.sockets[1].leave('default');
+	// room.sockets[0].join(room.roomId);
+	// room.sockets[1].join(room.roomId);
     //  console.log(`현재 방 개수 : ` + this.playRoom.push(room));
 	
-	// players[0].getSocket().join(roomName);
-	// players[1].getSocket().join(roomName);
+	players[0].getSocket().join(roomName);
+	players[1].getSocket().join(roomName);
+	this.playRoom.push(room);
 	room.setGamePhase(GamePhase.MAKE_ROOM);
 	// setTimeout(() => {
 	// 	server.to(roomName).emit('game_queue_success', new GameQueueSuccessDto(channel.gameIdx, players))
@@ -334,11 +336,11 @@ export class GameService {
   public findGameRoomIdByUserId(userIdx: number): string {
     for (const room of this.playRoom) {
       if (
-        room.users[0].getUserObject().userIdx.toString() === userIdx.toString()
+        room.users[0].getUserObject().userIdx.valueOf() === userIdx.valueOf()
       ) {
         return room.roomId;
       } else if (
-        room.users[1].getUserObject().userIdx.toString() === userIdx.toString()
+        room.users[1].getUserObject().userIdx.valueOf() === userIdx.valueOf()
       ) {
         return room.roomId;
       }
@@ -394,12 +396,12 @@ export class GameService {
 			break ;
 		}
 	}
-  console.log('readyto', server.sockets)
+//   console.log('readyto', server.sockets)
 
 	// const target = this.playRoom.find(
     //   (room) => {room.roomId.valueOf() === roomId.valueOf()}
     // );
-    target.intervalId = setInterval(()=> {this.sendPingToRoom(target, server)}, 1000);
+    target.intervalId = setInterval(()=> { this.sendPingToRoom(target, server)}, 1000);
   }
 
   // 실제 초반 레이턴시 확정을 위한 핑 보내는 메서드

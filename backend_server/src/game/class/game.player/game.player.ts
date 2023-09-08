@@ -12,7 +12,7 @@ export class GamePlayer {
     this.userObject = user;
     this.socket = null;
     this.options = null;
-    this.ready = null;
+    this.ready = false;
   }
 
   setSocket(socket: Socket) {

@@ -102,18 +102,23 @@ export class GameGateway
     console.log('ret', ret)
     console.log('data', data)
     // console.log("success", this.server.sockets)
-    // if (ret === null) client.disconnect(true);
-     if (ret === true) {
+    if (ret === null) client.disconnect(true);
+    else if (ret === true) {
       console.log("game ready")
 	  // this.messanger.logWithMessage("getReadyForGame", "", "", "ping is ready");
       const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
       setTimeout(() => {this.gameService.readyToSendPing(roomId, this.server)}, 1000);
 	    // this.gameService.readyToSendPing(roomId, this.server);
       this.gameService.uncheckReady(userIdx);
+	  return this.messanger.setResponseMsgWithLogger(
+      200,
+      'game is start soon!',
+      'game_queue_susccess',
+    );
     }
 	// this.messanger.logWithMessage("game_queue_success", "", "","game_queue_success is successed");
     return this.messanger.setResponseMsgWithLogger(
-      200,
+      201,
       'game is ready',
       'game_queue_susccess',
     );
