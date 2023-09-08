@@ -1228,6 +1228,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() userStatus: UserStatusDto,
   ) {
+    console.log('userStatus : ', userStatus);
     const userId: number = parseInt(client.handshake.query.userId as string);
 
     if (Number.isNaN(userId)) return;
