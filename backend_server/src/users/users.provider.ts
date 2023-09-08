@@ -64,12 +64,18 @@ export class InMemoryUsers {
   }
 
   setBlockListByIdFromIM(blockList: BlockList): void {
-    this.inMemoryBlockList.push(blockList);
+    const blockListIndex = this.inMemoryBlockList.findIndex(
+      (block) => block.idx === blockList.idx,
+    );
+    this.inMemoryBlockList[blockListIndex] = blockList;
+    if (blockListIndex === -1) {
+      this.inMemoryBlockList.push(blockList);
+    }
   }
 
-  removeBlockListByNicknameFromIM(nickname: string): void {
+  removeBlockListByIntraFromIM(intra: string): void {
     this.inMemoryBlockList = this.inMemoryBlockList.filter(
-      (user) => user.blockedNickname !== nickname,
+      (user) => user.blockedIntra !== intra,
     );
   }
 }

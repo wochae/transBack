@@ -21,7 +21,7 @@ export class BlockList extends BaseEntity {
   blockedUserIdx: number;
 
   @Column({ type: 'varchar', onUpdate: 'CASCADE' })
-  blockedNickname: string;
+  blockedIntra: string;
 
   @CreateDateColumn() // 해당 컬럼은 자동으로 입력됨.
   blockedTime: Date;

@@ -61,6 +61,13 @@ export class UsersService {
     return this.userObjectRepository.findOneBy({ userIdx });
   }
 
+  async setUserImg(userIdx: number, img: string)
+  {
+    const user = await this.userObjectRepository.findOneBy({userIdx})
+    user.imgUri = img;
+    return this.userObjectRepository.save(user);
+  }
+
   async updateUserNick(updateUsersDto: UserEditprofileDto) {
     const { userIdx, userNickname, imgData } = updateUsersDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
@@ -82,7 +89,7 @@ export class UsersService {
     }
   }
 
-  private async checkFileExists(filePath) {
+  async checkFileExists(filePath) {
     try {
       await fs.access(filePath);
       console.log('File exists:', filePath);
@@ -127,7 +134,6 @@ export class UsersService {
     const { userIdx, userNickname, imgData } = userEditImgDto;
   
     const user = await this.findOneUser(userIdx);
-    console.log('update user : ', user);
     if (userNickname !== '') {
       user.nickname = userNickname;
       try {
@@ -171,7 +177,7 @@ export class UsersService {
   };
 
   async setBlock(
-    targetNickname: string,
+    targetIdx: number,
     user: UserObject,
     inMemory: InMemoryUsers,
   ): Promise<BlockInfoDto[]> {
@@ -180,22 +186,33 @@ export class UsersService {
       await queryRunner.connect();
       await queryRunner.startTransaction();
       const blockInfo = await this.blockedListRepository.blockTarget(
-        targetNickname,
+        targetIdx,
         user,
         this.userObjectRepository,
       );
+      const friend = await this.friendListRepository.findOneBy({
+        userIdx: user.userIdx,
+        friendIdx: targetIdx,
+      });
+      // 친구일 경우, 지워주고, 채팅방에 멤버인 경우엔 그 경우를 지나지 않는다.
+      if (friend) {
+        await this.friendListRepository.delete(friend.idx);
+      }
       // check inmemory
       const checkTarget = await this.blockedListRepository.findOne({
         where: {
           userIdx: user.userIdx,
-          blockedNickname: targetNickname,
+          blockedUserIdx: targetIdx,
         },
       });
+      // 이런 경우 이전에 내가 누군가를 블락해서 디비에 저장을 했는데, 그 사람이 닉네임을 변경하면, 그 사람을 닉네임으로 찾을 수가 없다.
       if (!checkTarget) {
-        inMemory.removeBlockListByNicknameFromIM(targetNickname);
+        inMemory.removeBlockListByIntraFromIM(blockInfo.blockedIntra);
       } else {
         inMemory.setBlockListByIdFromIM(blockInfo);
       }
+      inMemory.setBlockListByIdFromIM(blockInfo);
+      
       await queryRunner.commitTransaction();
     } catch (err) {
       await queryRunner.rollbackTransaction();
@@ -206,7 +223,7 @@ export class UsersService {
     const blockList = inMemory.getBlockListByIdFromIM(user.userIdx);
     const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
       return {
-        userNickname: res.blockedNickname,
+        userNickname: res.blockedIntra,
         userIdx: res.blockedUserIdx,
       };
     });
@@ -275,7 +292,8 @@ export class UsersService {
       userIdx: userIdx,
       intra: intra,
       nickname: intra,
-      imgUri: `http://localhost:4000/img/${userIdx}.png`,
+      // imgUri: `http://localhost:4000/img/${userIdx}.png`,
+      imgUri: `http://paulryu9309.ddns.net:4000/img/${userIdx}.png`,
       rankpoint: 0,
       isOnline: OnlineStatus.ONLINE,
       available: true,

@@ -26,15 +26,15 @@ export class BlockListDto {
   blockedUserIdx: number;
 
   @IsNotEmpty()
-  blockedNickname: string;
+  blockedIntra: string;
 
   blockedTime: Date;
 }
 
 export class BlockInfoDto {
   @IsNotEmpty()
-  userNickname: string;
+  blockedNickname: string;
 
   @IsNotEmpty()
-  userIdx: number;
+  blockedUserIdx: number;
 }
