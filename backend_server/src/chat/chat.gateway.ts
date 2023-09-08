@@ -38,10 +38,12 @@ import {
 } from './dto/chat.transaction.dto';
 import { UserStatusDto } from './dto/update-chat.dto';
 
+const front = process.env.FRONT_REMOTE;
+
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000', front],
   },
 })
 export class ChatGateway
