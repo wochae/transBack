@@ -22,7 +22,7 @@ import { CertificateObject } from 'src/entity/certificate.entity';
 import { UserObject } from 'src/entity/users.entity';
 import { IntraSimpleInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
-const backenduri = process.env.BACKEND_DOMAIN;
+const backenduri = process.env.BACKEND_LOCAL;
 
 @Controller()
 export class LoginController {
@@ -64,7 +64,7 @@ export class LoginController {
       console.log('codeCallback user exist : ', user);
       intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
     }
-    const anyImg = await this.usersService.checkFileExists(intraSimpleInfoDto.imgUri);
+    const anyImg = await this.usersService.checkFileExists(`public/img/${intraSimpleInfoDto.userIdx}.png`);
     if (!anyImg)
     {
       intraSimpleInfoDto.imgUri = `${backenduri}/img/0.png`;
