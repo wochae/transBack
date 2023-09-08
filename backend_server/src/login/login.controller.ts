@@ -19,7 +19,7 @@ import { IntraInfoDto } from 'src/users/dto/user.dto';
 import { UsersService } from 'src/users/users.service';
 import { plainToClass } from 'class-transformer';
 import { CertificateObject } from 'src/entity/certificate.entity';
-import { UserObject } from 'src/entity/users.entity';
+import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import { IntraSimpleInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 const backenduri = process.env.BACKEND_LOCAL;
@@ -61,6 +61,7 @@ export class LoginController {
       intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
       this.loginService.downloadProfileImg(intraInfo);
     } else {
+      this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
       console.log('codeCallback user exist : ', user);
       intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
     }
