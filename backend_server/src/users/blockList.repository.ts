@@ -18,7 +18,7 @@ export class BlockListRepository extends Repository<BlockList> {
       where: { userIdx: targetIdx },
     });
     if (!data) {
-      throw new Error(`There is a no user`);
+      throw new Error(`There is no user`);
     }
 
     const check = await this.findOne({
@@ -30,7 +30,7 @@ export class BlockListRepository extends Repository<BlockList> {
       const target = this.create({
         userIdx: user.userIdx,
         blockedUserIdx: data.userIdx,
-        blockedIntra: data.intra,
+        blockedNickname: data.nickname,
       });
       await this.save(target); // 차단
       return target;
@@ -44,7 +44,7 @@ export class BlockListRepository extends Repository<BlockList> {
     const members = await Promise.all(
       blockedList.map(async (blocked) => {
         return {
-          targetNickname: blocked.blockedIntra,
+          targetNickname: blocked.blockedNickname,
           targetIdx: blocked.blockedUserIdx,
         };
       }),

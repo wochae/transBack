@@ -63,7 +63,7 @@ export class LoginController {
       console.log('codeCallback user exist : ', user);
       intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
     }
-    const anyImg = await this.usersService.checkFileExists(user.imgUri);
+    const anyImg = await this.usersService.checkFileExists(intraSimpleInfoDto.imgUri);
     if (!anyImg)
     {
       intraSimpleInfoDto.imgUri = "http://paulryu9309.ddns.net:4000/img/0.png";

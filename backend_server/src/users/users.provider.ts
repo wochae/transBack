@@ -26,11 +26,13 @@ export class InMemoryUsers {
     });
   }
 
-  getUserByIntraFromIM(intra: string): UserObject {
-    return this.inMemoryUsers.find((user) => user.intra === intra);
+  async getUserByNicknameFromIM(nickname: string): Promise<UserObject> {
+    await this.initInMemoryUsers();
+    return this.inMemoryUsers.find((user) => user.nickname === nickname);
   }
 
-  getUserByIdFromIM(userId: number): UserObject {
+  async getUserByIdFromIM(userId: number): Promise<UserObject> {
+    await this.initInMemoryUsers();
     return this.inMemoryUsers.find((user) => user.userIdx === userId);
   }
 
@@ -59,10 +61,12 @@ export class InMemoryUsers {
     }
   }
 
-  getBlockListByIdFromIM(userId: number): BlockList[] {
+  async getBlockListByIdFromIM(userId: number): Promise<BlockList[]> {
+    await this.initInMemoryUsers();
     return this.inMemoryBlockList.filter((user) => user.userIdx === userId);
   }
 
+  // unused
   setBlockListByIdFromIM(blockList: BlockList): void {
     const blockListIndex = this.inMemoryBlockList.findIndex(
       (block) => block.idx === blockList.idx,
@@ -73,9 +77,9 @@ export class InMemoryUsers {
     }
   }
 
-  removeBlockListByIntraFromIM(intra: string): void {
+  removeBlockListByIntraFromIM(nickname: string): void {
     this.inMemoryBlockList = this.inMemoryBlockList.filter(
-      (user) => user.blockedIntra !== intra,
+      (user) => user.blockedNickname !== nickname,
     );
   }
 }
