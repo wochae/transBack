@@ -65,7 +65,7 @@ export class LoginController {
       intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
     }
     const anyImg = await this.usersService.checkFileExists(`public/img/${intraSimpleInfoDto.userIdx}.png`);
-    if (!anyImg)
+    if (!anyImg && !intraSimpleInfoDto.imgUri)
     {
       intraSimpleInfoDto.imgUri = `${backenduri}/img/0.png`;
       await this.usersService.setUserImg(intraSimpleInfoDto.userIdx, intraSimpleInfoDto.imgUri);

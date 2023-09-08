@@ -18,12 +18,12 @@ export class InMemoryUsers {
   }
 
   private async initInMemoryUsers(): Promise<void> {
-    await this.userObjectRepository.find().then((users) => {
+    const users = await this.userObjectRepository.find();
       this.inMemoryUsers = users;
-    });
-    await this.blockListRepository.find().then((lists) => {
+    
+    const lists = await this.blockListRepository.find();
       this.inMemoryBlockList = lists;
-    });
+    
   }
 
   async getUserByNicknameFromIM(nickname: string): Promise<UserObject> {
@@ -32,6 +32,7 @@ export class InMemoryUsers {
   }
 
   async getUserByIdFromIM(userId: number): Promise<UserObject> {
+    console.log('getUserByIdFromIM');
     await this.initInMemoryUsers();
     return this.inMemoryUsers.find((user) => user.userIdx === userId);
   }

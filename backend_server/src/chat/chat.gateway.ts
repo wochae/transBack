@@ -156,7 +156,6 @@ export class ChatGateway
     // FIXME: 1. connect 된 소켓의 유저 인트라와 요청한 인트라가 일치하는지 확인하는 함수 추가 필요
     const userId: number = parseInt(client.handshake.query.userId as string);
     const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
-    console.log(checkUser);
     // if (checkUser.nickname !== userNickname) {
     //   client.disconnect();
     //   return this.messanger.setResponseErrorMsgWithLogger(
@@ -170,16 +169,16 @@ export class ChatGateway
     //  
     // const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
     // FIXME: 2. 예외처리 함수 만들기 // 유저 아이디로 찾아서 닉네임 대조만 하면 될 것 같다.
-    // if (!user) {
-    //   client.disconnect();
-    //   return this.messanger.logWithWarn(
-    //     'enterMainPage',
-    //     'intra',
-    //     intra,
-    //     'Not Found',
-    //   );
-    // }
-    //
+    if (!user) {
+      client.disconnect();
+      return this.messanger.logWithWarn(
+        'enterMainPage',
+        'nickname',
+        userNickname,
+        'Not Found',
+      );
+    }
+    
     // FIXME: 3. emit value 만드는 함수로 빼기, DTO 만들기?
     const userObject = {
       imgUri: user.imgUri,
@@ -203,6 +202,7 @@ export class ChatGateway
       blockList,
       userObject,
     };
+    console.log('main_enter ', main_enter);
     //
     client.emit('main_enter', main_enter);
 
