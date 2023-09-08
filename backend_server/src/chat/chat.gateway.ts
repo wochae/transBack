@@ -621,16 +621,7 @@ export class ChatGateway
   ) {
     const { channelIdx, userIdx, grant } = chatRoomAdminReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
-    if (checkUser.userIdx !== userIdx) {
-      client.disconnect();
-      return this.messanger.setResponseErrorMsgWithLogger(
-        400,
-        'Improper Access',
-        'chat_room_admin',
-        userId,
-      );
-    }
+    
     const channel = this.chat.getProtectedChannel(channelIdx);
     // FIXME: 함수로 빼기
     if (!channel) {
