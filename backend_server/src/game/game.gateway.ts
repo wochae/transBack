@@ -30,10 +30,11 @@ import {
   ReturnMsgDto,
 } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
+const front = process.env.FRONT_REMOTE;
 @WebSocketGateway({
   namespace: 'game',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000', front],
   },
 })
 @UseFilters(new WsExceptionFilter())

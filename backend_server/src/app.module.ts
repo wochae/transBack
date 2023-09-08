@@ -12,12 +12,16 @@ import { InMemoryUsers } from './users/users.provider';
 import { SharedModule } from './shared/shared.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { ConfigModule } from '@nestjs/config';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-import * as config from 'config';
 
-const mailConfig = config.get('mail');
+const mailId = process.env.MAIL_USER;
+const mailPassword = process.env.MAIL_PW;
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      envFilePath: '/.env', // .env 파일의 경로를 명시적으로 지정
+    }),
     AuthModule,
     UsersModule,
     SharedModule,
@@ -33,8 +37,8 @@ const mailConfig = config.get('mail');
           port: 587,
           secure: false,
           auth: {
-            user: mailConfig.userid,
-            pass: mailConfig.password,
+            user: mailId,
+            pass: mailPassword,
           },
         },
         defaults: {
@@ -53,4 +57,5 @@ const mailConfig = config.get('mail');
   controllers: [AppController],
   providers: [AppService, InMemoryUsers],
 })
-export class AppModule {}
+export class AppModule {
+}

@@ -38,8 +38,22 @@ import * as config from 'config';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 import * as fs from 'fs/promises'; // fs.promises를 사용하여 비동기적인 파일 처리
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
-
+import * as dotenv from 'dotenv';
+dotenv.config();
 const mailConfig = config.get('mail');
+
+export const apiUid = process.env.CLIENT_ID;
+export const apiSecret = process.env.SECRET_KEY;
+export const frontcallback = process.env.FRONT_CALLBACK_URI;
+export const callbackuri = process.env.NEXT_PUBLIC_REDIRECTURL;
+export const jwtSecret = process.env.JWT_SECRET;
+export const checking = {apiUid, apiSecret, frontcallback, callbackuri, jwtSecret};
+
+
+const mailId = process.env.MAIL_USER;
+const mailpw = process.env.MAIL_PW;
+const backenduri = process.env.BACKEND_LOCAL;
+
 const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 @Injectable()
 export class UsersService {
@@ -299,8 +313,7 @@ export class UsersService {
       userIdx: userIdx,
       intra: intra,
       nickname: intra,
-      // imgUri: `http://10.19.231.71:4000/img/${userIdx}.png`,
-      imgUri: `http://paulryu9309.ddns.net:4000/img/${userIdx}.png`,
+      imgUri: `${backenduri}/${userIdx}.png`,
       rankpoint: 0,
       isOnline: OnlineStatus.ONLINE,
       available: true,

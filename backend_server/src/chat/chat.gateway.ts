@@ -38,10 +38,12 @@ import {
 } from './dto/chat.transaction.dto';
 import { UserStatusDto } from './dto/update-chat.dto';
 
+const front = process.env.FRONT_REMOTE;
+
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000', front],
   },
 })
 export class ChatGateway
@@ -159,30 +161,29 @@ export class ChatGateway
     // console.log('userId : ', userId)
     // console.log('inmemoryUsers : ', this.inMemoryUsers);
     const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
-    // console.log("checkUser : ", checkUser);
-    if (checkUser.nickname !== userNickname) {
-      client.disconnect();
-      return this.messanger.setResponseErrorMsgWithLogger(
-        400,
-        'Improper Access',
-        'main_enter',
-        userId,
-      );
-    }
-    const user = checkUser;
-    //
-    // const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
-    // FIXME: 2. 예외처리 함수 만들기 // 유저 아이디로 찾아서 닉네임 대조만 하면 될 것 같다.
-    // if (!user) {
+    // if (checkUser.nickname !== userNickname) {
     //   client.disconnect();
-    //   return this.messanger.logWithWarn(
-    //     'enterMainPage',
-    //     'intra',
-    //     intra,
-    //     'Not Found',
+    //   return this.messanger.setResponseErrorMsgWithLogger(
+    //     400,
+    //     'Improper Access',
+    //     'main_enter',
+    //     userId,
     //   );
     // }
-    //
+    const user = checkUser;
+    //  
+    // const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
+    // FIXME: 2. 예외처리 함수 만들기 // 유저 아이디로 찾아서 닉네임 대조만 하면 될 것 같다.
+    if (!user) {
+      client.disconnect();
+      return this.messanger.logWithWarn(
+        'enterMainPage',
+        'nickname',
+        userNickname,
+        'Not Found',
+      );
+    }
+    
     // FIXME: 3. emit value 만드는 함수로 빼기, DTO 만들기?
     const userObject = {
       imgUri: user.imgUri,
@@ -206,6 +207,7 @@ export class ChatGateway
       blockList,
       userObject,
     };
+    console.log('main_enter ', main_enter);
     //
     client.emit('main_enter', main_enter);
 
@@ -1224,6 +1226,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() userStatus: UserStatusDto,
   ) {
+    console.log('userStatus : ', userStatus);
     const userId: number = parseInt(client.handshake.query.userId as string);
 
     if (Number.isNaN(userId)) return;
