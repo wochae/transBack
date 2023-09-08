@@ -1085,9 +1085,8 @@ export class ChatGateway
       user,
       this.inMemoryUsers,
     );
-    console.log('blockInfo : ', blockInfo);
-    console.log('friendList : ', await this.usersService.getFriendList(user.userIdx));
-    client.emit('chat_block', blockInfo);
+    const friendList = await this.usersService.getFriendList(user.userIdx);
+    client.emit('chat_block', { blockInfo, friendList });
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done block',

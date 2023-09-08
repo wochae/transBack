@@ -193,7 +193,7 @@ export class UsersService {
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      const blockInfo = await this.blockedListRepository.blockTarget(
+      await this.blockedListRepository.blockTarget(
         targetIdx,
         user,
         this.userObjectRepository,
@@ -227,7 +227,7 @@ export class UsersService {
       await queryRunner.release();
     }
     const blockList = await inMemory.getBlockListByIdFromIM(user.userIdx);
-    const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
+    const blockInfoList: BlockInfoDto[] = blockList?.map((res) => {
       return {
         blockedNickname: res.blockedNickname,
         blockedUserIdx: res.blockedUserIdx,
@@ -300,8 +300,7 @@ export class UsersService {
       intra: intra,
       nickname: intra,
       // imgUri: `http://10.19.231.71:4000/img/${userIdx}.png`,
-      imgUri: `http://localhost:4000/img/${userIdx}.png`,
-      // imgUri: `http://paulryu9309.ddns.net:4000/img/${userIdx}.png`,
+      imgUri: `http://paulryu9309.ddns.net:4000/img/${userIdx}.png`,
       rankpoint: 0,
       isOnline: OnlineStatus.ONLINE,
       available: true,
