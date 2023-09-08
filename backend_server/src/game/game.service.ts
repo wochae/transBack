@@ -541,7 +541,7 @@ export class GameService {
     const frame = room.getNextFrame(room);
 	// console.log(`frame data : ${frame}`);
     const status: GamePhase = room.getScoreStatus();
-    if (status !== GamePhase.ON_PLAYING) {
+    if (status === GamePhase.SET_NEW_GAME || status === GamePhase.MATCH_END) {
       room.stopInterval();
       if (status === GamePhase.SET_NEW_GAME) {
         server

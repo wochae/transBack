@@ -8,8 +8,8 @@ import { GameRoom } from '../game.room/game.room';
 export class Animations {
   private readonly MAX_WIDTH = 500;
   private readonly min_WIDTH = -500;
-  private readonly MAX_HEIGHT = 300;
-  private readonly min_HEIGHT = -300;
+  private readonly MAX_HEIGHT = 250;
+  private readonly min_HEIGHT = -250;
   private readonly PADDLE_LINE_1 = -470;
   private readonly PADDLE_LINE_2 = 470;
 
@@ -113,10 +113,10 @@ export class Animations {
   // 기존 데이터를 기반으로 다음 프레임 연산을 진행한다.
   public makeFrame(currentData: GameData, key: KeyPress[], room: GameRoom): GamePhase {
     // 기존 데이터 이관
-    if (room.animation.currentDatas != null) {
-      room.animation.prevDatas = room.animation.currentDatas;
+    // if (room.animation.currentDatas != null) {
+    //   room.animation.prevDatas = room.animation.currentDatas;
     //   room.animation.currentDatas = null;
-    }
+    // }
 	// console.log(`current data : ${room.animation.currentDatas}`);
 	room.animation.currentDatas.ballX = currentData.currentPosX;
 	room.animation.currentDatas.ballY = currentData.currentPosY;
@@ -127,54 +127,57 @@ export class Animations {
 
 
     // 좌표 계산
-    const nextX = parseFloat(
-      (currentData.currentPosX + room.animation.unitDistance).toFixed(2),
+    currentData.currentPosX = parseFloat(
+      ((currentData.currentPosX + room.animation.unitDistance) + (currentData.gameSpeed + 1)).toFixed(2),
     );
-    const nextY = parseFloat(
+	if (currentData.currentPosX <= room.animation.min_WIDTH)
+		currentData.currentPosX = room.animation.min_WIDTH;
+	else if (currentData.currentPosX >= room.animation.MAX_WIDTH)
+		currentData.currentPosX = room.animation.MAX_WIDTH;
+    currentData.currentPosY = parseFloat(
       // y = ax + b, a, b의 값을 미리 설정
-      (currentData.angle * nextX + currentData.yIntercept).toFixed(2),
+      ((currentData.angle * currentData.currentPosX + currentData.yIntercept) + (currentData.gameSpeed + 1)).toFixed(2),
     );
-	console.log(`next X : ${nextX}`);
-	console.log(`next Y : ${nextY}`);
-	console.log(`angle : ${currentData.angle}`);
-	console.log(`YUntercept : ${currentData.yIntercept}`);
-
+	if (currentData.currentPosY <= room.animation.min_HEIGHT)
+		currentData.currentPosY = room.animation.min_HEIGHT;
+	else if (currentData.currentPosY >= room.animation.MAX_HEIGHT)
+		currentData.currentPosY = room.animation.MAX_HEIGHT;
 
     // 페들 데이터 바꿈
-    const paddle1 = room.animation.currentDatas.paddle1 + key[0].popKeyValue();
-    const paddle2 = room.animation.currentDatas.paddle2 + key[1].popKeyValue();
+     currentData.paddle1 = room.animation.currentDatas.paddle1 + key[0].popKeyValue();
+     currentData.paddle2 = room.animation.currentDatas.paddle2 + key[1].popKeyValue();
 
     // 프레임 값 갱신
-    currentData.currentPosX = nextX;
-    currentData.currentPosY = nextY;
+    currentData.currentPosX = currentData.currentPosX;
+    currentData.currentPosY = currentData.currentPosY;
 
     // 프레임 값 갱신 #2 paddle 최대, 최소 값 정리
-    room.animation.setPaddleNotOverLimit(currentData, paddle1, paddle2);
+    room.animation.setPaddleNotOverLimit(currentData, currentData.paddle1, currentData.paddle2);
 
-    currentData.paddle1 = paddle1;
-    currentData.paddle2 = paddle2;
 
     // 현재 게임 상태 갱신
-	console.log(`room fps : ${room.animation.maxFps}`);
-    if (room.animation.currentFps + 1 <= room.animation.maxFps)
+	// console.log(`room fps : ${room.animation.maxFps}`);
+    if (room.animation.currentFps + 1 === room.animation.maxFps)
       room.animation.currentFps = 1;
     else {
       room.animation.currentFps += 1;
     }
-	room.animation.currentDatas.ballX = nextX;
-	room.animation.currentDatas.ballY = nextY;
-	room.animation.currentDatas.paddle1 = paddle1;
-	room.animation.currentDatas.paddle2 = paddle2;
+
+	room.animation.currentDatas.ballX = currentData.currentPosX;
+	room.animation.currentDatas.ballY = currentData.currentPosY;
+	room.animation.currentDatas.paddle1 = currentData.paddle1;
+	room.animation.currentDatas.paddle2 = currentData.paddle2;
 	room.animation.currentDatas.currentFrame = room.animation.currentFps;
 	room.animation.currentDatas.maxFrameRate = room.animation.maxFps;
 
-	console.log(`frame data - ball X: ${room.animation.currentDatas.ballX}`);
-	console.log(`frame data - ball Y: ${room.animation.currentDatas.ballY}`);
-	console.log(`frame data - paddle 1 : ${room.animation.currentDatas.paddle1}`);
-	console.log(`frame data - paddle 2 : ${room.animation.currentDatas.paddle2}`);
-	console.log(`frame data - curent Frame: ${room.animation.currentDatas.currentFrame}`);
+	// console.log(`frame data - ball X: ${room.animation.currentDatas.ballX}`);
+	// console.log(`frame data - ball Y: ${room.animation.currentDatas.ballY}`);
+	// console.log(`frame data - paddle 1 : ${room.animation.currentDatas.paddle1}`);
+	// console.log(`frame data - paddle 2 : ${room.animation.currentDatas.paddle2}`);
+	// console.log(`frame data - curent Frame: ${room.animation.currentDatas.currentFrame}`);
 
     const type = room.animation.checkStrike(currentData, this);
+	console.log(type);
     if (type.length === 2 || type.length === 3) {
       const cond1 = type.find((vec) => vec === GamePhase.HIT_THE_WALL);
       const cond2 = type.find((vec) => vec === GamePhase.HIT_THE_PADDLE);
@@ -216,26 +219,26 @@ export class Animations {
 
   private reverseVectorY(currentData: GameData) {
     currentData.standardY *= -1;
-    if (currentData.vector === Vector.UPLEFT) {
+    if (currentData.vector === Vector.UPRIGHT) {
+      currentData.vector = Vector.DOWNRIGHT;
+    } else if (currentData.vector === Vector.DOWNRIGHT) {
+      currentData.vector = Vector.UPRIGHT;
+    } else if (currentData.vector === Vector.UPLEFT) {
       currentData.vector = Vector.DOWNLEFT;
-    } else if (currentData.vector === Vector.DOWNLEFT) {
-      currentData.vector = Vector.UPLEFT;
-    } else if (currentData.vector === Vector.UPRIGHT) {
-      currentData.vector = Vector.DOWNRIGHT;
     } else {
-      currentData.vector = Vector.DOWNRIGHT;
+      currentData.vector = Vector.DOWNLEFT;
     }
   }
 
   private reverseVectorX(currentData: GameData) {
-    if (currentData.vector === Vector.UPLEFT) {
-      currentData.vector = Vector.UPRIGHT;
-    } else if (currentData.vector === Vector.DOWNLEFT) {
-      currentData.vector = Vector.DOWNRIGHT;
-    } else if (currentData.vector === Vector.UPRIGHT) {
+    if (currentData.vector === Vector.UPRIGHT) {
       currentData.vector = Vector.UPLEFT;
-    } else {
+    } else if (currentData.vector === Vector.DOWNRIGHT) {
       currentData.vector = Vector.DOWNLEFT;
+    } else if (currentData.vector === Vector.UPLEFT) {
+      currentData.vector = Vector.UPRIGHT;
+    } else {
+      currentData.vector = Vector.DOWNRIGHT;
     }
   }
 
@@ -247,7 +250,7 @@ export class Animations {
 
   private changeAngleForPaddle(currentData: GameData) {
     switch (currentData.vector) {
-      case Vector.UPLEFT:
+      case Vector.UPRIGHT:
         if (currentData.standardX === -1 && currentData.standardY === 2) {
           currentData.standardX = 2;
           currentData.standardY = 1;
@@ -262,7 +265,7 @@ export class Animations {
           currentData.standardY = 2;
         }
         break;
-      case Vector.UPRIGHT:
+      case Vector.UPLEFT:
         if (currentData.standardX === 1 && currentData.standardY === 2) {
           currentData.standardX = -2;
           currentData.standardY = 1;
@@ -274,7 +277,7 @@ export class Animations {
           currentData.standardY = 2;
         }
         break;
-      case Vector.DOWNLEFT:
+      case Vector.DOWNRIGHT:
         if (currentData.standardX === -2 && currentData.standardY === -1) {
           currentData.standardX = 1;
           currentData.standardY = -2;
@@ -289,7 +292,7 @@ export class Animations {
           currentData.standardY = -1;
         }
         break;
-      case Vector.DOWNRIGHT:
+      case Vector.DOWNLEFT:
         if (currentData.standardX === 1 && currentData.standardY === -2) {
           currentData.standardX = -2;
           currentData.standardY = -1;
@@ -309,7 +312,7 @@ export class Animations {
 
   public handleSituationPaddleStrike(currentData: GameData) {
     const type: Vector = currentData.vector;
-    if (type === Vector.DOWNLEFT || type === Vector.UPLEFT) {
+    if (type === Vector.DOWNRIGHT || type === Vector.UPRIGHT) {
       this.reverseVectorX(currentData);
       const y = currentData.currentPosY;
       const maxY = currentData.paddle1MaxMin[0];
@@ -347,7 +350,7 @@ export class Animations {
 
   public handleSituationGoalPostStrike(currentData: GameData): GamePhase {
     const type = currentData.vector;
-    if (type === Vector.UPLEFT || type === Vector.DOWNLEFT) {
+    if (type === Vector.UPRIGHT || type === Vector.DOWNRIGHT) {
       currentData.score2++;
       if (currentData.score2 === 5) {
         const ret: GamePhase = GamePhase.MATCH_END;
@@ -389,7 +392,7 @@ export class Animations {
   private checkPaddleStrike(vector: Vector, currentData: GameData): boolean {
     let condition1;
     let condition2;
-    if (vector === Vector.UPLEFT || vector === Vector.DOWNLEFT) {
+    if (vector === Vector.UPRIGHT || vector === Vector.DOWNRIGHT) {
       const max = currentData.currentPosY + 20;
       const min = currentData.currentPosY - 20;
       condition1 =
@@ -414,16 +417,17 @@ export class Animations {
   // 벽에 부딪히는지를 판단한다.
   public checkStrike(currentData: GameData, aniData:Animations): GamePhase[] {
     const ret: GamePhase[] = [];
+	console.log('현재 벡터 : ',currentData.vector);
     switch (currentData.vector) {
-      case Vector.UPLEFT:
+      case Vector.UPRIGHT:
         // 벽에 부딪히는지를 확인
         if (currentData.currentPosY + 20 >= aniData.MAX_HEIGHT) {
-          currentData.currentPosY = 280;
+          currentData.currentPosY = aniData.MAX_HEIGHT;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
         if (currentData.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
-          if (aniData.checkPaddleStrike(Vector.UPLEFT, currentData)) {
+          if (aniData.checkPaddleStrike(Vector.UPRIGHT, currentData)) {
             currentData.currentPosX = aniData.PADDLE_LINE_1;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
@@ -434,15 +438,15 @@ export class Animations {
           ret.push(GamePhase.HIT_THE_GOAL_POST);
         }
         break;
-      case Vector.UPRIGHT:
+      case Vector.UPLEFT:
         // 벽에 부딪히는지를 확인
         if (currentData.currentPosY + 20 >= aniData.MAX_HEIGHT) {
-          currentData.currentPosY = 280;
+          currentData.currentPosY = aniData.MAX_HEIGHT;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
         if (currentData.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
-          if (aniData.checkPaddleStrike(Vector.UPRIGHT, currentData)) {
+          if (aniData.checkPaddleStrike(Vector.UPLEFT, currentData)) {
             currentData.currentPosX = aniData.PADDLE_LINE_2;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
@@ -453,15 +457,15 @@ export class Animations {
           ret.push(GamePhase.HIT_THE_GOAL_POST);
         }
         break;
-      case Vector.DOWNLEFT:
+      case Vector.DOWNRIGHT:
         // 벽에 부딪히는지를 확인
-        if (currentData.currentPosY + 20 <= aniData.min_HEIGHT) {
-          currentData.currentPosY = -280;
+        if (currentData.currentPosY - 20 <= aniData.min_HEIGHT) {
+          currentData.currentPosY = aniData.min_HEIGHT;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
         if (currentData.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
-          if (aniData.checkPaddleStrike(Vector.DOWNLEFT, currentData)) {
+          if (aniData.checkPaddleStrike(Vector.DOWNRIGHT, currentData)) {
             currentData.currentPosX = aniData.PADDLE_LINE_1;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
@@ -472,15 +476,15 @@ export class Animations {
           ret.push(GamePhase.HIT_THE_GOAL_POST);
         }
         break;
-      case Vector.DOWNRIGHT:
+      case Vector.DOWNLEFT:
         // 벽에 부딪히는지를 확인
-        if (currentData.currentPosY + 20 <= aniData.min_HEIGHT) {
-          currentData.currentPosY = -280;
+        if (currentData.currentPosY - 20 <= aniData.min_HEIGHT) {
+          currentData.currentPosY = -aniData.min_HEIGHT;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
         if (currentData.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
-          if (aniData.checkPaddleStrike(Vector.DOWNRIGHT, currentData)) {
+          if (aniData.checkPaddleStrike(Vector.DOWNLEFT, currentData)) {
             currentData.currentPosX = aniData.PADDLE_LINE_2;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }

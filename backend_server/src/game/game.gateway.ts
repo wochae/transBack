@@ -138,7 +138,7 @@ export class GameGateway
         .to(targetRoom.roomId)
         .emit('game_start', new GameStartDto(targetRoom));
 	  // this.messanger.logWithMessage("game_ping", "", "","game is start now");
-      setTimeout(() => {this.gameService.startGame(data.userIdx, this.server, this.gameService)}, 2000);
+      setTimeout(() => {this.gameService.startGame(data.userIdx, this.server, this.gameService)}, 4000);
       return this.messanger.setResponseMsgWithLogger(
         this.gameService.sendSetFrameRate(data.userIdx),
         'Your max fps is checked',

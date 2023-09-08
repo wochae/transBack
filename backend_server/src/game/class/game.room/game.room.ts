@@ -50,7 +50,7 @@ export class GameRoom {
       standardY: 0,
       angle: 0,
       yIntercept: 0,
-      vector: Vector.UPLEFT,
+      vector: Vector.UPRIGHT,
       paddle1: 0,
       paddle1MaxMin: [20, -20],
       paddle2: 0,
@@ -94,7 +94,7 @@ export class GameRoom {
     room.gameObj.standardY = 0;
     room.gameObj.angle = 0;
     room.gameObj.yIntercept = 0;
-    room.gameObj.vector = Vector.UPLEFT;
+    room.gameObj.vector = Vector.UPRIGHT;
     room.gameObj.paddle1 = 0;
     room.gameObj.paddle1MaxMin = [20, -20];
     room.gameObj.paddle2 = 0;
@@ -163,6 +163,17 @@ export class GameRoom {
 
   public getNextFrame(room:GameRoom): FrameData {
     room.gamePhase = room.animation.makeFrame(room.gameObj, room.keyPress, room);
+	console.log(`Ball - x : ${room.animation.currentDatas.ballX}`);
+	console.log(`Ball - Y : ${room.animation.currentDatas.ballY}`);
+	console.log(`FPS: ${room.animation.currentDatas.currentFrame}/ ${room.animation.currentDatas.maxFrameRate}`)
+	console.log(`paddle 1 : ${room.animation.currentDatas.paddle1}`);
+	console.log(`paddle 1 Max - min : ${room.gameObj.paddle1MaxMin}`);
+	console.log(`paddle 2 : ${room.animation.currentDatas.paddle2}`);
+	console.log(`paddle 2 Max - min : ${room.gameObj.paddle2MaxMin}`);
+	console.log(`standard X : ${room.gameObj.standardX}`);
+	console.log(`standard Y : ${room.gameObj.standardY}`);
+	console.log(`y intecept : ${room.gameObj.yIntercept}`);
+	console.log(`equation angle : ${room.gameObj.angle}`);
     return room.animation.currentDatas;
   }
 
@@ -179,13 +190,13 @@ export class GameRoom {
     if (this.gameObj.standardY < 0) up = false;
 
     if (right == true && up == true) {
-      this.gameObj.vector = Vector.UPRIGHT;
-    } else if (right == true && up == false) {
-      this.gameObj.vector = Vector.DOWNRIGHT;
-    } else if (right == false && up == true) {
       this.gameObj.vector = Vector.UPLEFT;
-    } else {
+    } else if (right == true && up == false) {
       this.gameObj.vector = Vector.DOWNLEFT;
+    } else if (right == false && up == true) {
+      this.gameObj.vector = Vector.UPRIGHT;
+    } else {
+      this.gameObj.vector = Vector.DOWNRIGHT;
     }
   }
 
