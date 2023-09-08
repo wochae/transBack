@@ -8,6 +8,8 @@ export interface GameData {
   currentPosY: number;
   standardX: number;
   standardY: number;
+  currentFrame: number;
+  maxFrame: number;
   angle: number; // y = ax + b, 'a'
   yIntercept: number; // y = ax + b, 'b'
   vector: Vector;

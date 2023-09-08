@@ -48,6 +48,8 @@ export class GameRoom {
       currentPosY: 0,
       standardX: 0,
       standardY: 0,
+	  currentFrame: 0,
+	  maxFrame: 0,
       angle: 0,
       yIntercept: 0,
       vector: Vector.UPRIGHT,
@@ -85,13 +87,11 @@ export class GameRoom {
 
   // 게임을 초기화한다.
   public setNewGame(room: GameRoom) {
-    // this.gamePhase = GamePhase.SET_NEW_GAME;
     room.resetBall();
-// room.resetPaddle();    
-    room.gameObj.currentPosX = 0;
-    room.gameObj.currentPosY = 0;
     room.gameObj.standardX = 0;
     room.gameObj.standardY = 0;
+    room.gameObj.currentFrame = 0;
+	room.gameObj.maxFrame = 0;
     room.gameObj.angle = 0;
     room.gameObj.yIntercept = 0;
     room.gameObj.vector = Vector.UPRIGHT;
@@ -123,6 +123,7 @@ export class GameRoom {
   public setLatency(latency: number): number {
     this.animation.setMaxFps(latency);
     const maxFps = this.animation.getMaxFps();
+	this.gameObj.maxFrame = maxFps;
     if (maxFps == 60) this.intervalPeriod = 15;
     else if (maxFps == 30) this.intervalPeriod = 30;
     else if (maxFps == 24) this.intervalPeriod = 40;
@@ -163,6 +164,12 @@ export class GameRoom {
 
   public getNextFrame(room:GameRoom): FrameData {
     room.gamePhase = room.animation.makeFrame(room.gameObj, room.keyPress, room);
+		room.animation.currentDatas.ballX = room.gameObj.currentPosX;
+	room.animation.currentDatas.ballY = room.gameObj.currentPosY;
+	room.animation.currentDatas.paddle1 = room.gameObj.paddle1;
+	room.animation.currentDatas.paddle2 = room.gameObj.paddle2;
+	room.animation.currentDatas.currentFrame = room.gameObj.currentFrame;
+	room.animation.currentDatas.maxFrameRate = room.gameObj.maxFrame;
 	console.log(`Ball - x : ${room.animation.currentDatas.ballX}`);
 	console.log(`Ball - Y : ${room.animation.currentDatas.ballY}`);
 	console.log(`FPS: ${room.animation.currentDatas.currentFrame}/ ${room.animation.currentDatas.maxFrameRate}`)
@@ -182,12 +189,11 @@ export class GameRoom {
     this.gameObj.currentPosY = 0;
     this.gameObj.standardX = this.getRandomInt(-2, 2);
     this.gameObj.standardY = this.getRandomInt(-2, 2);
-    let up = true;
+    let up = false;
     let right = true;
-    this.gameObj.vector = null;
 
     if (this.gameObj.standardX < 0) right = false;
-    if (this.gameObj.standardY < 0) up = false;
+    if (this.gameObj.standardY < 0) up = true;
 
     if (right == true && up == true) {
       this.gameObj.vector = Vector.UPLEFT;
@@ -205,8 +211,6 @@ export class GameRoom {
       (this.gameObj.standardY - 0) / (this.gameObj.standardX - 0);
     this.gameObj.yIntercept =
       this.gameObj.standardY - this.gameObj.angle * this.gameObj.standardX;
-	console.log(`angle : ${this.gameObj.angle}`);
-	console.log(`yIntercept : ${this.gameObj.yIntercept}`);
   }
 
   public getRandomInt(min: number, max: number): number {

@@ -46,8 +46,6 @@ export class Animations {
 
   // 레이턴시를 가지고 최대 FPS를 확정짓는다.
   public setMaxFps(latency: number) {
-    if (this.maxFps === null) this.maxFps = 0;
-	console.log(`latency : ${latency}`)
     if (latency < 8) {
       this.maxFps = 60;
     } else if (latency >= 8 && latency < 15) {
@@ -63,7 +61,7 @@ export class Animations {
   }
 
   // getter FPS
-  public getMaxFps(): number | null {
+  public getMaxFps(): number {
     return this.maxFps;
   }
 
@@ -112,69 +110,64 @@ export class Animations {
 
   // 기존 데이터를 기반으로 다음 프레임 연산을 진행한다.
   public makeFrame(currentData: GameData, key: KeyPress[], room: GameRoom): GamePhase {
-    // 기존 데이터 이관
-    // if (room.animation.currentDatas != null) {
-    //   room.animation.prevDatas = room.animation.currentDatas;
-    //   room.animation.currentDatas = null;
-    // }
-	// console.log(`current data : ${room.animation.currentDatas}`);
-	room.animation.currentDatas.ballX = currentData.currentPosX;
-	room.animation.currentDatas.ballY = currentData.currentPosY;
-	room.animation.currentDatas.paddle1 = currentData.paddle1;
-	room.animation.currentDatas.paddle2 = currentData.paddle2;
-	room.animation.currentDatas.currentFrame = room.animation.prevDatas.currentFrame
-	room.animation.currentDatas.maxFrameRate = room.animation.prevDatas.maxFrameRate
-
-
     // 좌표 계산
+	if (currentData.vector === Vector.DOWNLEFT) {
     currentData.currentPosX = parseFloat(
-      ((currentData.currentPosX + room.animation.unitDistance) + (currentData.gameSpeed + 1)).toFixed(2),
+      ((currentData.currentPosX - room.animation.unitDistance) + (currentData.gameSpeed -1)).toFixed(2),
     );
+    currentData.currentPosY = parseFloat(
+      // y = ax + b, a, b의 값을 미리 설정
+      ((currentData.angle * currentData.currentPosX + currentData.yIntercept) + (currentData.gameSpeed -1 )).toFixed(2),
+    );
+	}
+	else if (currentData.vector === Vector.DOWNRIGHT) {
+		currentData.currentPosX = parseFloat(
+      ((currentData.currentPosX + room.animation.unitDistance) + (currentData.gameSpeed - 1)).toFixed(2),
+    	);
+   	 	currentData.currentPosY = parseFloat(
+      // y = ax + b, a, b의 값을 미리 설정
+      ((currentData.angle * currentData.currentPosX + currentData.yIntercept) + (currentData.gameSpeed -1)).toFixed(2),
+    );
+	} else if (currentData.vector === Vector.UPLEFT){
+		currentData.currentPosX = parseFloat(
+      ((currentData.currentPosX - room.animation.unitDistance) + (currentData.gameSpeed - 1)).toFixed(2),
+    	);
+   	 	currentData.currentPosY = parseFloat(
+      // y = ax + b, a, b의 값을 미리 설정
+      ((currentData.angle * currentData.currentPosX - currentData.yIntercept) + (currentData.gameSpeed -1)).toFixed(2),
+   		);
+	} else if (currentData.vector === Vector.UPRIGHT) {
+		currentData.currentPosX = parseFloat(
+      ((currentData.currentPosX - room.animation.unitDistance) + (currentData.gameSpeed - 1)).toFixed(2),
+    	);
+   	 	currentData.currentPosY = parseFloat(
+      // y = ax + b, a, b의 값을 미리 설정
+      ((currentData.angle * currentData.currentPosX - currentData.yIntercept) + (currentData.gameSpeed -1)).toFixed(2),
+   		);
+	}
+
+
 	if (currentData.currentPosX <= room.animation.min_WIDTH)
 		currentData.currentPosX = room.animation.min_WIDTH;
 	else if (currentData.currentPosX >= room.animation.MAX_WIDTH)
 		currentData.currentPosX = room.animation.MAX_WIDTH;
-    currentData.currentPosY = parseFloat(
-      // y = ax + b, a, b의 값을 미리 설정
-      ((currentData.angle * currentData.currentPosX + currentData.yIntercept) + (currentData.gameSpeed + 1)).toFixed(2),
-    );
+
 	if (currentData.currentPosY <= room.animation.min_HEIGHT)
 		currentData.currentPosY = room.animation.min_HEIGHT;
 	else if (currentData.currentPosY >= room.animation.MAX_HEIGHT)
 		currentData.currentPosY = room.animation.MAX_HEIGHT;
 
     // 페들 데이터 바꿈
-     currentData.paddle1 = room.animation.currentDatas.paddle1 + key[0].popKeyValue();
-     currentData.paddle2 = room.animation.currentDatas.paddle2 + key[1].popKeyValue();
+     currentData.paddle1 = currentData.paddle1 + key[0].popKeyValue();
+     currentData.paddle2 = currentData.paddle2 + key[1].popKeyValue();
 
     // 프레임 값 갱신
-    currentData.currentPosX = currentData.currentPosX;
-    currentData.currentPosY = currentData.currentPosY;
+	currentData.currentFrame += 1;
+	if (currentData.currentFrame === currentData.maxFrame)
+	  currentData.currentFrame = 0;
 
     // 프레임 값 갱신 #2 paddle 최대, 최소 값 정리
     room.animation.setPaddleNotOverLimit(currentData, currentData.paddle1, currentData.paddle2);
-
-
-    // 현재 게임 상태 갱신
-	// console.log(`room fps : ${room.animation.maxFps}`);
-    if (room.animation.currentFps + 1 === room.animation.maxFps)
-      room.animation.currentFps = 1;
-    else {
-      room.animation.currentFps += 1;
-    }
-
-	room.animation.currentDatas.ballX = currentData.currentPosX;
-	room.animation.currentDatas.ballY = currentData.currentPosY;
-	room.animation.currentDatas.paddle1 = currentData.paddle1;
-	room.animation.currentDatas.paddle2 = currentData.paddle2;
-	room.animation.currentDatas.currentFrame = room.animation.currentFps;
-	room.animation.currentDatas.maxFrameRate = room.animation.maxFps;
-
-	// console.log(`frame data - ball X: ${room.animation.currentDatas.ballX}`);
-	// console.log(`frame data - ball Y: ${room.animation.currentDatas.ballY}`);
-	// console.log(`frame data - paddle 1 : ${room.animation.currentDatas.paddle1}`);
-	// console.log(`frame data - paddle 2 : ${room.animation.currentDatas.paddle2}`);
-	// console.log(`frame data - curent Frame: ${room.animation.currentDatas.currentFrame}`);
 
     const type = room.animation.checkStrike(currentData, this);
 	console.log(type);
