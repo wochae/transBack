@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, Logger, } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import * as jwt from 'jsonwebtoken';
 import * as dotenv from 'dotenv';
@@ -12,7 +12,6 @@ import * as config from 'config';
 
 const authConfig = config.get('auth');
 
-
 export const apiUid = authConfig.clientid;
 export const apiSecret = authConfig.clientsecret;
 export const redirectUri = authConfig.redirecturi;
@@ -25,9 +24,7 @@ export const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 
 @Injectable()
 export class LoginService {
-  constructor(
-    private readonly usersService: UsersService,
-  ) { }
+  constructor(private readonly usersService: UsersService) {}
   private logger: Logger = new Logger('LoginService');
 
   async getAccessToken(code: string): Promise<any> {
@@ -39,9 +36,13 @@ export class LoginService {
       code: code,
       redirect_uri: frontcallback,
     };
+    console.log('body', body);
     try {
+      console.log('hi');
       const response = await axios.post(intraApiTokenUri, body);
-      this.logger.log(`getAccessToken: response.data.access_token : ${response.data.access_token}`)
+      this.logger.log(
+        `getAccessToken: response.data.access_token : ${response.data.access_token}`,
+      );
       return response.data.access_token;
     } catch (error) {
       // Handle error
@@ -51,7 +52,6 @@ export class LoginService {
   }
 
   async getIntraInfo(code: string): Promise<IntraInfoDto> {
-
     const token = await this.getAccessToken(code);
     try {
       const response = await axios.get(intraApiMyInfoUri, {
@@ -87,7 +87,7 @@ export class LoginService {
   async downloadProfileImg(intraInfo: IntraInfoDto) {
     const { userIdx, imgUri } = intraInfo;
     const imgData = await axios.get(imgUri, { responseEncoding: 'base64' }),
-    fs = require('fs');
+      fs = require('fs');
     fs.mkdirSync('public/img/', { recursive: true });
     fs.writeFileSync(
       `public/img/${userIdx}.png`,

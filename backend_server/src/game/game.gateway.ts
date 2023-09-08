@@ -33,7 +33,7 @@ import {
 @WebSocketGateway({
   namespace: 'game',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://10.19.231.71:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
   },
 })
 @UseFilters(new WsExceptionFilter())

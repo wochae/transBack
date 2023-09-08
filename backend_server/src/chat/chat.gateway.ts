@@ -41,7 +41,7 @@ import { UserStatusDto } from './dto/update-chat.dto';
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://10.19.231.71:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
   },
 })
 export class ChatGateway
@@ -154,8 +154,12 @@ export class ChatGateway
     const { userNickname } = chatMainEnterReqDto;
     console.log('userNickname : ', userNickname);
     // FIXME: 1. connect 된 소켓의 유저 인트라와 요청한 인트라가 일치하는지 확인하는 함수 추가 필요
+    console.log('param : ', client.handshake.query.userId);
     const userId: number = parseInt(client.handshake.query.userId as string);
+    // console.log('userId : ', userId)
+    // console.log('inmemoryUsers : ', this.inMemoryUsers);
     const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    // console.log("checkUser : ", checkUser);
     if (checkUser.nickname !== userNickname) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(

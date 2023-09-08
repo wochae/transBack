@@ -67,7 +67,8 @@ export class LoginController {
     if (!anyImg)
     {
       // intraSimpleInfoDto.imgUri = "http://paulryu9309.ddns.net:4000/img/0.png";
-      intraSimpleInfoDto.imgUri = "http://10.19.231.71:4000/img/0.png";
+      // intraSimpleInfoDto.imgUri = "http://10.19.231.71:4000/img/0.png";
+      intraSimpleInfoDto.imgUri = "http://localhost:4000/img/0.png";
       await this.usersService.setUserImg(intraSimpleInfoDto.userIdx, intraSimpleInfoDto.imgUri);
     }
     const payload = { id: intraInfo.userIdx, email: intraInfo.email };
