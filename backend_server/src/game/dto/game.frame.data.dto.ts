@@ -1,4 +1,5 @@
 import { FrameData } from '../enum/frame.data.enum';
+import { GameData } from '../enum/game.data.enum';
 
 export class GameFrameDataDto {
   ballX: number;
@@ -29,13 +30,13 @@ export class GameFrameDataDto {
     }
   }
 
-  setData(data: FrameData, serverTime: number)  {
-    this.ballX = data.ballX;
-    this.ballY = data.ballY;
-    this.paddle1 = data.paddle1;
-    this.paddle2 = data.paddle2;
+  setData(data: GameData, serverTime: number) {
+    this.ballX = data.currentPos[0];
+    this.ballY = data.currentPos[1];
+    this.paddle1 = data.paddle1[0];
+    this.paddle2 = data.paddle2[0];
     this.serverTime = serverTime;
-    this.targetFrame = data.maxFrameRate;
-    this.cntPerFrame = data.currentFrame;
+    this.targetFrame = data.frameData[1];
+    this.cntPerFrame = data.frameData[0];
   }
 }

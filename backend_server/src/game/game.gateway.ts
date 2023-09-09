@@ -56,7 +56,12 @@ export class GameGateway
   }
 
   handleConnection(client: Socket) {
-	this.messanger.logWithMessage("handleConnection", "", "","connection handling is start");
+    this.messanger.logWithMessage(
+      'handleConnection',
+      '',
+      '',
+      'connection handling is start',
+    );
 
     const userIdx: number = parseInt(
       client.handshake.query.userId as string,
@@ -73,19 +78,26 @@ export class GameGateway
       client.disconnect();
       return;
     }
-	// this.messanger.logWithMessage("handleConnection", "", "","connection handling is status Player");
+    // this.messanger.logWithMessage("handleConnection", "", "","connection handling is status Player");
     this.gameService.changeStatusForPlayer(userIdx);
-	// this.messanger.logWithMessage("handleConnection", "", "","connection handling is after status Player");
+    // this.messanger.logWithMessage("handleConnection", "", "","connection handling is after status Player");
     const players = this.gameService.checkQueue(userIdx);
-	// this.messanger.logWithMessage("handleConnection", "", "","connection handling is check Queue");
-	
+    // this.messanger.logWithMessage("handleConnection", "", "","connection handling is check Queue");
+
     if (players === undefined) {
-	// this.messanger.logWithMessage("handleConnection", "", "","check players");
-		return this.messanger.setResponseMsgWithLogger(200, "you are ready", "handleConnection");
-	}
-    else this.gameService.makePlayerRoom(players, this.server);
-	// this.messanger.logWithMessage("handleConnection", "", "","connection handling is successed");
-    return this.messanger.setResponseMsgWithLogger(200, "room is setted", "handleConnection");
+      // this.messanger.logWithMessage("handleConnection", "", "","check players");
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'you are ready',
+        'handleConnection',
+      );
+    } else this.gameService.makePlayerRoom(players, this.server);
+    // this.messanger.logWithMessage("handleConnection", "", "","connection handling is successed");
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'room is setted',
+      'handleConnection',
+    );
   }
 
   afterInit() {
@@ -104,17 +116,21 @@ export class GameGateway
     // console.log("success", this.server.sockets)
     if (ret === null) client.disconnect(true);
     else if (ret === true) {
-      console.log("game ready")
-	  // this.messanger.logWithMessage("getReadyForGame", "", "", "ping is ready");
+      console.log('game ready');
+      // this.messanger.logWithMessage("getReadyForGame", "", "", "ping is ready");
       const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
-      setTimeout(() => {this.gameService.readyToSendPing(roomId, this.server)}, 1200);
-	    // this.gameService.readyToSendPing(roomId, this.server);
+      setTimeout(() => {
+        this.gameService.readyToSendPing(roomId, this.server);
+      }, 1200);
+      // this.gameService.readyToSendPing(roomId, this.server);
       this.gameService.uncheckReady(userIdx);
-	  return this.messanger.setResponseMsgWithLogger(200, 'game is start soon!',
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'game is start soon!',
         'game_queue_susccess',
       );
     }
-	// this.messanger.logWithMessage("game_queue_success", "", "","game_queue_success is successed");
+    // this.messanger.logWithMessage("game_queue_success", "", "","game_queue_success is successed");
     return this.messanger.setResponseMsgWithLogger(
       201,
       'game is ready',
@@ -124,20 +140,22 @@ export class GameGateway
 
   @SubscribeMessage('game_ping_receive')
   async getUserPong(@MessageBody() data: GamePingReceiveDto) {
-	// this.messanger.logWithMessage("game_ping", "", "","game_ping is started");
-	// this.messanger.logWithMessage("game_ping", "", "",`user : ${data.userIdx}`);
+    // this.messanger.logWithMessage("game_ping", "", "","game_ping is started");
+    // this.messanger.logWithMessage("game_ping", "", "",`user : ${data.userIdx}`);
     // console.log("game_ping_receive", this.server.sockets);
-	const time = Date.now();
-	const latency = (time - data.serverTime) / 2;
+    const time = Date.now();
+    const latency = (time - data.serverTime) / 2;
 
     if (this.gameService.receivePing(data.userIdx, latency)) {
       const targetRoom = this.gameService.findGameRoomById(data.userIdx);
-	  targetRoom.setNewGame(targetRoom);
+      targetRoom.setNewGame(targetRoom);
       this.server
         .to(targetRoom.roomId)
         .emit('game_start', new GameStartDto(targetRoom));
-	  // this.messanger.logWithMessage("game_ping", "", "","game is start now");
-      setTimeout(() => {this.gameService.startGame(data.userIdx, this.server, this.gameService)}, 4000);
+      // this.messanger.logWithMessage("game_ping", "", "","game is start now");
+      setTimeout(() => {
+        this.gameService.startGame(data.userIdx, this.server, this.gameService);
+      }, 4000);
       return this.messanger.setResponseMsgWithLogger(
         this.gameService.sendSetFrameRate(data.userIdx),
         'Your max fps is checked',
@@ -154,7 +172,7 @@ export class GameGateway
   @SubscribeMessage('game_move_paddle')
   getKeyPressData(@MessageBody() data: KeyPressDto) {
     const targetRoom = this.gameService.findGameRoomById(data.userIdx);
-	console.log(`key board signal = ${data.userIdx} : ${data.paddle}`);
+    console.log(`key board signal = ${data.userIdx} : ${data.paddle}`);
     targetRoom.keyPressed(data.userIdx, data.paddle);
     if (this.gameService.checkLatencyOnPlay(targetRoom, data)) {
       return this.messanger.setResponseMsgWithLogger(

@@ -38,37 +38,38 @@ export class GameRoom {
     mapNumber: MapNumber,
     histories: GameRecord[],
     channel: GameChannel,
-    totalDistancePerSec: number
+    totalDistancePerSec: number,
   ) {
     this.roomId = id;
     this.intervalId = null;
-	this.intervalPeriod = 0;
+    this.intervalPeriod = 0;
     this.users = users;
     this.gameObj = {
-  		currentPos: [0,0],
-  		anglePos: [0,0],
-  		standardPos: [0,0],
-  		frameData: [0,0],
-  		linearEquation:[0,0],
-		vector: Vector.UPRIGHT,
-  		paddle1: [0, [0,0]],
-		paddle2: [0, [0,0]],
-  		score: [0,0],
-  		gamePhase: GamePhase.SET_NEW_GAME,
-  		gameType: type,
-  		gameSpeed: speed,
-  		gameMapNumber: mapNumber,
+      currentPos: [0, 0],
+      anglePos: [0, 0],
+      standardPos: [0, 0],
+      frameData: [0, 0],
+      linearEquation: [0, 0],
+      vector: Vector.UPRIGHT,
+      paddle1: [0, [0, 0]],
+      paddle2: [0, [0, 0]],
+      score: [0, 0],
+      gamePhase: GamePhase.SET_NEW_GAME,
+      gameType: type,
+      gameSpeed: speed,
+      gameMapNumber: mapNumber,
     };
 
     this.latency = [];
     this.latency.push(0);
     this.latency.push(0);
+
     this.latencyCnt = [];
     this.latencyCnt.push(0);
     this.latencyCnt.push(0);
 
-    this.animation = new Animations(totalDistancePerSec);
-	this.physics = new Physics()
+    this.animation = new Animations();
+    this.physics = new Physics();
 
     this.keyPress = [];
     this.keyPress[0] = new KeyPress();
@@ -82,34 +83,31 @@ export class GameRoom {
 
   // 게임을 초기화한다.
   public setNewGame(room: GameRoom) {
-	room.gameObj = {
-  		currentPos: [0,0],
-  		anglePos: [0,0],
-  		standardPos: [0,0],
-  		frameData: [0,0],
-  		linearEquation:[0,0],
-		vector: Vector.UPRIGHT,
-  		paddle1: [0, [0,0]],
-		paddle2: [0, [0,0]],
-  		score: [0,0],
-  		gamePhase: GamePhase.SET_NEW_GAME,
-		gameType: room.gameObj.gameType,
-		gameSpeed: room.gameObj.gameSpeed,
-		gameMapNumber: room.gameObj.gameMapNumber
+    room.gameObj = {
+      currentPos: [0, 0],
+      anglePos: [0, 0],
+      standardPos: [0, 0],
+      frameData: [0, 0],
+      linearEquation: [0, 0],
+      vector: Vector.UPRIGHT,
+      paddle1: [0, [-20, 20]],
+      paddle2: [0, [-20, 20]],
+      score: [0, 0],
+      gamePhase: GamePhase.SET_NEW_GAME,
+      gameType: room.gameObj.gameType,
+      gameSpeed: room.gameObj.gameSpeed,
+      gameMapNumber: room.gameObj.gameMapNumber,
     };
-	room.setRandomStandardCoordinates();
+    room.setRandomStandardCoordinates();
     // room.animation.setRenewLinearEquation(room.gameObj);
     room.keyPress[0].setRenewKeypress();
     room.keyPress[1].setRenewKeypress();
-    // TODO: 애니메이션 객체를 새롭게 만들어야 하는가?
-    //
   }
 
   public setLatency(latency: number, room: GameRoom): number {
-	console.log(`target latency -> ${latency}`)
-    // room.animation.setMaxFps(latency);
-	let maxFps;
-	if (latency < 8) {
+    console.log(`target latency -> ${latency}`);
+    let maxFps;
+    if (latency < 8) {
       maxFps = 60;
     } else if (latency >= 8 && latency < 15) {
       maxFps = 30;
@@ -118,14 +116,12 @@ export class GameRoom {
     } else if (latency >= 20) {
       maxFps = 10;
     }
-	room.gameObj.frameData[1] = maxFps;
-	console.log(`MaxFPS? -> ${maxFps}`)
-
+    room.gameObj.frameData[1] = maxFps;
+    console.log(`MaxFPS? -> ${maxFps}`);
     if (maxFps == 60) room.intervalPeriod = 15;
     else if (maxFps == 30) room.intervalPeriod = 30;
     else if (maxFps == 24) room.intervalPeriod = 40;
     else room.intervalPeriod = 80;
-    // TODO: 정상 가동 여부 판단 필요
     room.keyPress.map((data) => data.setPressedNumberByMaxFps(maxFps));
     return maxFps;
   }
@@ -158,21 +154,36 @@ export class GameRoom {
     }
   }
 
-  //TODO: 
-  public getNextFrame(room:GameRoom): FrameData {
-	room.animation.makeFrame(room.gameObj);
-    room.physics.checkPhysics(room.gameObj);
-    return room.makeFrameData(room.gameObj);
+  public makeNextFrame(room: GameRoom) {
+    room.animation.makeFrame(room.gameObj, room.keyPress, room);
+    room.gameObj = room.physics.checkPhysics(room.gameObj, room.physics);
+  }
+
+  public getChannel(): GameChannel {
+    return this.channel;
+  }
+
+  public getHistories(): GameRecord[] {
+    return this.history;
+  }
+
+  public getGameData(): GameData {
+    return this.gameObj;
   }
 
   public setRandomStandardCoordinates() {
-    this.gameObj.angleX = this.gameObj.standardX = this.getRandomInt(-2, 2);
-    this.gameObj.angleY = this.gameObj.standardY = this.getRandomInt(-2, 2);
+    this.gameObj.anglePos = [
+      this.getRandomInt(-2, 2),
+      this.getRandomInt(-2, 2),
+    ];
     let down = true;
     let right = true;
 
-    if (this.gameObj.angleX < 0) right = false;
-    if (this.gameObj.angleY < 0) down = false;
+    if (this.gameObj.anglePos[0] < 0) right = false;
+    if (this.gameObj.anglePos[1] < 0) down = false;
+
+    this.gameObj.standardPos[0] = this.gameObj.anglePos[0];
+    this.gameObj.standardPos[1] = this.gameObj.anglePos[1];
 
     if (right == true && down == true) {
       this.gameObj.vector = Vector.DOWNRIGHT;
@@ -185,12 +196,12 @@ export class GameRoom {
     }
   }
 
-//   public setRenewLinearEquation(room: GameRoom) {
-//     this.gameObj.angle =
-//       (this.gameObj.standardY - 0) / (this.gameObj.standardX - 0);
-//     this.gameObj.yIntercept =
-//       this.gameObj.standardY - this.gameObj.angle * 0;
-//   }
+  //   public setRenewLinearEquation(room: GameRoom) {
+  //     this.gameObj.angle =
+  //       (this.gameObj.standardY - 0) / (this.gameObj.standardX - 0);
+  //     this.gameObj.yIntercept =
+  //       this.gameObj.standardY - this.gameObj.angle * 0;
+  //   }
 
   public getRandomInt(min: number, max: number): number {
     let randomValue = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -199,31 +210,33 @@ export class GameRoom {
   }
 
   public getGamePhase(): GamePhase {
-    return this.gamePhase;
+    return this.gameObj.gamePhase;
   }
 
-  public setGamePhase(value: GamePhase): GamePhase {
-    this.gamePhase = value;
-    return this.gamePhase;
+  public setGamePhase(value: GamePhase) {
+    this.gameObj.gamePhase = value;
   }
 
-  public getScoreStatus(): GamePhase {
-    return this.gamePhase;
-  }
-
-  public getCurrentFrame(): FrameData {
-    return this.animation.currentDatas;
-  }
-
-  public syncronizeResult() {
-    this.channel.score1 = this.gameObj.score1;
-    this.channel.score2 = this.gameObj.score2;
-    this.history[0].score = `${this.channel.score1} : ${this.channel.score2}`;
-    this.history[1].score = `${this.channel.score2} : ${this.channel.score1}`;
-    if (this.gamePhase === GamePhase.SET_NEW_GAME) {
-      this.channel.status = RecordResult.PLAYING;
-    } else {
-      this.channel.status = RecordResult.DONE;
-    }
+  public deleteRoom() {
+    this.roomId = undefined;
+    this.intervalId = undefined;
+    this.intervalPeriod = undefined; // 서버 -(좌표)-> 클라이언트 -(키 입력)-> 서버  -(좌표, 키 입력)-> 클라이언트
+    this.users[0].getSocket().disconnect(true);
+    this.users[0].setSocket(undefined);
+    this.users[1].getSocket().disconnect(true);
+    this.users[1].setSocket(undefined);
+    this.users[0].setUserObject(undefined);
+    this.users[1].setUserObject(undefined);
+    this.gameObj = undefined;
+    this.latency = undefined;
+    this.latencyCnt = undefined;
+    delete this.animation;
+    delete this.physics;
+    delete this.keyPress[0];
+    delete this.keyPress[1];
+    this.keyPress = undefined;
+    this.history[0] = undefined;
+    this.history[1] = undefined;
+    this.channel = undefined;
   }
 }

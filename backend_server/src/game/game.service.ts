@@ -108,11 +108,11 @@ export class GameService {
 
   // 플레이어가 커넥션이 연결됨에 따라, 소켓을 설정해준다.
   setSocketToPlayer(clientSocket: Socket, userIdx: number): boolean {
-	console.log("setSocketToPlayer here start");
+    console.log('setSocketToPlayer here start');
     for (const member of this.onLinePlayer) {
       if (member[0].getUserObject().userIdx === userIdx) {
         member[0].setSocket(clientSocket);
-		console.log("setSocketToPlayer here end");
+        console.log('setSocketToPlayer here end');
         return true;
       }
     }
@@ -121,7 +121,7 @@ export class GameService {
 
   // 큐 내부를 파악하고, 게임 상대가 준비되었는지 확인한다.
   checkQueue(userIdx: number): GamePlayer[] {
-	// console.log(`userIdx 확인 전 : ` + userIdx)
+    // console.log(`userIdx 확인 전 : ` + userIdx)
     let target: [GamePlayer, GameType];
     for (const member of this.onLinePlayer) {
       if (member[0].getUserObject().userIdx === userIdx) {
@@ -129,9 +129,9 @@ export class GameService {
         break;
       }
     }
-	// console.log(`UserIdx 확인 후` + target[0].getUserObject().userIdx)
+    // console.log(`UserIdx 확인 후` + target[0].getUserObject().userIdx)
     const type = target[1];
-	let targetQueue: GameQueue;
+    let targetQueue: GameQueue;
     switch (type) {
       case GameType.FRIEND:
         targetQueue = this.friendQueue;
@@ -144,7 +144,7 @@ export class GameService {
         break;
     }
     if (targetQueue.getLength() >= 2) {
-	  console.log("here it is!!!");
+      console.log('here it is!!!');
       const list = targetQueue.popPlayer(target[0].getUserObject().userIdx);
       return list;
     } else return undefined;
@@ -169,22 +169,17 @@ export class GameService {
   // play room 을 구성한다.
   async makePlayerRoom(players: GamePlayer[], server: Server) {
     const roomName = this.makeRoomName();
-	this.messanger.logWithMessage(
-      'makePlayerRoom',
-      '',
-      '',
-      `${roomName}`,
-    );
+    this.messanger.logWithMessage('makePlayerRoom', '', '', `${roomName}`);
 
     const option = this.setOptions(players);
-	this.messanger.logWithMessage(
+    this.messanger.logWithMessage(
       'makePlayerRoom',
       '',
       '',
       `${option.userIdx}`,
     );
 
-    let channel = this.makeGameChannel(players);
+    const channel = this.makeGameChannel(players);
     this.messanger.logWithMessage(
       'makePlayerRoom',
       '',
@@ -192,46 +187,62 @@ export class GameService {
       `${players.length}`,
     );
 
-    const newChannel = await this.gameChannelRepository.save(channel)
+    const newChannel = await this.gameChannelRepository.save(channel);
     this.messanger.logWithMessage(
-        'makePlayerRoom',
-        '',
-        '',
-        `${channel.userIdx1} ${channel.userIdx2} / ${channel.matchDate}`,);
-   
+      'makePlayerRoom',
+      '',
+      '',
+      `${channel.userIdx1} ${channel.userIdx2} / ${channel.matchDate}`,
+    );
 
-	const gameRecord = this.makeGameHistory(players, newChannel);
-      // TODO: FIX here
-    let record0 = await this.gameRecordRepository.save(gameRecord[0]);
-	let record1 = await this.gameRecordRepository.save(gameRecord[1]);
-	(await gameRecord).splice(0, 2);
-	(await gameRecord).push(record0);
-	(await gameRecord).push(record1);
-	const room = new GameRoom(roomName, players, option.gameType, option.speed, option.mapNumber,
-            await gameRecord, channel);
-	// room.sockets = [];
-	// room.sockets.push(players[0].getSocket());
-	// room.sockets.push(players[1].getSocket());
-	// room.server = server;
-	// room.sockets[0].leave('default');
-	// room.sockets[1].leave('default');
-	// room.sockets[0].join(room.roomId);
-	// room.sockets[1].join(room.roomId);
+    const gameRecord = this.makeGameHistory(players, newChannel);
+    // TODO: FIX here
+    const record0 = await this.gameRecordRepository.save(gameRecord[0]);
+    const record1 = await this.gameRecordRepository.save(gameRecord[1]);
+    (await gameRecord).splice(0, 2);
+    (await gameRecord).push(record0);
+    (await gameRecord).push(record1);
+    const room = new GameRoom(
+      roomName,
+      players,
+      option.gameType,
+      option.speed,
+      option.mapNumber,
+      await gameRecord,
+      channel,
+      100,
+    );
+    // room.sockets = [];
+    // room.sockets.push(players[0].getSocket());
+    // room.sockets.push(players[1].getSocket());
+    // room.server = server;
+    // room.sockets[0].leave('default');
+    // room.sockets[1].leave('default');
+    // room.sockets[0].join(room.roomId);
+    // room.sockets[1].join(room.roomId);
     //  console.log(`현재 방 개수 : ` + this.playRoom.push(room));
-	
-	players[0].getSocket().join(roomName);
-	players[1].getSocket().join(roomName);
-	this.playRoom.push(room);
-	room.setGamePhase(GamePhase.MAKE_ROOM);
-	// setTimeout(() => {
-	// 	server.to(roomName).emit('game_queue_success', new GameQueueSuccessDto(channel.gameIdx, players))
-	// },500);
-	
-	const data = new GameQueueSuccessDto(channel.gameIdx, players, room.gameObj.gameType, room.gameObj.gameSpeed, room.gameObj.gameMapNumber);
-	setTimeout(() => {server.to(room.roomId).emit('game_queue_success', data)}, 1000);
-	// console.log('server', server);
-	// console.log('------------------------')
-	// this.messanger.logWithMessage("makePlyerRoom", "", "" ,"server emit to room");
+
+    players[0].getSocket().join(roomName);
+    players[1].getSocket().join(roomName);
+    this.playRoom.push(room);
+    room.setGamePhase(GamePhase.MAKE_ROOM);
+    // setTimeout(() => {
+    // 	server.to(roomName).emit('game_queue_success', new GameQueueSuccessDto(channel.gameIdx, players))
+    // },500);
+
+    const data = new GameQueueSuccessDto(
+      channel.gameIdx,
+      players,
+      room.gameObj.gameType,
+      room.gameObj.gameSpeed,
+      room.gameObj.gameMapNumber,
+    );
+    setTimeout(() => {
+      server.to(room.roomId).emit('game_queue_success', data);
+    }, 1000);
+    // console.log('server', server);
+    // console.log('------------------------')
+    // this.messanger.logWithMessage("makePlyerRoom", "", "" ,"server emit to room");
   }
 
   // play room 의 이름을 설정한다.
@@ -305,7 +316,7 @@ export class GameService {
   // game_queue_success 를 진행하면서, 들어오는 반환값들이 정상 처리가 되느지를 확인한다. true 가 나오면 플레이어 1, 2가 모두 준비된 상태를 의미하다.
   checkReady(userIdx: number): boolean | null {
     const room = this.findGameRoomById(userIdx);
-    console.log('room', room)
+    console.log('room', room);
     if (room === null) return null;
     if (room.users[0].getUserObject().userIdx === userIdx)
       room.users[0].setReady(userIdx);
@@ -350,82 +361,64 @@ export class GameService {
 
   // Room 의 이름으로 룸을 가
   public findGameRoomByRoomId(roomId: string): GameRoom {
-	// const target = this.playRoom.find(
+    // const target = this.playRoom.find(
     //   (room) => room.roomId.valueOf() === roomId.valueOf(),
     // );
-	let target;
-	for (let i = 0; i < this.playRoom.length; i++) {
-		if (this.playRoom[i].roomId.valueOf() === roomId.valueOf()){
-			target = this.playRoom[i]; 
-			break;
-		}
-	}
-	return target;
+    let target;
+    for (let i = 0; i < this.playRoom.length; i++) {
+      if (this.playRoom[i].roomId.valueOf() === roomId.valueOf()) {
+        target = this.playRoom[i];
+        break;
+      }
+    }
+    return target;
   }
 
-  // 1차 핑 보내기 준비하는 용도
-//   public readyToSendPing(roomId: string, server: Server, gameService: GameService) {
-//     // const target = this.findGameRoomByRoomId(roomId);
-// 	console.log(roomId);
-// 	gameService.messanger.logWithMessage("ready to send ping", "", "", `room Id : ${roomId}`);
-// 	gameService.messanger.logWithMessage("ready to send ping", "", "", `room length : ${gameService.playRoom.length}`);
-	
-// 	let target;
-// 	for(let i = 0; i < gameService.playRoom.length; i++) {
-// 		if (gameService.playRoom[i].roomId.valueOf === roomId.valueOf) {
-// 			target = gameService.playRoom[i];
-// 			break ;
-// 		}
-// 	}
-
-// 	// const target = gameService.playRoom.find(
-//     //   (room) => {room.roomId.valueOf() === roomId.valueOf()}
-//     // );
-//     target.intervalId = setInterval(()=> {gameService.sendPingToRoom(target, server)}, 1000);
-//   }
-
-	public readyToSendPing(roomId: string, server: Server) {
-	let target;
-	for(let i = 0; i < this.playRoom.length; i++) {
-		if (this.playRoom[i].roomId.valueOf === roomId.valueOf) {
-			target = this.playRoom[i];
-			break ;
-		}
-	}
-    target.intervalId = setInterval(()=> { this.sendPingToRoom(target, server)}, 1000);
+  public readyToSendPing(roomId: string, server: Server) {
+    let target;
+    for (let i = 0; i < this.playRoom.length; i++) {
+      if (this.playRoom[i].roomId.valueOf === roomId.valueOf) {
+        target = this.playRoom[i];
+        break;
+      }
+    }
+    target.intervalId = setInterval(() => {
+      this.sendPingToRoom(target, server);
+    }, 1000);
   }
 
   // 실제 초반 레이턴시 확정을 위한 핑 보내는 메서드
   public sendPingToRoom(room: GameRoom, server: Server) {
-	const target = new GamePingDto();
-  	server.to(room.roomId).emit('game_ping', target);
+    const target = new GamePingDto();
+    server.to(room.roomId).emit('game_ping', target);
   }
 
   // 핑의 수신 용도
   public receivePing(userIdx: number, latency: number): boolean {
-	// this.messanger.logWithMessage("receive ping", "" , "" , "start here");
+    // this.messanger.logWithMessage("receive ping", "" , "" , "start here");
     const targetRoom = this.findGameRoomById(userIdx);
-	// this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.roomId}`);
-	// this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.gamePhase}`);
+    // this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.roomId}`);
+    // this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.gamePhase}`);
 
-    if (targetRoom.gamePhase !== GamePhase.MAKE_ROOM) return false;
+    if (targetRoom.getGamePhase() !== GamePhase.MAKE_ROOM) return false;
     let latencyIdx;
-	if (targetRoom.users[0].getUserObject().userIdx === userIdx)
-      latencyIdx = 0;
+    if (targetRoom.users[0].getUserObject().userIdx === userIdx) latencyIdx = 0;
     else latencyIdx = 1;
-	// this.messanger.logWithMessage("receive ping", "" , "" ,`latency Idx : ${latencyIdx}`);
+    // this.messanger.logWithMessage("receive ping", "" , "" ,`latency Idx : ${latencyIdx}`);
     targetRoom.latencyCnt[latencyIdx] += 1;
 
     if (targetRoom.latency[latencyIdx] === 0) {
       targetRoom.latency[latencyIdx] += latency;
     } else {
-    	targetRoom.latency[latencyIdx] += latency;
-    	targetRoom.latency[latencyIdx] = Math.round( targetRoom.latency[latencyIdx] / 2);
-	  console.log(`data latency : ${latency}`);
-	//   console.log(`data clientTime : ${data.clientTime}`);
-	  console.log(`Player ${latencyIdx} : ${targetRoom.latency[latencyIdx]}`);
+      targetRoom.latency[latencyIdx] += latency;
+      targetRoom.latency[latencyIdx] = Math.round(
+        targetRoom.latency[latencyIdx] / 2,
+      );
+      console.log(`data latency : ${latency}`);
+      //   console.log(`data clientTime : ${data.clientTime}`);
+      console.log(`Player ${latencyIdx} : ${targetRoom.latency[latencyIdx]}`);
     }
-	// TODO: Lateyncy cnt to change
+    // TODO: Lateyncy cnt to change
     if (targetRoom.latencyCnt[latencyIdx] === 3) {
       if (targetRoom.latencyCnt[0] >= 3 && targetRoom.latencyCnt[1] >= 3) {
         targetRoom.stopInterval();
@@ -433,7 +426,6 @@ export class GameService {
         targetRoom.latencyCnt.splice(0, 2);
         targetRoom.latencyCnt.push(0);
         targetRoom.latencyCnt.push(0);
-        targetRoom.gamePhase = GamePhase.SET_NEW_GAME;
         return true;
       }
     }
@@ -481,32 +473,36 @@ export class GameService {
 
   // 최초 게임 시작시, 여기서 게임이 시작된다.
   public startGame(userIdx: number, server: Server, gameService: GameService) {
-	let targetRoom: GameRoom;
-	for (const room of gameService.playRoom) {
+    let targetRoom: GameRoom;
+    for (const room of gameService.playRoom) {
       if (room.users[0].getUserObject().userIdx === userIdx) {
         targetRoom = room;
-		break ;
+        break;
       } else if (room.users[1].getUserObject().userIdx === userIdx) {
         targetRoom = room;
-		break ;
+        break;
       }
     }
-    if (targetRoom.gamePhase != GamePhase.SET_NEW_GAME) return;
-    // targetRoom.setNewGame(targetRoom);
+    targetRoom.setNewGame(targetRoom);
+    if (targetRoom.getGamePhase() != GamePhase.SET_NEW_GAME) return;
     targetRoom.setGamePhase(GamePhase.ON_PLAYING);
-	console.log(`target Interval Ms : ${targetRoom.getIntervalMs()}`)
+    console.log(`target Interval Ms : ${targetRoom.getIntervalMs()}`);
     targetRoom.setIntervalId(
       setInterval(() => {
-        gameService.makeFrame(targetRoom, server, gameService)},targetRoom.getIntervalMs()
-      ),
+        gameService.startRendering(targetRoom, server, gameService);
+      }, targetRoom.getIntervalMs()),
     );
   }
 
   // 프레임을 전달하는 함수
-  private async makeFrame(room: GameRoom, server: Server, gameService: GameService) {
-    const frame = room.getNextFrame(room);
-	// console.log(`frame data : ${frame}`);
-    const status: GamePhase = room.getScoreStatus();
+  private async startRendering(
+    room: GameRoom,
+    server: Server,
+    gameService: GameService,
+  ) {
+    room.makeNextFrame(room);
+    // console.log(`frame data : ${frame}`);
+    const status: GamePhase = room.getGamePhase();
     if (status === GamePhase.SET_NEW_GAME || status === GamePhase.MATCH_END) {
       room.stopInterval();
       if (status === GamePhase.SET_NEW_GAME) {
@@ -524,57 +520,51 @@ export class GameService {
             new GamePauseScpreDto(room.users, room.gameObj, GameStatus.END),
           );
       }
-      room.syncronizeResult();
-      await this.gameChannelRepository.save(room.channel).then(async () => {
-        await this.gameRecordRepository.save(room.history[0]).then(async () => {
-          await this.gameRecordRepository
-            .save(room.history[1])
-            .then(async () => {
-              const user1 = room.users[0].getUserObject();
-              const user2 = room.users[1].getUserObject();
-              if (room.channel.score1 === 5) {
-                user1.win += 1;
-                user2.lose += 1;
-                if (room.channel.type === RecordType.RANK) {
-                  let correctionValue1;
-                  let correctionValue2;
-                  if (user1.rankpoint > user2.rankpoint) {
-                    correctionValue1 = user2.rankpoint / user1.rankpoint;
-                    correctionValue2 = user1.rankpoint / user2.rankpoint;
-                  } else {
-                    correctionValue2 = user2.rankpoint / user1.rankpoint;
-                    correctionValue1 = user1.rankpoint / user2.rankpoint;
-                  }
-                  user1.rankpoint += 100 * correctionValue1;
-                  user2.rankpoint -= 100 * correctionValue2;
-                }
-              } else {
-                user2.win += 1;
-                user1.lose += 1;
-                if (room.channel.type === RecordType.RANK) {
-                  let correctionValue1;
-                  let correctionValue2;
-                  if (user1.rankpoint > user2.rankpoint) {
-                    correctionValue1 = user2.rankpoint / user1.rankpoint;
-                    correctionValue2 = user1.rankpoint / user2.rankpoint;
-                  } else {
-                    correctionValue2 = user2.rankpoint / user1.rankpoint;
-                    correctionValue1 = user1.rankpoint / user2.rankpoint;
-                  }
-                  user2.rankpoint += 100 * correctionValue1;
-                  user1.rankpoint -= 100 * correctionValue2;
-                }
-              }
-              await this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
-              await this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
-            });
-        });
-      });
+      await this.gameChannelRepository.save(room.getChannel());
+      await this.gameRecordRepository.save(room.getHistories()[0]);
+      await this.gameRecordRepository.save(room.getHistories()[1]);
+
+      const user1 = room.users[0].getUserObject();
+      const user2 = room.users[1].getUserObject();
+
+      if (room.channel.score1 === 5) {
+        user1.win += 1;
+        user2.lose += 1;
+        if (room.channel.type === RecordType.RANK) {
+          let correctionValue1;
+          let correctionValue2;
+          if (user1.rankpoint > user2.rankpoint) {
+            correctionValue1 = user2.rankpoint / user1.rankpoint;
+            correctionValue2 = user1.rankpoint / user2.rankpoint;
+          } else {
+            correctionValue2 = user2.rankpoint / user1.rankpoint;
+            correctionValue1 = user1.rankpoint / user2.rankpoint;
+          }
+          user1.rankpoint += 100 * correctionValue1;
+          user2.rankpoint -= 100 * correctionValue2;
+        }
+      } else {
+        user2.win += 1;
+        user1.lose += 1;
+        if (room.channel.type === RecordType.RANK) {
+          let correctionValue1;
+          let correctionValue2;
+          if (user1.rankpoint > user2.rankpoint) {
+            correctionValue1 = user2.rankpoint / user1.rankpoint;
+            correctionValue2 = user1.rankpoint / user2.rankpoint;
+          } else {
+            correctionValue2 = user2.rankpoint / user1.rankpoint;
+            correctionValue1 = user1.rankpoint / user2.rankpoint;
+          }
+          user2.rankpoint += 100 * correctionValue1;
+          user1.rankpoint -= 100 * correctionValue2;
+        }
+      }
+      await this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
+      await this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
     } else {
-		gameService.frameData.setData(frame, Date.now());
-      server
-        .to(room.roomId)
-        .emit('game_frame',gameService.frameData );
+      gameService.frameData.setData(room.getGameData(), Date.now());
+      server.to(room.roomId).emit('game_frame', gameService.frameData);
     }
   }
 

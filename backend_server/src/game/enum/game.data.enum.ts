@@ -5,7 +5,7 @@ import { Vector } from './game.vector.enum';
  * 게임 구성요소를 나타내는 용도
  */
 export interface GameData {
-  // 현재 좌표
+  // 현재 좌표 x, y
   currentPos: [number, number];
   // 각도 정보
   anglePos: [number, number];
@@ -17,9 +17,9 @@ export interface GameData {
   linearEquation: [number, number];
   // 방향 벡터
   vector: Vector;
-  // 페들 정보 1, 중간 좌표, [최소, 최대]를 의미한다. 
+  // 페들 정보 1, 중간 좌표, [상부, 하부]를 의미한다.
   paddle1: [number, [number, number]];
-  // 페들 정보 2, 중간 좌표, [최소, 최대]를 의미한다. 
+  // 페들 정보 2, 중간 좌표, [상부, 하부]를 의미한다.
   paddle2: [number, [number, number]];
   // 점수 튜플
   score: [number, number];

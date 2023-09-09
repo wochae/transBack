@@ -12,9 +12,9 @@ export class GamePauseScpreDto {
 
   constructor(users: GamePlayer[], data: GameData, status: GameStatus) {
     this.userIdx1 = users[0].getUserObject().userIdx;
-    this.userScore1 = data.score1;
+    this.userScore1 = data.score[0];
     this.userIdx2 = users[1].getUserObject().userIdx;
-    this.userScore2 = data.score2;
+    this.userScore2 = data.score[1];
     this.issueDate = Date.now();
     this.gameStatus = status;
   }
