@@ -12,6 +12,7 @@ import { Animations } from 'src/game/class/animation/animation';
 import { GamePhase } from 'src/game/enum/game.phase';
 import { RecordResult } from 'src/game/enum/game.type.enum';
 import { Socket, Server } from 'socket.io';
+import { Physics } from '../physics/physics';
 /**
  * 연산의 핵심. 간단한 데이터를 제외하곤 여기서 연산이 이루어 진다.
  */
@@ -20,16 +21,14 @@ export class GameRoom {
   intervalId: any;
   intervalPeriod: number; // 서버 -(좌표)-> 클라이언트 -(키 입력)-> 서버  -(좌표, 키 입력)-> 클라이언트
   users: GamePlayer[];
-  sockets: Socket[];
-  server: Server;
   gameObj: GameData;
   latency: number[];
   latencyCnt: number[];
   animation: Animations;
+  physics: Physics;
   keyPress: KeyPress[];
   history: GameRecord[];
   channel: GameChannel;
-  gamePhase: GamePhase;
 
   constructor(
     id: string,
@@ -39,31 +38,26 @@ export class GameRoom {
     mapNumber: MapNumber,
     histories: GameRecord[],
     channel: GameChannel,
+    totalDistancePerSec: number
   ) {
     this.roomId = id;
-
+    this.intervalId = null;
+	this.intervalPeriod = 0;
     this.users = users;
     this.gameObj = {
-      currentPosX: 0,
-      currentPosY: 0,
-	  angleX: 0,
-	  angleY: 0,
-      standardX: 0,
-      standardY: 0,
-	  currentFrame: 0,
-	  maxFrame: 0,
-      angle: 0,
-      yIntercept: 0,
-      vector: Vector.UPRIGHT,
-      paddle1: 0,
-      paddle1MaxMin: [20, -20],
-      paddle2: 0,
-      paddle2MaxMin: [20, -20],
-      gameType: type,
-      gameSpeed: speed,
-      gameMapNumber: mapNumber,
-      score1: 0,
-      score2: 2,
+  		currentPos: [0,0],
+  		anglePos: [0,0],
+  		standardPos: [0,0],
+  		frameData: [0,0],
+  		linearEquation:[0,0],
+		vector: Vector.UPRIGHT,
+  		paddle1: [0, [0,0]],
+		paddle2: [0, [0,0]],
+  		score: [0,0],
+  		gamePhase: GamePhase.SET_NEW_GAME,
+  		gameType: type,
+  		gameSpeed: speed,
+  		gameMapNumber: mapNumber,
     };
 
     this.latency = [];
@@ -73,7 +67,8 @@ export class GameRoom {
     this.latencyCnt.push(0);
     this.latencyCnt.push(0);
 
-    this.animation = new Animations();
+    this.animation = new Animations(totalDistancePerSec);
+	this.physics = new Physics()
 
     this.keyPress = [];
     this.keyPress[0] = new KeyPress();
@@ -82,56 +77,50 @@ export class GameRoom {
     this.history = histories;
     this.channel = channel;
 
-    this.keyPress.map((item) => item.setMaxUnit(100));
-
-    this.gamePhase = GamePhase.MAKE_ROOM;
+    this.keyPress.map((item) => item.setMaxUnit(totalDistancePerSec));
   }
 
   // 게임을 초기화한다.
   public setNewGame(room: GameRoom) {
-    room.resetBall();
-    room.gameObj.standardX = 0;
-    room.gameObj.standardY = 0;
-    room.gameObj.angleX = 0;
-    room.gameObj.angleY = 0;
-	room.gameObj.currentPosX = 0;
-	room.gameObj.currentPosY = 0;
-    room.gameObj.currentFrame = 0;
-	room.gameObj.maxFrame = 0;
-    room.gameObj.angle = 0;
-    room.gameObj.yIntercept = 0;
-    room.gameObj.vector = Vector.UPRIGHT;
-    room.gameObj.paddle1 = 0;
-    room.gameObj.paddle1MaxMin = [20, -20];
-    room.gameObj.paddle2 = 0;
-    room.gameObj.paddle2MaxMin = [20, -20];
-    room.gameObj.score1 = 0;
-    room.gameObj.score2 = 2;
-    room.gamePhase = GamePhase.SET_NEW_GAME;
+	room.gameObj = {
+  		currentPos: [0,0],
+  		anglePos: [0,0],
+  		standardPos: [0,0],
+  		frameData: [0,0],
+  		linearEquation:[0,0],
+		vector: Vector.UPRIGHT,
+  		paddle1: [0, [0,0]],
+		paddle2: [0, [0,0]],
+  		score: [0,0],
+  		gamePhase: GamePhase.SET_NEW_GAME,
+		gameType: room.gameObj.gameType,
+		gameSpeed: room.gameObj.gameSpeed,
+		gameMapNumber: room.gameObj.gameMapNumber
+    };
 	room.setRandomStandardCoordinates();
-    room.animation.setRenewLinearEquation(room.gameObj);
+    // room.animation.setRenewLinearEquation(room.gameObj);
     room.keyPress[0].setRenewKeypress();
     room.keyPress[1].setRenewKeypress();
     // TODO: 애니메이션 객체를 새롭게 만들어야 하는가?
     //
   }
 
-  public resetBall() {
-    this.gameObj.currentPosX = 0;
-    this.gameObj.currentPosY = 0;
-  }
-
-  public resetPaddle() {
-    this.gameObj.paddle1 = 0;
-    this.gameObj.paddle2 = 0;
-  }
-
   public setLatency(latency: number, room: GameRoom): number {
 	console.log(`target latency -> ${latency}`)
-    room.animation.setMaxFps(latency);
-    const maxFps = room.animation.getMaxFps();
+    // room.animation.setMaxFps(latency);
+	let maxFps;
+	if (latency < 8) {
+      maxFps = 60;
+    } else if (latency >= 8 && latency < 15) {
+      maxFps = 30;
+    } else if (latency >= 15 && latency < 20) {
+      maxFps = 24;
+    } else if (latency >= 20) {
+      maxFps = 10;
+    }
+	room.gameObj.frameData[1] = maxFps;
 	console.log(`MaxFPS? -> ${maxFps}`)
-	room.gameObj.maxFrame = maxFps;
+
     if (maxFps == 60) room.intervalPeriod = 15;
     else if (maxFps == 30) room.intervalPeriod = 30;
     else if (maxFps == 24) room.intervalPeriod = 40;
@@ -154,8 +143,7 @@ export class GameRoom {
   }
 
   public getMaxFps(): number {
-    if (this.animation.maxFps === null) return -1;
-    return this.animation.maxFps;
+    return this.gameObj.frameData[1];
   }
 
   public getIntervalMs(): number {
@@ -170,26 +158,11 @@ export class GameRoom {
     }
   }
 
+  //TODO: 
   public getNextFrame(room:GameRoom): FrameData {
-    room.gamePhase = room.animation.makeFrame(room.gameObj, room.keyPress, room);
-	room.animation.currentDatas.ballX = room.gameObj.currentPosX;
-	room.animation.currentDatas.ballY = room.gameObj.currentPosY;
-	room.animation.currentDatas.paddle1 = room.gameObj.paddle1;
-	room.animation.currentDatas.paddle2 = room.gameObj.paddle2;
-	room.animation.currentDatas.currentFrame = room.gameObj.currentFrame;
-	room.animation.currentDatas.maxFrameRate = room.gameObj.maxFrame;
-	// console.log(`Ball - x : ${room.animation.currentDatas.ballX}`);
-	// console.log(`Ball - Y : ${room.animation.currentDatas.ballY}`);
-	// console.log(`FPS: ${room.animation.currentDatas.currentFrame}/ ${room.animation.currentDatas.maxFrameRate}`)
-	// console.log(`paddle 1 : ${room.animation.currentDatas.paddle1}`);
-	// console.log(`paddle 1 Max - min : ${room.gameObj.paddle1MaxMin}`);
-	// console.log(`paddle 2 : ${room.animation.currentDatas.paddle2}`);
-	// console.log(`paddle 2 Max - min : ${room.gameObj.paddle2MaxMin}`);
-	// console.log(`standard X : ${room.gameObj.standardX}`);
-	// console.log(`standard Y : ${room.gameObj.standardY}`);
-	// console.log(`y intecept : ${room.gameObj.yIntercept}`);
-	// console.log(`equation angle : ${room.gameObj.angle}`);
-    return room.animation.currentDatas;
+	room.animation.makeFrame(room.gameObj);
+    room.physics.checkPhysics(room.gameObj);
+    return room.makeFrameData(room.gameObj);
   }
 
   public setRandomStandardCoordinates() {

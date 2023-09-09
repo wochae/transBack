@@ -5,9 +5,9 @@ export enum GameType {
 }
 
 export enum GameSpeed {
-  NORMAL = 0,
+  SLOW = 0,
+  NORMAL,
   FAST,
-  FATSTER,
 }
 
 export enum MapNumber {

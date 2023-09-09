@@ -6,65 +6,35 @@ import { Vector } from 'src/game/enum/game.vector.enum';
 import { GameRoom } from '../game.room/game.room';
 
 export class Animations {
-  private readonly MAX_WIDTH = 500;
-  private readonly min_WIDTH = -500;
-  private readonly MAX_HEIGHT = 250;
-  private readonly min_HEIGHT = -250;
-  private readonly PADDLE_LINE_1 = -470;
-  private readonly PADDLE_LINE_2 = 470;
+  private totalDistancePerSec: number;
+  private unitDistance: number;
 
-  prevDatas: FrameData | null;
-  currentDatas: FrameData | null;
-  gameStatus: GamePhase;
-  maxFps: number;
-  currentFps: number;
-  totalDistancePerSec: number;
-  unitDistance: number;
-
-  constructor() {
-    this.prevDatas = {
-		ballX: 0,
-  		ballY: 0,
- 		paddle1: 0,
-  		paddle2: 0,
-  		maxFrameRate: 0,
-  		currentFrame: 0,
-	};
-	this.currentDatas = {
-		ballX: 0,
-  		ballY: 0,
- 		paddle1: 0,
-  		paddle2: 0,
-  		maxFrameRate: 0,
-  		currentFrame: 0,
-	};
-    this.maxFps = 0;
-    this.currentFps = 0;
-    this.totalDistancePerSec = 50;
-    this.gameStatus = GamePhase.ON_PLAYING;
+  constructor(totalDistancePerSec: number) {
+    this.totalDistancePerSec = totalDistancePerSec;
+	this.unitDistance = 0;
   }
 
   // 레이턴시를 가지고 최대 FPS를 확정짓는다.
-  public setMaxFps(latency: number) {
-    if (latency < 8) {
-      this.maxFps = 60;
-    } else if (latency >= 8 && latency < 15) {
-      this.maxFps = 30;
-    } else if (latency >= 15 && latency < 20) {
-      this.maxFps = 24;
-    } else if (latency >= 20) {
-      this.maxFps = 10;
-    }
-	// this.maxFps = 60;
-    this.unitDistance = parseFloat(
-      (this.totalDistancePerSec / this.maxFps).toFixed(2),
-    );
-  }
+//   public setMaxFps(latency: number) {
+//     if (latency < 8) {
+//       this.maxFps = 60;
+//     } else if (latency >= 8 && latency < 15) {
+//       this.maxFps = 30;
+//     } else if (latency >= 15 && latency < 20) {
+//       this.maxFps = 24;
+//     } else if (latency >= 20) {
+//       this.maxFps = 10;
+//     }
+// 	// this.maxFps = 60;
+//     this.unitDistance = parseFloat(
+//       (this.totalDistancePerSec / this.maxFps).toFixed(2),
+//     );
+//   }
 
   // getter FPS
-  public getMaxFps(): number {
-    return this.maxFps;
-  }
+//   public getMaxFps(): number {
+//     return this.maxFps;
+//   }
 
   private setPaddleNotOverLimit(
     currentData: GameData,
