@@ -18,8 +18,8 @@ export class Physics {
   constructor() {}
 
   checkPhysics(gameData: GameData, engine: Physics): GameData {
-    engine.correctPaddleDatas(gameData.paddle1, engine);
-    engine.correctPaddleDatas(gameData.paddle2, engine);
+    gameData.paddle1 = engine.correctPaddleDatas(gameData.paddle1, engine);
+    gameData.paddle2 = engine.correctPaddleDatas(gameData.paddle2, engine);
     // wall 부딪힘 여부 판단
     if (engine.checkHitTheWall(gameData.currentPos, gameData.vector, engine)) {
       gameData.gamePhase = GamePhase.HIT_THE_WALL;
@@ -29,15 +29,18 @@ export class Physics {
     if (
       engine.checkHitThePaddle(gameData.currentPos, gameData.vector, engine)
     ) {
+		console.log(`paddle 1 범위 ${gameData.paddle1[1][0]} / ${gameData.paddle1[1][1]}`)
+		console.log(`paddle 2 범위 ${gameData.paddle2[1][0]} / ${gameData.paddle2[1][1]}`)
       if (engine.needToCorrection(gameData)) {
+		console.log("페들 입력시 여기로 들어갈까?!");
         gameData.gamePhase = GamePhase.HIT_THE_PADDLE;
         gameData = engine.correctLinearEquation(gameData, engine);
+		// wall 부딪힘 여부 판단 재 판단(순간적으로 두번 부딪히는지 여부를 확인하기 위해)
+		if (engine.checkHitTheWall(gameData.currentPos, gameData.vector, engine)) {
+		gameData.gamePhase = GamePhase.HIT_THE_WALL;
+		gameData = engine.correctLinearEquation(gameData, engine);
+		}
       }
-    }
-    // wall 부딪힘 여부 판단 재 판단(순간적으로 두번 부딪히는지 여부를 확인하기 위해)
-    if (engine.checkHitTheWall(gameData.currentPos, gameData.vector, engine)) {
-      gameData.gamePhase = GamePhase.HIT_THE_WALL;
-      gameData = engine.correctLinearEquation(gameData, engine);
     }
     // Score 획득 여부 판단
     if (
@@ -45,6 +48,8 @@ export class Physics {
     ) {
       gameData = engine.checkGameScore(gameData, engine);
     }
+	if (gameData.gamePhase !== GamePhase.HIT_THE_GOAL_POST)
+		gameData.gamePhase = GamePhase.ON_PLAYING
     return gameData;
   }
 
@@ -60,12 +65,30 @@ export class Physics {
         gameData.paddle1[1][1] >= gameData.currentPos[1]
       )
         ret = true;
+	  else {
+		if (gameData.currentPos[0] === -450) {
+			const min = gameData.currentPos[1] - 20;
+			const max = gameData.currentPos[1] + 20;
+			if ((gameData.paddle1[1][0] <= min && gameData.paddle1[1][1] >= min) || (gameData.paddle1[1][0] <= max && gameData.paddle1[1][1] >= max)) {
+				ret = true;
+			}
+		}
+	  }
     } else {
       if (
         gameData.paddle2[1][0] <= gameData.currentPos[1] &&
         gameData.paddle2[1][1] >= gameData.currentPos[1]
       )
         ret = true;
+	  else {
+		if (gameData.currentPos[0] === 450) {
+			const min = gameData.currentPos[1] - 20;
+			const max = gameData.currentPos[1] + 20;
+			if ((gameData.paddle2[1][0] <= min && gameData.paddle2[1][1] >= min) || (gameData.paddle2[1][0] <= max && gameData.paddle2[1][1] >= max)) {
+				ret = true;
+			}
+		}
+	  }
     }
     return ret;
   }
@@ -73,52 +96,57 @@ export class Physics {
   private correctLinearEquation(gameData: GameData, engine: Physics): GameData {
     if (gameData.gamePhase === GamePhase.HIT_THE_WALL) {
       gameData.anglePos[1] *= -1;
-      gameData.standardPos = gameData.currentPos;
+      gameData.standardPos[0] = gameData.currentPos[0].valueOf();
+      gameData.standardPos[1] = gameData.currentPos[1].valueOf();
+	  gameData.standardPos[0] += gameData.anglePos[0].valueOf();
+	  gameData.standardPos[1] += gameData.anglePos[1].valueOf();
       if (
         gameData.vector === Vector.UPLEFT ||
         gameData.vector === Vector.UPRIGHT
       ) {
         gameData.vector += 2;
-        gameData.standardPos[0] += gameData.anglePos[0];
-        gameData.standardPos[1] += gameData.anglePos[1];
+
       } else if (
         gameData.vector === Vector.DOWNLEFT ||
         gameData.vector === Vector.DOWNRIGHT
       ) {
         gameData.vector -= 2;
-        gameData.standardPos[0] += gameData.anglePos[0];
-        gameData.standardPos[1] -= gameData.anglePos[1];
       }
     } else if (gameData.gamePhase === GamePhase.HIT_THE_PADDLE) {
-      gameData.anglePos[0] *= -1;
-      gameData.standardPos = gameData.currentPos;
+      gameData.standardPos[0] = gameData.currentPos[0].valueOf();
+      gameData.standardPos[1] = gameData.currentPos[1].valueOf();
       if (
         gameData.vector === Vector.UPLEFT ||
         gameData.vector === Vector.DOWNLEFT
       ) {
-        gameData.vector += 1;
         if (
-          gameData.paddle1[0] - 5 > gameData.currentPos[1] ||
-          gameData.paddle1[0] + 5 < gameData.currentPos[1]
+          gameData.paddle1[0] - 10 > gameData.currentPos[1] ||
+          gameData.paddle1[0] + 10 < gameData.currentPos[1]
         )
           gameData.anglePos = engine.changeAngleForPaddle(gameData);
-
+		else {
+			gameData.anglePos[0] *= -1;
+		}
+        gameData.vector += 1;
         // TODO: angle 보정치 전달
       } else if (
         gameData.vector === Vector.UPRIGHT ||
         gameData.vector === Vector.DOWNRIGHT
       ) {
-        gameData.vector -= 1;
         if (
-          gameData.paddle2[0] - 5 > gameData.currentPos[1] ||
-          gameData.paddle2[0] + 5 < gameData.currentPos[1]
+          gameData.paddle2[0] - 10 > gameData.currentPos[1] ||
+          gameData.paddle2[0] + 10 < gameData.currentPos[1]
         )
           gameData.anglePos = engine.changeAngleForPaddle(gameData);
+		else {
+			gameData.anglePos[0] *= -1;
+		}
+        gameData.vector -= 1;
       }
 
       // 바뀐 벡터 기준에서 새로운 각도를 추가한다.
-      gameData.standardPos[0] += gameData.anglePos[0];
-      gameData.standardPos[1] += gameData.anglePos[1];
+      gameData.standardPos[0] += gameData.anglePos[0].valueOf();
+      gameData.standardPos[1] += gameData.anglePos[1].valueOf();
     }
     gameData.linearEquation[0] =
       (gameData.standardPos[1] - gameData.currentPos[1]) /
@@ -187,20 +215,21 @@ export class Physics {
   private correctPaddleDatas(
     paddle: [number, [number, number]],
     engine: Physics,
-  ) {
+  ): [number, [number, number]] {
     if (paddle[0] > 0) {
-      if (paddle[1][1] >= engine.MAX_HEIGHT) {
-        paddle[1][0] = engine.MAX_HEIGHT - 40;
-        paddle[0] = engine.MAX_HEIGHT - 20;
+      if (paddle[0] >= engine.MAX_HEIGHT - 40) {
+        paddle[1][0] = engine.MAX_HEIGHT - 80;
+        paddle[0] = engine.MAX_HEIGHT - 40;
         paddle[1][1] = engine.MAX_HEIGHT;
       }
     } else if (paddle[0] < 0) {
-      if (paddle[1][0] <= engine.MIN_HEIGTH) {
+      if (paddle[0] <= engine.MIN_HEIGTH + 40) {
         paddle[1][0] = engine.MIN_HEIGTH;
-        paddle[0] = engine.MIN_HEIGTH + 20;
-        paddle[1][1] = engine.MIN_HEIGTH + 40;
+        paddle[0] = engine.MIN_HEIGTH + 40;
+        paddle[1][1] = engine.MIN_HEIGTH + 80;
       }
     }
+	return paddle;
   }
 
   private checkHitTheWall(
@@ -233,12 +262,10 @@ export class Physics {
     ret = false;
     if (vector === Vector.DOWNLEFT || vector === Vector.UPLEFT) {
       if (ballData[0] - 20 <= engine.PADDLE_LINE_1) {
-        ballData[0] = engine.PADDLE_LINE_1 + 20;
         ret = true;
       }
     } else if (vector === Vector.DOWNRIGHT || vector === Vector.UPRIGHT) {
       if (ballData[0] + 20 >= engine.PADDLE_LINE_2) {
-        ballData[0] = engine.PADDLE_LINE_2 - 20;
         ret = true;
       }
     }
@@ -258,8 +285,8 @@ export class Physics {
         ret = true;
       }
     } else if (vector === Vector.DOWNRIGHT || vector === Vector.UPRIGHT) {
-      if (ballData[0] + 20 >= engine.MAX_HEIGHT) {
-        ballData[0] = engine.MAX_HEIGHT - 20;
+      if (ballData[0] + 20 >= engine.MAX_WIDTH) {
+        ballData[0] = engine.MAX_WIDTH - 20;
         ret = true;
       }
     }

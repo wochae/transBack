@@ -508,8 +508,12 @@ export class GameService {
     room.makeNextFrame(room);
 	console.log(`좌표 X : ${room.getGameData().currentPos[0]}`);
 	console.log(`좌표 Y : ${room.getGameData().currentPos[1]}`);
-	console.log(`기준 각도 a : ${room.getGameData().anglePos[0]}`);
-	console.log(`기준 각도 b : ${room.getGameData().anglePos[1]}`);
+	console.log(`각도 계산용 X : ${room.getGameData().standardPos[0]}`);
+	console.log(`각도 계산용 Y : ${room.getGameData().standardPos[1]}`);
+	console.log(`기준 좌표 X : ${room.getGameData().anglePos[0]}`);
+	console.log(`기준 좌표 Y : ${room.getGameData().anglePos[1]}`);
+	console.log(`기준 각도 a : ${room.getGameData().linearEquation[0]}`);
+	console.log(`기준 각도 b : ${room.getGameData().linearEquation[1]}`);
 	console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
 	console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
 	if (room.getGameData().vector === Vector.UPLEFT) {

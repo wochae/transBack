@@ -52,8 +52,8 @@ export class GameRoom {
       frameData: [0, 0],
       linearEquation: [0, 0],
       vector: Vector.UPRIGHT,
-      paddle1: [0, [0, 0]],
-      paddle2: [0, [0, 0]],
+      paddle1: [0, [-40, 40]],
+      paddle2: [0, [-40, 40]],
       score: [0, 0],
       gamePhase: GamePhase.SET_NEW_GAME,
       gameType: type,
@@ -91,8 +91,8 @@ export class GameRoom {
       frameData: [0, 0],
       linearEquation: [0, 0],
       vector: Vector.UPRIGHT,
-      paddle1: [0, [-20, 20]],
-      paddle2: [0, [-20, 20]],
+      paddle1: [0, [-40, 40]],
+      paddle2: [0, [-40, 40]],
       score: [0, 0],
       gamePhase: GamePhase.SET_NEW_GAME,
       gameType: room.gameObj.gameType,
@@ -124,7 +124,8 @@ export class GameRoom {
     else if (maxFps == 30) room.intervalPeriod = 30;
     else if (maxFps == 24) room.intervalPeriod = 40;
     else room.intervalPeriod = 80;
-    room.keyPress.map((data) => data.setPressedNumberByMaxFps(maxFps));
+	room.keyPress[0].setPressedNumberByMaxFps(maxFps);
+	room.keyPress[1].setPressedNumberByMaxFps(maxFps);
     return maxFps;
   }
 
@@ -149,16 +150,33 @@ export class GameRoom {
   }
 
   public keyPressed(userIdx: number, value: number) {
+	console.log(`key pressed by : ${userIdx}`);
     if (this.users[0].getUserObject().userIdx === userIdx) {
       this.keyPress[0].pushKey(value);
+	  console.log(`key value : ${this.keyPress[0].getHowManyKey()}`);
     } else if (this.users[1].getUserObject().userIdx === userIdx) {
       this.keyPress[1].pushKey(value);
+	  console.log(`key value : ${this.keyPress[1].getHowManyKey()}`);
     }
   }
 
   public makeNextFrame(room: GameRoom) {
     room.gameObj = room.animation.makeFrame(room, room.keyPress);
     room.gameObj = room.physics.checkPhysics(room.gameObj, room.physics);
+	room.gameObj = room.checkScore(room.gameObj);
+  }
+
+  public checkScore(gameData: GameData): GameData {
+	if (gameData.gamePhase === GamePhase.HIT_THE_GOAL_POST) {
+	  if (gameData.score[0] === 5 || gameData.score[1] === 5) {
+		gameData.gamePhase = GamePhase.MATCH_END;
+	  } else {
+		gameData.gamePhase = GamePhase.SET_NEW_GAME;
+	  }
+	} else {
+		gameData.gamePhase = GamePhase.ON_PLAYING;
+	}
+	return gameData;
   }
 
   public getChannel(): GameChannel {
@@ -196,6 +214,13 @@ export class GameRoom {
     } else {
       this.gameObj.vector = Vector.UPLEFT;
     }
+
+    this.gameObj.linearEquation[0] =
+      (this.gameObj.standardPos[1] - this.gameObj.currentPos[1]) /
+      (this.gameObj.standardPos[0] - this.gameObj.currentPos[0]);
+    this.gameObj.linearEquation[1] =
+      this.gameObj.standardPos[1] -
+      this.gameObj.linearEquation[0] * this.gameObj.currentPos[0];
   }
 
   //   public setRenewLinearEquation(room: GameRoom) {

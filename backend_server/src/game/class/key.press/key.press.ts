@@ -27,18 +27,19 @@ export class KeyPress {
     this.keyAccumulatedValue = 0;
   }
 
-  public setPressedNumberByMaxFps(maxFps: number): Fps {
+  public setPressedNumberByMaxFps(maxFps: number) {
     if (maxFps == 60) {
-      return Fps.FULL;
+      this.pressedNumber = Fps.FULL;
     } else if (maxFps == 30) {
-      return Fps.HALF;
+      this.pressedNumber = Fps.HALF;
     } else if (maxFps == 24) {
-      return Fps.LOW;
+      this.pressedNumber = Fps.LOW;
     } else if (maxFps == 10) {
-      return Fps.SUPERLOW;
+      this.pressedNumber = Fps.SUPERLOW;
     } else {
-      return Fps.ERROR;
+      this.pressedNumber = 0;
     }
+	this.pressedNumber *= 15;
   }
 
   public setMaxUnit(value: number) {
@@ -55,5 +56,9 @@ export class KeyPress {
     const sum = Math.floor(this.keyAccumulatedValue / thresholdLevel);
     this.keyAccumulatedValue -= sum * thresholdLevel;
     return sum * this.moveUnit;
+  }
+
+  public getHowManyKey(): number {
+	return this.keyAccumulatedValue;
   }
 }
