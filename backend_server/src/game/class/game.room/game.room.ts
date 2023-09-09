@@ -155,7 +155,7 @@ export class GameRoom {
   }
 
   public makeNextFrame(room: GameRoom) {
-    room.animation.makeFrame(room.gameObj, room.keyPress, room);
+    room.animation.makeFrame(room, room.keyPress);
     room.gameObj = room.physics.checkPhysics(room.gameObj, room.physics);
   }
 

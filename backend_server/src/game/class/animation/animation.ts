@@ -14,52 +14,56 @@ export class Animations {
     this.unitDistance = 0;
   }
 
+  public setUnitDistance(value: number) {
+	this.unitDistance = value;
+	}
+
   // 기존 데이터를 기반으로 다음 프레임 연산을 진행한다.
-  public makeFrame(currentData: GameData, key: KeyPress[], room: GameRoom) {
+  public makeFrame(room: GameRoom, key: KeyPress[]) {
     if (
-      currentData.vector === Vector.DOWNLEFT ||
-      currentData.vector === Vector.UPLEFT
+      room.gameObj.vector === Vector.DOWNLEFT ||
+      room.gameObj.vector === Vector.UPLEFT
     ) {
-      currentData.currentPos[0] = parseFloat(
+      room.gameObj.currentPos[0] = parseFloat(
         (
-          currentData.currentPos[0] -
+          room.gameObj.currentPos[0] -
           room.animation.unitDistance +
-          (currentData.gameSpeed - 1)
+          (room.gameObj.gameSpeed - 1)
         ).toFixed(2),
       );
     } else if (
-      currentData.vector === Vector.DOWNRIGHT ||
-      currentData.vector === Vector.UPRIGHT
+      room.gameObj.vector === Vector.DOWNRIGHT ||
+      room.gameObj.vector === Vector.UPRIGHT
     ) {
-      currentData.currentPos[0] = parseFloat(
+      room.gameObj.currentPos[0] = parseFloat(
         (
-          currentData.currentPos[0] -
+          room.gameObj.currentPos[0] -
           room.animation.unitDistance +
-          (currentData.gameSpeed - 1)
+          (room.gameObj.gameSpeed - 1)
         ).toFixed(2),
       );
     }
-    currentData.currentPos[1] = parseFloat(
+    room.gameObj.currentPos[1] = parseFloat(
       (
-        currentData.anglePos[0] * currentData.currentPos[0] +
-        currentData.anglePos[1] +
-        (currentData.gameSpeed - 1)
+        room.gameObj.anglePos[0] * room.gameObj.currentPos[0] +
+        room.gameObj.anglePos[1] +
+        (room.gameObj.gameSpeed - 1)
       ).toFixed(2),
     );
 
     // 페들 데이터 바꿈
     //TODO: 키보드 입력 잘못 들어올 수도 있음
-    currentData.paddle1[0] -= key[0].popKeyValue();
-    currentData.paddle1[1][0] -= key[0].popKeyValue();
-    currentData.paddle1[1][1] -= key[0].popKeyValue();
-    currentData.paddle2[0] -= key[1].popKeyValue();
-    currentData.paddle2[1][0] -= key[1].popKeyValue();
-    currentData.paddle2[1][1] -= key[1].popKeyValue();
+    room.gameObj.paddle1[0] -= key[0].popKeyValue();
+    room.gameObj.paddle1[1][0] -= key[0].popKeyValue();
+    room.gameObj.paddle1[1][1] -= key[0].popKeyValue();
+    room.gameObj.paddle2[0] -= key[1].popKeyValue();
+    room.gameObj.paddle2[1][0] -= key[1].popKeyValue();
+    room.gameObj.paddle2[1][1] -= key[1].popKeyValue();
 
     // 프레임 값 갱신
-    currentData.frameData[0] += 1;
-    if (currentData.frameData[0] === currentData.frameData[1])
-      currentData.frameData[0] = 0;
+    room.gameObj.frameData[0] += 1;
+    if (room.gameObj.frameData[0] === room.gameObj.frameData[1])
+      room.gameObj.frameData[0] = 0;
   }
 }
 
@@ -86,56 +90,56 @@ export class Animations {
 //   }
 
 //   private setPaddleNotOverLimit(
-//     currentData: GameData,
+//     room: GameData,
 //     paddle1: number,
 //     paddle2: number,
 //   ) {
-//     currentData.paddle1MaxMin = [
-//       (currentData.paddle1MaxMin[0] += paddle1),
-//       (currentData.paddle1MaxMin[1] += paddle1),
+//     room.paddle1MaxMin = [
+//       (room.paddle1MaxMin[0] += paddle1),
+//       (room.paddle1MaxMin[1] += paddle1),
 //     ];
-//     if (currentData.paddle1 > 0) {
+//     if (room.paddle1 > 0) {
 //       // 패들 좌표 수정
-//       if (currentData.paddle1MaxMin[0] >= this.MAX_HEIGHT) {
-//         currentData.paddle1 = this.MAX_HEIGHT - 20;
-//         currentData.paddle1MaxMin[0] = this.MAX_HEIGHT;
-//         currentData.paddle1MaxMin[1] = this.MAX_HEIGHT - 40;
+//       if (room.paddle1MaxMin[0] >= this.MAX_HEIGHT) {
+//         room.paddle1 = this.MAX_HEIGHT - 20;
+//         room.paddle1MaxMin[0] = this.MAX_HEIGHT;
+//         room.paddle1MaxMin[1] = this.MAX_HEIGHT - 40;
 //       }
 //     } else {
-//       if (currentData.paddle1MaxMin[1] <= this.min_HEIGHT) {
-//         currentData.paddle1 = this.min_HEIGHT + 20;
-//         currentData.paddle1MaxMin[0] = this.min_HEIGHT + 40;
-//         currentData.paddle1MaxMin[1] = this.min_HEIGHT;
+//       if (room.paddle1MaxMin[1] <= this.min_HEIGHT) {
+//         room.paddle1 = this.min_HEIGHT + 20;
+//         room.paddle1MaxMin[0] = this.min_HEIGHT + 40;
+//         room.paddle1MaxMin[1] = this.min_HEIGHT;
 //       }
 //     }
-//     currentData.paddle2MaxMin = [
-//       (currentData.paddle2MaxMin[0] += paddle2),
-//       (currentData.paddle2MaxMin[1] += paddle2),
+//     room.paddle2MaxMin = [
+//       (room.paddle2MaxMin[0] += paddle2),
+//       (room.paddle2MaxMin[1] += paddle2),
 //     ];
-//     if (currentData.paddle2 > 0) {
+//     if (room.paddle2 > 0) {
 //       // 패들 좌표 수정
-//       if (currentData.paddle2MaxMin[0] >= this.MAX_HEIGHT) {
-//         currentData.paddle2 = this.MAX_HEIGHT - 20;
-//         currentData.paddle2MaxMin[0] = this.MAX_HEIGHT;
-//         currentData.paddle2MaxMin[1] = this.MAX_HEIGHT - 40;
+//       if (room.paddle2MaxMin[0] >= this.MAX_HEIGHT) {
+//         room.paddle2 = this.MAX_HEIGHT - 20;
+//         room.paddle2MaxMin[0] = this.MAX_HEIGHT;
+//         room.paddle2MaxMin[1] = this.MAX_HEIGHT - 40;
 //       }
 //     } else {
-//       if (currentData.paddle2MaxMin[1] <= this.min_HEIGHT) {
-//         currentData.paddle2 = this.min_HEIGHT + 20;
-//         currentData.paddle2MaxMin[0] = this.min_HEIGHT + 40;
-//         currentData.paddle2MaxMin[1] = this.min_HEIGHT;
+//       if (room.paddle2MaxMin[1] <= this.min_HEIGHT) {
+//         room.paddle2 = this.min_HEIGHT + 20;
+//         room.paddle2MaxMin[0] = this.min_HEIGHT + 40;
+//         room.paddle2MaxMin[1] = this.min_HEIGHT;
 //       }
 //     }
 //   }
 
 // // 프레임 값 갱신 #2 paddle 최대, 최소 값 정리
 // room.animation.setPaddleNotOverLimit(
-//   currentData,
-//   currentData.paddle1,
-//   currentData.paddle2,
+//   room,
+//   room.paddle1,
+//   room.paddle2,
 // );
 
-// const type = room.animation.checkStrike(currentData, this);
+// const type = room.animation.checkStrike(room, this);
 // console.log(
 //   `이벤트 발생 : ${type} =============================================`,
 // );
@@ -147,7 +151,7 @@ export class Animations {
 //     cond1 === GamePhase.HIT_THE_WALL &&
 //     cond2 === GamePhase.HIT_THE_PADDLE
 //   ) {
-//     room.animation.handleSituationWallAndPaddleStrike(currentData);
+//     room.animation.handleSituationWallAndPaddleStrike(room);
 //     room.animation.gameStatus = GamePhase.HIT_THE_PADDLE;
 //     return room.animation.gameStatus;
 //   } else if (
@@ -155,25 +159,25 @@ export class Animations {
 //     cond3 === GamePhase.HIT_THE_GOAL_POST
 //   ) {
 //     room.animation.gameStatus =
-//       room.animation.handleSituationWallAndGoalPostStrike(currentData);
+//       room.animation.handleSituationWallAndGoalPostStrike(room);
 //     return room.animation.gameStatus;
 //   }
 //   // TODO: 조건 두개 이상
 // } else {
 //   if (type[0] === GamePhase.HIT_THE_WALL) {
 //     console.log(`벽충돌로 좌표 수정`);
-//     currentData = room.animation.handleSituationWallStrike(currentData);
+//     room = room.animation.handleSituationWallStrike(room);
 //     room.animation.gameStatus = GamePhase.HIT_THE_WALL;
 //     return room.animation.gameStatus;
 //   } else if (type[0] === GamePhase.HIT_THE_PADDLE) {
 //     console.log(`페등 충돌로 좌표 수정`);
-//     room.animation.handleSituationPaddleStrike(currentData);
+//     room.animation.handleSituationPaddleStrike(room);
 //     room.animation.gameStatus = GamePhase.HIT_THE_PADDLE;
 //     return room.animation.gameStatus;
 //   } else if (type[0] === GamePhase.HIT_THE_GOAL_POST) {
 //     console.log(`골대 충돌`);
 //     room.animation.gameStatus =
-//       room.animation.handleSituationGoalPostStrike(currentData);
+//       room.animation.handleSituationGoalPostStrike(room);
 //     return room.animation.gameStatus;
 //   }
 //   // TODO: 조건 한개 처리
@@ -182,150 +186,150 @@ export class Animations {
 // return room.animation.gameStatus;
 //   }
 
-//   private reverseVectorY(currentData: GameData) {
-//     currentData.angleY *= -1;
-//     if (currentData.vector === Vector.UPRIGHT) {
-//       currentData.vector = Vector.DOWNRIGHT;
-//     } else if (currentData.vector === Vector.DOWNRIGHT) {
-//       currentData.vector = Vector.UPRIGHT;
-//     } else if (currentData.vector === Vector.UPLEFT) {
-//       currentData.vector = Vector.DOWNLEFT;
+//   private reverseVectorY(room: GameData) {
+//     room.angleY *= -1;
+//     if (room.vector === Vector.UPRIGHT) {
+//       room.vector = Vector.DOWNRIGHT;
+//     } else if (room.vector === Vector.DOWNRIGHT) {
+//       room.vector = Vector.UPRIGHT;
+//     } else if (room.vector === Vector.UPLEFT) {
+//       room.vector = Vector.DOWNLEFT;
 //     } else {
-//       currentData.vector = Vector.UPLEFT;
+//       room.vector = Vector.UPLEFT;
 //     }
 //   }
 
-//   private reverseVectorX(currentData: GameData) {
-//     if (currentData.vector === Vector.UPRIGHT) {
-//       currentData.vector = Vector.DOWNLEFT;
-//     } else if (currentData.vector === Vector.DOWNRIGHT) {
-//       currentData.vector = Vector.UPLEFT;
-//     } else if (currentData.vector === Vector.UPLEFT) {
-//       currentData.vector = Vector.DOWNRIGHT;
+//   private reverseVectorX(room: GameData) {
+//     if (room.vector === Vector.UPRIGHT) {
+//       room.vector = Vector.DOWNLEFT;
+//     } else if (room.vector === Vector.DOWNRIGHT) {
+//       room.vector = Vector.UPLEFT;
+//     } else if (room.vector === Vector.UPLEFT) {
+//       room.vector = Vector.DOWNRIGHT;
 //     } else {
-//       currentData.vector = Vector.UPLEFT;
+//       room.vector = Vector.UPLEFT;
 //     }
 //   }
 
-//   public handleSituationWallStrike(currentData: GameData): GameData {
-//     this.reverseVectorY(currentData);
-//     this.setRenewLinearEquation(currentData);
-//     return currentData;
+//   public handleSituationWallStrike(room: GameData): GameData {
+//     this.reverseVectorY(room);
+//     this.setRenewLinearEquation(room);
+//     return room;
 //   }
 
-//   private changeAngleForPaddle(currentData: GameData) {
-//     switch (currentData.vector) {
+//   private changeAngleForPaddle(room: GameData) {
+//     switch (room.vector) {
 //       case Vector.UPRIGHT:
-//         if (currentData.standardX === -1 && currentData.standardY === 2) {
-//           currentData.standardX = 2;
-//           currentData.standardY = 1;
+//         if (room.standardX === -1 && room.standardY === 2) {
+//           room.standardX = 2;
+//           room.standardY = 1;
 //         } else if (
-//           currentData.standardX === -1 &&
-//           currentData.standardY == -1
+//           room.standardX === -1 &&
+//           room.standardY == -1
 //         ) {
-//           currentData.standardX = 1;
-//           currentData.standardY = 1;
+//           room.standardX = 1;
+//           room.standardY = 1;
 //         } else {
-//           currentData.standardX = 1;
-//           currentData.standardY = 2;
+//           room.standardX = 1;
+//           room.standardY = 2;
 //         }
 //         break;
 //       case Vector.UPLEFT:
-//         if (currentData.standardX === 1 && currentData.standardY === 2) {
-//           currentData.standardX = -2;
-//           currentData.standardY = 1;
-//         } else if (currentData.standardX === 1 && currentData.standardY === 1) {
-//           currentData.standardX = -1;
-//           currentData.standardY = 1;
+//         if (room.standardX === 1 && room.standardY === 2) {
+//           room.standardX = -2;
+//           room.standardY = 1;
+//         } else if (room.standardX === 1 && room.standardY === 1) {
+//           room.standardX = -1;
+//           room.standardY = 1;
 //         } else {
-//           currentData.standardX = -1;
-//           currentData.standardY = 2;
+//           room.standardX = -1;
+//           room.standardY = 2;
 //         }
 //         break;
 //       case Vector.DOWNRIGHT:
-//         if (currentData.standardX === -2 && currentData.standardY === -1) {
-//           currentData.standardX = 1;
-//           currentData.standardY = -2;
+//         if (room.standardX === -2 && room.standardY === -1) {
+//           room.standardX = 1;
+//           room.standardY = -2;
 //         } else if (
-//           currentData.standardX === -1 &&
-//           currentData.standardY === -1
+//           room.standardX === -1 &&
+//           room.standardY === -1
 //         ) {
-//           currentData.standardX = 1;
-//           currentData.standardY = -1;
+//           room.standardX = 1;
+//           room.standardY = -1;
 //         } else {
-//           currentData.standardX = 2;
-//           currentData.standardY = -1;
+//           room.standardX = 2;
+//           room.standardY = -1;
 //         }
 //         break;
 //       case Vector.DOWNLEFT:
-//         if (currentData.standardX === 1 && currentData.standardY === -2) {
-//           currentData.standardX = -2;
-//           currentData.standardY = -1;
+//         if (room.standardX === 1 && room.standardY === -2) {
+//           room.standardX = -2;
+//           room.standardY = -1;
 //         } else if (
-//           currentData.standardX === 1 &&
-//           currentData.standardY === -1
+//           room.standardX === 1 &&
+//           room.standardY === -1
 //         ) {
-//           currentData.standardX = -1;
-//           currentData.standardY = -1;
+//           room.standardX = -1;
+//           room.standardY = -1;
 //         } else {
-//           currentData.standardX = -1;
-//           currentData.standardY = -2;
+//           room.standardX = -1;
+//           room.standardY = -2;
 //         }
 //         break;
 //     }
 //   }
 
-//   public handleSituationPaddleStrike(currentData: GameData) {
-//     const type: Vector = currentData.vector;
+//   public handleSituationPaddleStrike(room: GameData) {
+//     const type: Vector = room.vector;
 //     if (type === Vector.DOWNRIGHT || type === Vector.UPRIGHT) {
-//       this.reverseVectorX(currentData);
-//       const y = currentData.currentPosY;
-//       const maxY = currentData.paddle1MaxMin[0];
-//       const minY = currentData.paddle1MaxMin[1];
+//       this.reverseVectorX(room);
+//       const y = room.currentPosY;
+//       const maxY = room.paddle1MaxMin[0];
+//       const minY = room.paddle1MaxMin[1];
 //       const rangeSize = Math.round((maxY - minY + 1) / 3);
 //       if (y > maxY - rangeSize) {
 //         //상단
-//         this.changeAngleForPaddle(currentData);
+//         this.changeAngleForPaddle(room);
 //       } else if (y >= minY + rangeSize && y <= maxY - rangeSize) {
 //         //중간
-//         currentData.standardX *= -1;
+//         room.standardX *= -1;
 //       } else {
 //         //하단
-//         this.changeAngleForPaddle(currentData);
+//         this.changeAngleForPaddle(room);
 //       }
 //     } else {
-//       this.reverseVectorX(currentData);
-//       const y = currentData.currentPosY;
-//       const maxY = currentData.paddle2MaxMin[0];
-//       const minY = currentData.paddle2MaxMin[1];
+//       this.reverseVectorX(room);
+//       const y = room.currentPosY;
+//       const maxY = room.paddle2MaxMin[0];
+//       const minY = room.paddle2MaxMin[1];
 //       const rangeSize = Math.round((maxY - minY + 1) / 3);
 //       if (y > maxY - rangeSize) {
 //         //상단
-//         this.changeAngleForPaddle(currentData);
+//         this.changeAngleForPaddle(room);
 //       } else if (y >= minY + rangeSize && y <= maxY - rangeSize) {
 //         //중간
-//         currentData.standardX *= -1;
+//         room.standardX *= -1;
 //       } else {
 //         //하단
-//         this.changeAngleForPaddle(currentData);
+//         this.changeAngleForPaddle(room);
 //       }
 //     }
-//     this.setRenewLinearEquation(currentData);
+//     this.setRenewLinearEquation(room);
 //   }
 
-//   public handleSituationGoalPostStrike(currentData: GameData): GamePhase {
-//     const type = currentData.vector;
+//   public handleSituationGoalPostStrike(room: GameData): GamePhase {
+//     const type = room.vector;
 //     if (type === Vector.UPRIGHT || type === Vector.DOWNRIGHT) {
-//       currentData.score2++;
-//       if (currentData.score2 === 5) {
+//       room.score2++;
+//       if (room.score2 === 5) {
 //         const ret: GamePhase = GamePhase.MATCH_END;
 //         return ret;
 //       }
 //       const ret: GamePhase = GamePhase.HIT_THE_GOAL_POST;
 //       return ret;
 //     } else {
-//       currentData.score1++;
-//       if (currentData.score1 === 5) {
+//       room.score1++;
+//       if (room.score1 === 5) {
 //         const ret: GamePhase = GamePhase.MATCH_END;
 //         return ret;
 //       }
@@ -334,54 +338,54 @@ export class Animations {
 //     }
 //   }
 
-//   public handleSituationWallAndPaddleStrike(currentData: GameData) {
-//     this.handleSituationWallStrike(currentData);
-//     this.handleSituationPaddleStrike(currentData);
+//   public handleSituationWallAndPaddleStrike(room: GameData) {
+//     this.handleSituationWallStrike(room);
+//     this.handleSituationPaddleStrike(room);
 //   }
 
 //   public handleSituationWallAndGoalPostStrike(
-//     currentData: GameData,
+//     room: GameData,
 //   ): GamePhase {
 //     const ret: GamePhase = GamePhase.MATCH_END;
 //     return ret;
 //   }
 
-//   public setRenewLinearEquation(currentData: GameData) {
+//   public setRenewLinearEquation(room: GameData) {
 //     // 기준 좌표 구하기
-//     currentData.standardX = currentData.currentPosX + currentData.angleX;
-//     currentData.standardY = currentData.currentPosY + currentData.angleY;
+//     room.standardX = room.currentPosX + room.angleX;
+//     room.standardY = room.currentPosY + room.angleY;
 
-//     currentData.angle = Math.round(
-//       (currentData.standardY - currentData.currentPosY) /
-//         (currentData.standardX - currentData.currentPosX),
+//     room.angle = Math.round(
+//       (room.standardY - room.currentPosY) /
+//         (room.standardX - room.currentPosX),
 //     );
-//     currentData.yIntercept = Math.round(
-//       currentData.standardY - currentData.angle * currentData.standardX,
+//     room.yIntercept = Math.round(
+//       room.standardY - room.angle * room.standardX,
 //     );
 //   }
 
 //   // paddle에 부딪히는지 여부 판단
-//   private checkPaddleStrike(vector: Vector, currentData: GameData): boolean {
+//   private checkPaddleStrike(vector: Vector, room: GameData): boolean {
 //     let condition1;
 //     let condition2;
 //     if (vector === Vector.UPRIGHT || vector === Vector.DOWNRIGHT) {
-//       const max = currentData.currentPosY + 20;
-//       const min = currentData.currentPosY - 20;
+//       const max = room.currentPosY + 20;
+//       const min = room.currentPosY - 20;
 //       condition1 =
-//         max <= currentData.paddle2MaxMin[0] ||
-//         currentData.paddle2MaxMin[1] <= min;
+//         max <= room.paddle2MaxMin[0] ||
+//         room.paddle2MaxMin[1] <= min;
 //       condition2 =
-//         min >= currentData.paddle2MaxMin[1] ||
-//         currentData.paddle2MaxMin[0] >= max;
+//         min >= room.paddle2MaxMin[1] ||
+//         room.paddle2MaxMin[0] >= max;
 //     } else {
-//       const max = currentData.currentPosY + 20;
-//       const min = currentData.currentPosY - 20;
+//       const max = room.currentPosY + 20;
+//       const min = room.currentPosY - 20;
 //       condition1 =
-//         max <= currentData.paddle2MaxMin[0] ||
-//         currentData.paddle2MaxMin[1] <= min;
+//         max <= room.paddle2MaxMin[0] ||
+//         room.paddle2MaxMin[1] <= min;
 //       condition2 =
-//         min >= currentData.paddle2MaxMin[1] ||
-//         currentData.paddle2MaxMin[0] >= max;
+//         min >= room.paddle2MaxMin[1] ||
+//         room.paddle2MaxMin[0] >= max;
 //     }
 //     const value = condition1 || condition2;
 //     console.log(` 패들 부딪힘! ${value}`);
@@ -389,113 +393,113 @@ export class Animations {
 //   }
 
 //   // 벽에 부딪히는지를 판단한다.
-//   public checkStrike(currentData: GameData, aniData: Animations): GamePhase[] {
+//   public checkStrike(room: GameData, aniData: Animations): GamePhase[] {
 //     const ret: GamePhase[] = [];
-//     console.log('현재 벡터 : ', currentData.vector);
-//     console.log(`현재 각도 : ${currentData.angle}`);
-//     console.log(`현재 Y 절편 : ${currentData.yIntercept}`);
-//     console.log(`현재 X : ${currentData.currentPosX}`);
-//     console.log(`현재 Y : ${currentData.currentPosY}`);
-//     console.log(`각도 X : ${currentData.angleX}`);
-//     console.log(`각도 Y : ${currentData.angleY}`);
-//     console.log(`기준 X : ${currentData.standardX}`);
-//     console.log(`기준 Y : ${currentData.standardY}`);
-//     console.log(`현재 벡터 : ${currentData.vector}`);
+//     console.log('현재 벡터 : ', room.vector);
+//     console.log(`현재 각도 : ${room.angle}`);
+//     console.log(`현재 Y 절편 : ${room.yIntercept}`);
+//     console.log(`현재 X : ${room.currentPosX}`);
+//     console.log(`현재 Y : ${room.currentPosY}`);
+//     console.log(`각도 X : ${room.angleX}`);
+//     console.log(`각도 Y : ${room.angleY}`);
+//     console.log(`기준 X : ${room.standardX}`);
+//     console.log(`기준 Y : ${room.standardY}`);
+//     console.log(`현재 벡터 : ${room.vector}`);
 //     console.log(
-//       `현재 프레임 : ${currentData.currentFrame} / ${currentData.maxFrame}`,
+//       `현재 프레임 : ${room.currentFrame} / ${room.maxFrame}`,
 //     );
-//     console.log(`현재 페들1 : ${currentData.paddle1}`);
-//     console.log(`현재 페들2 : ${currentData.paddle2}`);
-//     switch (currentData.vector) {
+//     console.log(`현재 페들1 : ${room.paddle1}`);
+//     console.log(`현재 페들2 : ${room.paddle2}`);
+//     switch (room.vector) {
 //       case Vector.UPRIGHT:
 //         console.log('이벤트 발생! : 상우');
 //         // 벽에 부딪히는지를 확인
-//         if (currentData.currentPosY - 20 <= aniData.min_HEIGHT) {
-//           currentData.currentPosY = aniData.min_HEIGHT + 20;
+//         if (room.currentPosY - 20 <= aniData.min_HEIGHT) {
+//           room.currentPosY = aniData.min_HEIGHT + 20;
 //           ret.push(GamePhase.HIT_THE_WALL);
 //         }
 //         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-//         if (currentData.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
-//           if (aniData.checkPaddleStrike(Vector.UPRIGHT, currentData)) {
+//         if (room.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
+//           if (aniData.checkPaddleStrike(Vector.UPRIGHT, room)) {
 //             console.log(
-//               `paddle 충돌 : ${currentData.currentPosX} / ${currentData.currentPosY}`,
+//               `paddle 충돌 : ${room.currentPosX} / ${room.currentPosY}`,
 //             );
-//             currentData.currentPosX = aniData.PADDLE_LINE_2 - 20;
+//             room.currentPosX = aniData.PADDLE_LINE_2 - 20;
 //             ret.push(GamePhase.HIT_THE_PADDLE);
 //           }
 //         }
 //         // 골대 라인에 부딪히는지 확인
-//         if (currentData.currentPosX - 20 <= aniData.min_WIDTH) {
-//           currentData.currentPosX = aniData.min_WIDTH;
+//         if (room.currentPosX - 20 <= aniData.min_WIDTH) {
+//           room.currentPosX = aniData.min_WIDTH;
 //           ret.push(GamePhase.HIT_THE_GOAL_POST);
 //         }
 //         break;
 //       case Vector.UPLEFT:
 //         console.log('이벤트 발생! : 상좌');
 //         // 벽에 부딪히는지를 확인
-//         if (currentData.currentPosY - 20 <= aniData.min_HEIGHT) {
-//           currentData.currentPosY = aniData.min_HEIGHT + 20;
+//         if (room.currentPosY - 20 <= aniData.min_HEIGHT) {
+//           room.currentPosY = aniData.min_HEIGHT + 20;
 //           ret.push(GamePhase.HIT_THE_WALL);
 //         }
 //         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-//         if (currentData.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
-//           if (aniData.checkPaddleStrike(Vector.UPLEFT, currentData)) {
+//         if (room.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
+//           if (aniData.checkPaddleStrike(Vector.UPLEFT, room)) {
 //             console.log(
-//               `paddle 충돌 : ${currentData.currentPosX} / ${currentData.currentPosY}`,
+//               `paddle 충돌 : ${room.currentPosX} / ${room.currentPosY}`,
 //             );
-//             currentData.currentPosX = aniData.PADDLE_LINE_1 + 20;
+//             room.currentPosX = aniData.PADDLE_LINE_1 + 20;
 //             ret.push(GamePhase.HIT_THE_PADDLE);
 //           }
 //         }
 //         // 골대 라인에 부딪히는지 확인
-//         if (currentData.currentPosX + 20 >= aniData.MAX_WIDTH) {
-//           currentData.currentPosX = aniData.MAX_WIDTH;
+//         if (room.currentPosX + 20 >= aniData.MAX_WIDTH) {
+//           room.currentPosX = aniData.MAX_WIDTH;
 //           ret.push(GamePhase.HIT_THE_GOAL_POST);
 //         }
 //         break;
 //       case Vector.DOWNRIGHT:
 //         console.log('이벤트 발생! : 하우');
 //         // 벽에 부딪히는지를 확인
-//         if (currentData.currentPosY + 20 >= aniData.MAX_HEIGHT) {
-//           currentData.currentPosY = aniData.MAX_HEIGHT - 20;
+//         if (room.currentPosY + 20 >= aniData.MAX_HEIGHT) {
+//           room.currentPosY = aniData.MAX_HEIGHT - 20;
 //           ret.push(GamePhase.HIT_THE_WALL);
 //         }
 //         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-//         if (currentData.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
-//           if (aniData.checkPaddleStrike(Vector.DOWNRIGHT, currentData)) {
+//         if (room.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
+//           if (aniData.checkPaddleStrike(Vector.DOWNRIGHT, room)) {
 //             console.log(
-//               `paddle 충돌 : ${currentData.currentPosX} / ${currentData.currentPosY}`,
+//               `paddle 충돌 : ${room.currentPosX} / ${room.currentPosY}`,
 //             );
-//             currentData.currentPosX = aniData.PADDLE_LINE_2 - 20;
+//             room.currentPosX = aniData.PADDLE_LINE_2 - 20;
 //             ret.push(GamePhase.HIT_THE_PADDLE);
 //           }
 //         }
 //         // 골대 라인에 부딪히는지 확인
-//         if (currentData.currentPosX - 20 <= aniData.min_WIDTH) {
-//           currentData.currentPosX = aniData.min_WIDTH;
+//         if (room.currentPosX - 20 <= aniData.min_WIDTH) {
+//           room.currentPosX = aniData.min_WIDTH;
 //           ret.push(GamePhase.HIT_THE_GOAL_POST);
 //         }
 //         break;
 //       case Vector.DOWNLEFT:
 //         console.log('이벤트 발생! : 하좌');
 //         // 벽에 부딪히는지를 확인
-//         if (currentData.currentPosY + 20 >= aniData.MAX_HEIGHT) {
-//           currentData.currentPosY = aniData.MAX_HEIGHT - 20;
+//         if (room.currentPosY + 20 >= aniData.MAX_HEIGHT) {
+//           room.currentPosY = aniData.MAX_HEIGHT - 20;
 //           ret.push(GamePhase.HIT_THE_WALL);
 //         }
 //         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-//         if (currentData.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
-//           if (aniData.checkPaddleStrike(Vector.DOWNLEFT, currentData)) {
+//         if (room.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
+//           if (aniData.checkPaddleStrike(Vector.DOWNLEFT, room)) {
 //             console.log(
-//               `paddle 충돌 : ${currentData.currentPosX} / ${currentData.currentPosY}`,
+//               `paddle 충돌 : ${room.currentPosX} / ${room.currentPosY}`,
 //             );
-//             currentData.currentPosX = aniData.PADDLE_LINE_1 + 20;
+//             room.currentPosX = aniData.PADDLE_LINE_1 + 20;
 //             ret.push(GamePhase.HIT_THE_PADDLE);
 //           }
 //         }
 //         // 골대 라인에 부딪히는지 확인
-//         if (currentData.currentPosX + 20 >= aniData.MAX_WIDTH) {
-//           currentData.currentPosX = aniData.MAX_WIDTH;
+//         if (room.currentPosX + 20 >= aniData.MAX_WIDTH) {
+//           room.currentPosX = aniData.MAX_WIDTH;
 //           ret.push(GamePhase.HIT_THE_GOAL_POST);
 //         }
 //         break;
@@ -504,9 +508,9 @@ export class Animations {
 //   }
 
 //   // 벡터 방향을 바꾼다.
-//   public changeVector(currentData: GameData) {
+//   public changeVector(room: GameData) {
 //     if (this.gameStatus === GamePhase.HIT_THE_WALL) {
-//       currentData.standardY *= -1;
+//       room.standardY *= -1;
 //     } else if (this.gameStatus === GamePhase.HIT_THE_PADDLE) {
 //       // TODO: paddle 보정으로 어떻게 바뀌는지 체크해야함
 //     }

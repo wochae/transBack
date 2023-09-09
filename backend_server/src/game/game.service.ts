@@ -225,6 +225,7 @@ export class GameService {
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
     this.playRoom.push(room);
+	room.setNewGame(room);
     room.setGamePhase(GamePhase.MAKE_ROOM);
     // setTimeout(() => {
     // 	server.to(roomName).emit('game_queue_success', new GameQueueSuccessDto(channel.gameIdx, players))
@@ -422,6 +423,7 @@ export class GameService {
     if (targetRoom.latencyCnt[latencyIdx] === 3) {
       if (targetRoom.latencyCnt[0] >= 3 && targetRoom.latencyCnt[1] >= 3) {
         targetRoom.stopInterval();
+		targetRoom.setGamePhase(GamePhase.SET_NEW_GAME);
         this.sendSetFrameRate(userIdx);
         targetRoom.latencyCnt.splice(0, 2);
         targetRoom.latencyCnt.push(0);
@@ -468,6 +470,7 @@ export class GameService {
       targetRoom.latency[0] >= targetRoom.latency[1]
         ? targetRoom.latency[0]
         : targetRoom.latency[1];
+	// targetRoom.intervalPeriod
     return targetRoom.setLatency(targetLatency, targetRoom);
   }
 
@@ -483,7 +486,8 @@ export class GameService {
         break;
       }
     }
-    targetRoom.setNewGame(targetRoom);
+    // targetRoom.setNewGame(targetRoom);
+	console.log(`game Phase : ${targetRoom.getGamePhase()}`);
     if (targetRoom.getGamePhase() != GamePhase.SET_NEW_GAME) return;
     targetRoom.setGamePhase(GamePhase.ON_PLAYING);
     console.log(`target Interval Ms : ${targetRoom.getIntervalMs()}`);
@@ -501,8 +505,13 @@ export class GameService {
     gameService: GameService,
   ) {
     room.makeNextFrame(room);
+	console.log(`좌표 X : ${room.getGameData().currentPos[0]}`);
+	console.log(`좌표 Y : ${room.getGameData().currentPos[1]}`);
+	console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
+	console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
     // console.log(`frame data : ${frame}`);
     const status: GamePhase = room.getGamePhase();
+	console.log(`Status : ${status}`);
     if (status === GamePhase.SET_NEW_GAME || status === GamePhase.MATCH_END) {
       room.stopInterval();
       if (status === GamePhase.SET_NEW_GAME) {
@@ -562,7 +571,7 @@ export class GameService {
       }
       await this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
       await this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
-    } else {
+    } else if (status === GamePhase.ON_PLAYING) {
       gameService.frameData.setData(room.getGameData(), Date.now());
       server.to(room.roomId).emit('game_frame', gameService.frameData);
     }

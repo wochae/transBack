@@ -148,7 +148,6 @@ export class GameGateway
 
     if (this.gameService.receivePing(data.userIdx, latency)) {
       const targetRoom = this.gameService.findGameRoomById(data.userIdx);
-      targetRoom.setNewGame(targetRoom);
       this.server
         .to(targetRoom.roomId)
         .emit('game_start', new GameStartDto(targetRoom));
