@@ -13,6 +13,7 @@ import { GamePhase } from 'src/game/enum/game.phase';
 import { RecordResult } from 'src/game/enum/game.type.enum';
 import { Socket, Server } from 'socket.io';
 import { Physics } from '../physics/physics';
+import { max } from 'class-validator';
 /**
  * 연산의 핵심. 간단한 데이터를 제외하곤 여기서 연산이 이루어 진다.
  */
@@ -117,6 +118,7 @@ export class GameRoom {
       maxFps = 10;
     }
     room.gameObj.frameData[1] = maxFps;
+	room.animation.setUnitDistance(maxFps);
     console.log(`MaxFPS? -> ${maxFps}`);
     if (maxFps == 60) room.intervalPeriod = 15;
     else if (maxFps == 30) room.intervalPeriod = 30;
@@ -155,7 +157,7 @@ export class GameRoom {
   }
 
   public makeNextFrame(room: GameRoom) {
-    room.animation.makeFrame(room, room.keyPress);
+    room.gameObj = room.animation.makeFrame(room, room.keyPress);
     room.gameObj = room.physics.checkPhysics(room.gameObj, room.physics);
   }
 

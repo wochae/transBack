@@ -26,6 +26,7 @@ import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.respo
 import { GameFrameDataDto } from './dto/game.frame.data.dto';
 import { KeyPressDto } from './dto/key.press.dto';
 import { GameResultDto } from './dto/game.result.dto';
+import { Vector } from './enum/game.vector.enum';
 
 @Injectable()
 export class GameService {
@@ -507,9 +508,22 @@ export class GameService {
     room.makeNextFrame(room);
 	console.log(`좌표 X : ${room.getGameData().currentPos[0]}`);
 	console.log(`좌표 Y : ${room.getGameData().currentPos[1]}`);
+	console.log(`기준 각도 a : ${room.getGameData().anglePos[0]}`);
+	console.log(`기준 각도 b : ${room.getGameData().anglePos[1]}`);
 	console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
 	console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
-    // console.log(`frame data : ${frame}`);
+	if (room.getGameData().vector === Vector.UPLEFT) {
+		console.log(`벡터 : UP-LEFT`)
+	}
+	else if (room.getGameData().vector === Vector.UPRIGHT) {
+		console.log(`벡터 : UP-RIGHT`)
+	}
+	else if (room.getGameData().vector === Vector.DOWNLEFT) {
+		console.log(`벡터 : DOWN-LEFT`)
+	}
+	else if (room.getGameData().vector === Vector.DOWNRIGHT) {
+		console.log(`벡터 : DOWN-RIGHT`)
+	}
     const status: GamePhase = room.getGamePhase();
 	console.log(`Status : ${status}`);
     if (status === GamePhase.SET_NEW_GAME || status === GamePhase.MATCH_END) {

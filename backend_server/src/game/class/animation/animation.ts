@@ -14,31 +14,32 @@ export class Animations {
     this.unitDistance = 0;
   }
 
-  public setUnitDistance(value: number) {
-	this.unitDistance = value;
+  public setUnitDistance(maxFps: number) {
+	this.unitDistance = parseFloat(
+      (this.totalDistancePerSec / maxFps).toFixed(2),
+    );
 	}
 
   // 기존 데이터를 기반으로 다음 프레임 연산을 진행한다.
-  public makeFrame(room: GameRoom, key: KeyPress[]) {
+  public makeFrame(room: GameRoom, key: KeyPress[]): GameData {
     if (
       room.gameObj.vector === Vector.DOWNLEFT ||
       room.gameObj.vector === Vector.UPLEFT
     ) {
       room.gameObj.currentPos[0] = parseFloat(
         (
-          room.gameObj.currentPos[0] -
-          room.animation.unitDistance +
-          (room.gameObj.gameSpeed - 1)
+          room.gameObj.currentPos[0] - room.animation.unitDistance +
+(room.gameObj.gameSpeed - 1)
         ).toFixed(2),
       );
     } else if (
       room.gameObj.vector === Vector.DOWNRIGHT ||
-      room.gameObj.vector === Vector.UPRIGHT
+	  room.gameObj.vector === Vector.UPRIGHT
+      
     ) {
       room.gameObj.currentPos[0] = parseFloat(
         (
-          room.gameObj.currentPos[0] -
-          room.animation.unitDistance +
+          room.gameObj.currentPos[0] + room.animation.unitDistance +
           (room.gameObj.gameSpeed - 1)
         ).toFixed(2),
       );
@@ -64,6 +65,7 @@ export class Animations {
     room.gameObj.frameData[0] += 1;
     if (room.gameObj.frameData[0] === room.gameObj.frameData[1])
       room.gameObj.frameData[0] = 0;
+  	return room.gameObj;
   }
 }
 

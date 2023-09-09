@@ -211,17 +211,16 @@ export class Physics {
     let ret: boolean;
     ret = false;
     if (vector === Vector.DOWNLEFT || vector === Vector.DOWNRIGHT) {
-      if (ballData[1] - 20 <= engine.MIN_HEIGTH) {
-        ballData[1] = engine.MIN_HEIGTH + 20;
-        ret = true;
-      }
-    } else if (vector === Vector.UPLEFT || vector === Vector.UPRIGHT) {
       if (ballData[1] + 20 >= engine.MAX_HEIGHT) {
         ballData[1] = engine.MAX_HEIGHT - 20;
         ret = true;
       }
+    } else if (vector === Vector.UPLEFT || vector === Vector.UPRIGHT) {
+      if (ballData[1] - 20 <= engine.MIN_HEIGTH) {
+        ballData[1] = engine.MIN_HEIGTH + 20;
+        ret = true;
+      }
     }
-
     return ret;
   }
 
