@@ -6,6 +6,8 @@ import { Vector } from './game.vector.enum';
 export interface GameData {
   currentPosX: number;
   currentPosY: number;
+  angleX: number;
+  angleY: number;
   standardX: number;
   standardY: number;
   currentFrame: number;

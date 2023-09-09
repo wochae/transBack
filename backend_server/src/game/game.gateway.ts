@@ -81,11 +81,11 @@ export class GameGateway
 	
     if (players === undefined) {
 	// this.messanger.logWithMessage("handleConnection", "", "","check players");
-		return this.messanger.setResponseMsgWithLogger(200, "first One is ready", "handleConnection");
+		return this.messanger.setResponseMsgWithLogger(200, "you are ready", "handleConnection");
 	}
     else this.gameService.makePlayerRoom(players, this.server);
 	// this.messanger.logWithMessage("handleConnection", "", "","connection handling is successed");
-    return this.messanger.setResponseMsgWithLogger(200, "first One is ready sucessfully", "handleConnection");
+    return this.messanger.setResponseMsgWithLogger(200, "room is setted", "handleConnection");
   }
 
   afterInit() {
@@ -99,22 +99,20 @@ export class GameGateway
   ) {
     const userIdx = data.userIdx;
     const ret = this.gameService.checkReady(userIdx);
-    console.log('ret', ret)
-    console.log('data', data)
+    // console.log('ret', ret)
+    // console.log('data', data)
     // console.log("success", this.server.sockets)
     if (ret === null) client.disconnect(true);
     else if (ret === true) {
       console.log("game ready")
 	  // this.messanger.logWithMessage("getReadyForGame", "", "", "ping is ready");
       const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
-      setTimeout(() => {this.gameService.readyToSendPing(roomId, this.server)}, 1000);
+      setTimeout(() => {this.gameService.readyToSendPing(roomId, this.server)}, 1200);
 	    // this.gameService.readyToSendPing(roomId, this.server);
       this.gameService.uncheckReady(userIdx);
-	  return this.messanger.setResponseMsgWithLogger(
-      200,
-      'game is start soon!',
-      'game_queue_susccess',
-    );
+	  return this.messanger.setResponseMsgWithLogger(200, 'game is start soon!',
+        'game_queue_susccess',
+      );
     }
 	// this.messanger.logWithMessage("game_queue_success", "", "","game_queue_success is successed");
     return this.messanger.setResponseMsgWithLogger(
@@ -134,6 +132,7 @@ export class GameGateway
 
     if (this.gameService.receivePing(data.userIdx, latency)) {
       const targetRoom = this.gameService.findGameRoomById(data.userIdx);
+	  targetRoom.setNewGame(targetRoom);
       this.server
         .to(targetRoom.roomId)
         .emit('game_start', new GameStartDto(targetRoom));
@@ -155,6 +154,7 @@ export class GameGateway
   @SubscribeMessage('game_move_paddle')
   getKeyPressData(@MessageBody() data: KeyPressDto) {
     const targetRoom = this.gameService.findGameRoomById(data.userIdx);
+	console.log(`key board signal = ${data.userIdx} : ${data.paddle}`);
     targetRoom.keyPressed(data.userIdx, data.paddle);
     if (this.gameService.checkLatencyOnPlay(targetRoom, data)) {
       return this.messanger.setResponseMsgWithLogger(

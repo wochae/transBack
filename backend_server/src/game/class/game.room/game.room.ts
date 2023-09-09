@@ -46,6 +46,8 @@ export class GameRoom {
     this.gameObj = {
       currentPosX: 0,
       currentPosY: 0,
+	  angleX: 0,
+	  angleY: 0,
       standardX: 0,
       standardY: 0,
 	  currentFrame: 0,
@@ -90,6 +92,10 @@ export class GameRoom {
     room.resetBall();
     room.gameObj.standardX = 0;
     room.gameObj.standardY = 0;
+    room.gameObj.angleX = 0;
+    room.gameObj.angleY = 0;
+	room.gameObj.currentPosX = 0;
+	room.gameObj.currentPosY = 0;
     room.gameObj.currentFrame = 0;
 	room.gameObj.maxFrame = 0;
     room.gameObj.angle = 0;
@@ -103,7 +109,7 @@ export class GameRoom {
     room.gameObj.score2 = 2;
     room.gamePhase = GamePhase.SET_NEW_GAME;
 	room.setRandomStandardCoordinates();
-    room.setNewLinearEquation(room);
+    room.animation.setRenewLinearEquation(room.gameObj);
     room.keyPress[0].setRenewKeypress();
     room.keyPress[1].setRenewKeypress();
     // TODO: 애니메이션 객체를 새롭게 만들어야 하는가?
@@ -120,16 +126,18 @@ export class GameRoom {
     this.gameObj.paddle2 = 0;
   }
 
-  public setLatency(latency: number): number {
-    this.animation.setMaxFps(latency);
-    const maxFps = this.animation.getMaxFps();
-	this.gameObj.maxFrame = maxFps;
-    if (maxFps == 60) this.intervalPeriod = 15;
-    else if (maxFps == 30) this.intervalPeriod = 30;
-    else if (maxFps == 24) this.intervalPeriod = 40;
-    else this.intervalPeriod = 80;
+  public setLatency(latency: number, room: GameRoom): number {
+	console.log(`target latency -> ${latency}`)
+    room.animation.setMaxFps(latency);
+    const maxFps = room.animation.getMaxFps();
+	console.log(`MaxFPS? -> ${maxFps}`)
+	room.gameObj.maxFrame = maxFps;
+    if (maxFps == 60) room.intervalPeriod = 15;
+    else if (maxFps == 30) room.intervalPeriod = 30;
+    else if (maxFps == 24) room.intervalPeriod = 40;
+    else room.intervalPeriod = 80;
     // TODO: 정상 가동 여부 판단 필요
-    this.keyPress.map((data) => data.setPressedNumberByMaxFps(maxFps));
+    room.keyPress.map((data) => data.setPressedNumberByMaxFps(maxFps));
     return maxFps;
   }
 
@@ -164,54 +172,52 @@ export class GameRoom {
 
   public getNextFrame(room:GameRoom): FrameData {
     room.gamePhase = room.animation.makeFrame(room.gameObj, room.keyPress, room);
-		room.animation.currentDatas.ballX = room.gameObj.currentPosX;
+	room.animation.currentDatas.ballX = room.gameObj.currentPosX;
 	room.animation.currentDatas.ballY = room.gameObj.currentPosY;
 	room.animation.currentDatas.paddle1 = room.gameObj.paddle1;
 	room.animation.currentDatas.paddle2 = room.gameObj.paddle2;
 	room.animation.currentDatas.currentFrame = room.gameObj.currentFrame;
 	room.animation.currentDatas.maxFrameRate = room.gameObj.maxFrame;
-	console.log(`Ball - x : ${room.animation.currentDatas.ballX}`);
-	console.log(`Ball - Y : ${room.animation.currentDatas.ballY}`);
-	console.log(`FPS: ${room.animation.currentDatas.currentFrame}/ ${room.animation.currentDatas.maxFrameRate}`)
-	console.log(`paddle 1 : ${room.animation.currentDatas.paddle1}`);
-	console.log(`paddle 1 Max - min : ${room.gameObj.paddle1MaxMin}`);
-	console.log(`paddle 2 : ${room.animation.currentDatas.paddle2}`);
-	console.log(`paddle 2 Max - min : ${room.gameObj.paddle2MaxMin}`);
-	console.log(`standard X : ${room.gameObj.standardX}`);
-	console.log(`standard Y : ${room.gameObj.standardY}`);
-	console.log(`y intecept : ${room.gameObj.yIntercept}`);
-	console.log(`equation angle : ${room.gameObj.angle}`);
+	// console.log(`Ball - x : ${room.animation.currentDatas.ballX}`);
+	// console.log(`Ball - Y : ${room.animation.currentDatas.ballY}`);
+	// console.log(`FPS: ${room.animation.currentDatas.currentFrame}/ ${room.animation.currentDatas.maxFrameRate}`)
+	// console.log(`paddle 1 : ${room.animation.currentDatas.paddle1}`);
+	// console.log(`paddle 1 Max - min : ${room.gameObj.paddle1MaxMin}`);
+	// console.log(`paddle 2 : ${room.animation.currentDatas.paddle2}`);
+	// console.log(`paddle 2 Max - min : ${room.gameObj.paddle2MaxMin}`);
+	// console.log(`standard X : ${room.gameObj.standardX}`);
+	// console.log(`standard Y : ${room.gameObj.standardY}`);
+	// console.log(`y intecept : ${room.gameObj.yIntercept}`);
+	// console.log(`equation angle : ${room.gameObj.angle}`);
     return room.animation.currentDatas;
   }
 
   public setRandomStandardCoordinates() {
-    this.gameObj.currentPosX = 0;
-    this.gameObj.currentPosY = 0;
-    this.gameObj.standardX = this.getRandomInt(-2, 2);
-    this.gameObj.standardY = this.getRandomInt(-2, 2);
-    let up = false;
+    this.gameObj.angleX = this.gameObj.standardX = this.getRandomInt(-2, 2);
+    this.gameObj.angleY = this.gameObj.standardY = this.getRandomInt(-2, 2);
+    let down = true;
     let right = true;
 
-    if (this.gameObj.standardX < 0) right = false;
-    if (this.gameObj.standardY < 0) up = true;
+    if (this.gameObj.angleX < 0) right = false;
+    if (this.gameObj.angleY < 0) down = false;
 
-    if (right == true && up == true) {
-      this.gameObj.vector = Vector.UPLEFT;
-    } else if (right == true && up == false) {
-      this.gameObj.vector = Vector.DOWNLEFT;
-    } else if (right == false && up == true) {
-      this.gameObj.vector = Vector.UPRIGHT;
-    } else {
+    if (right == true && down == true) {
       this.gameObj.vector = Vector.DOWNRIGHT;
+    } else if (right == true && down == false) {
+      this.gameObj.vector = Vector.UPRIGHT;
+    } else if (right == false && down == true) {
+      this.gameObj.vector = Vector.DOWNLEFT;
+    } else {
+      this.gameObj.vector = Vector.UPLEFT;
     }
   }
 
-  public setNewLinearEquation(room: GameRoom) {
-    this.gameObj.angle =
-      (this.gameObj.standardY - 0) / (this.gameObj.standardX - 0);
-    this.gameObj.yIntercept =
-      this.gameObj.standardY - this.gameObj.angle * this.gameObj.standardX;
-  }
+//   public setRenewLinearEquation(room: GameRoom) {
+//     this.gameObj.angle =
+//       (this.gameObj.standardY - 0) / (this.gameObj.standardX - 0);
+//     this.gameObj.yIntercept =
+//       this.gameObj.standardY - this.gameObj.angle * 0;
+//   }
 
   public getRandomInt(min: number, max: number): number {
     let randomValue = Math.floor(Math.random() * (max - min + 1)) + min;

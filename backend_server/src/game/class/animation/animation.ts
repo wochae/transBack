@@ -52,9 +52,10 @@ export class Animations {
       this.maxFps = 30;
     } else if (latency >= 15 && latency < 20) {
       this.maxFps = 24;
-    } else if (latency >= 20 && latency < 50) {
+    } else if (latency >= 20) {
       this.maxFps = 10;
     }
+	// this.maxFps = 60;
     this.unitDistance = parseFloat(
       (this.totalDistancePerSec / this.maxFps).toFixed(2),
     );
@@ -134,27 +135,27 @@ export class Animations {
     	);
    	 	currentData.currentPosY = parseFloat(
       // y = ax + b, a, b의 값을 미리 설정
-      ((currentData.angle * currentData.currentPosX - currentData.yIntercept) + (currentData.gameSpeed -1)).toFixed(2),
+      ((currentData.angle * currentData.currentPosX + currentData.yIntercept) + (currentData.gameSpeed -1)).toFixed(2),
    		);
 	} else if (currentData.vector === Vector.UPRIGHT) {
 		currentData.currentPosX = parseFloat(
-      ((currentData.currentPosX - room.animation.unitDistance) + (currentData.gameSpeed - 1)).toFixed(2),
+      ((currentData.currentPosX + room.animation.unitDistance) + (currentData.gameSpeed - 1)).toFixed(2),
     	);
    	 	currentData.currentPosY = parseFloat(
       // y = ax + b, a, b의 값을 미리 설정
-      ((currentData.angle * currentData.currentPosX - currentData.yIntercept) + (currentData.gameSpeed -1)).toFixed(2),
+      ((currentData.angle * currentData.currentPosX + currentData.yIntercept) + (currentData.gameSpeed -1)).toFixed(2),
    		);
 	}
 
 
-	if (currentData.currentPosX <= room.animation.min_WIDTH)
+	if (currentData.currentPosX < room.animation.min_WIDTH)
 		currentData.currentPosX = room.animation.min_WIDTH;
-	else if (currentData.currentPosX >= room.animation.MAX_WIDTH)
+	else if (currentData.currentPosX > room.animation.MAX_WIDTH)
 		currentData.currentPosX = room.animation.MAX_WIDTH;
 
-	if (currentData.currentPosY <= room.animation.min_HEIGHT)
+	if (currentData.currentPosY < room.animation.min_HEIGHT)
 		currentData.currentPosY = room.animation.min_HEIGHT;
-	else if (currentData.currentPosY >= room.animation.MAX_HEIGHT)
+	else if (currentData.currentPosY > room.animation.MAX_HEIGHT)
 		currentData.currentPosY = room.animation.MAX_HEIGHT;
 
     // 페들 데이터 바꿈
@@ -170,7 +171,7 @@ export class Animations {
     room.animation.setPaddleNotOverLimit(currentData, currentData.paddle1, currentData.paddle2);
 
     const type = room.animation.checkStrike(currentData, this);
-	console.log(type);
+	console.log(`이벤트 발생 : ${type} =============================================`);
     if (type.length === 2 || type.length === 3) {
       const cond1 = type.find((vec) => vec === GamePhase.HIT_THE_WALL);
       const cond2 = type.find((vec) => vec === GamePhase.HIT_THE_PADDLE);
@@ -193,14 +194,17 @@ export class Animations {
       // TODO: 조건 두개 이상
     } else {
       if (type[0] === GamePhase.HIT_THE_WALL) {
-        room.animation.handleSituationWallStrike(currentData);
+		console.log(`벽충돌로 좌표 수정`);
+        currentData = room.animation.handleSituationWallStrike(currentData);
         room.animation.gameStatus = GamePhase.HIT_THE_WALL;
         return room.animation.gameStatus;
       } else if (type[0] === GamePhase.HIT_THE_PADDLE) {
+		console.log(`페등 충돌로 좌표 수정`);
         room.animation.handleSituationPaddleStrike(currentData);
         room.animation.gameStatus = GamePhase.HIT_THE_PADDLE;
         return room.animation.gameStatus;
       } else if (type[0] === GamePhase.HIT_THE_GOAL_POST) {
+		console.log(`골대 충돌`)
         room.animation.gameStatus = room.animation.handleSituationGoalPostStrike(currentData);
         return room.animation.gameStatus;
       }
@@ -211,7 +215,7 @@ export class Animations {
   }
 
   private reverseVectorY(currentData: GameData) {
-    currentData.standardY *= -1;
+    currentData.angleY *= -1;
     if (currentData.vector === Vector.UPRIGHT) {
       currentData.vector = Vector.DOWNRIGHT;
     } else if (currentData.vector === Vector.DOWNRIGHT) {
@@ -219,26 +223,26 @@ export class Animations {
     } else if (currentData.vector === Vector.UPLEFT) {
       currentData.vector = Vector.DOWNLEFT;
     } else {
-      currentData.vector = Vector.DOWNLEFT;
+      currentData.vector = Vector.UPLEFT;
     }
   }
 
   private reverseVectorX(currentData: GameData) {
     if (currentData.vector === Vector.UPRIGHT) {
-      currentData.vector = Vector.UPLEFT;
-    } else if (currentData.vector === Vector.DOWNRIGHT) {
       currentData.vector = Vector.DOWNLEFT;
+    } else if (currentData.vector === Vector.DOWNRIGHT) {
+      currentData.vector = Vector.UPLEFT;
     } else if (currentData.vector === Vector.UPLEFT) {
-      currentData.vector = Vector.UPRIGHT;
-    } else {
       currentData.vector = Vector.DOWNRIGHT;
+    } else {
+      currentData.vector = Vector.UPLEFT;
     }
   }
 
-  public handleSituationWallStrike(currentData: GameData) {
+  public handleSituationWallStrike(currentData: GameData): GameData {
     this.reverseVectorY(currentData);
-    this.setNewlinearEquation(currentData);
-    return;
+    this.setRenewLinearEquation(currentData);
+    return currentData;
   }
 
   private changeAngleForPaddle(currentData: GameData) {
@@ -338,7 +342,7 @@ export class Animations {
         this.changeAngleForPaddle(currentData);
       }
     }
-    this.setNewlinearEquation(currentData);
+    this.setRenewLinearEquation(currentData);
   }
 
   public handleSituationGoalPostStrike(currentData: GameData): GamePhase {
@@ -374,12 +378,16 @@ export class Animations {
     return ret;
   }
 
-  public setNewlinearEquation(currentData: GameData) {
+  public setRenewLinearEquation(currentData: GameData) {
+	// 기준 좌표 구하기
+	currentData.standardX = currentData.currentPosX + currentData.angleX;
+	currentData.standardY = currentData.currentPosY + currentData.angleY;
+
     currentData.angle =
-      (currentData.standardY - 0) / (currentData.standardX - 0);
+      Math.round((currentData.standardY - currentData.currentPosY) / (currentData.standardX - currentData.currentPosX));
     currentData.yIntercept =
-      currentData.standardY - currentData.angle * currentData.standardX;
-  }
+      Math.round(currentData.standardY - currentData.angle * currentData.standardX);
+	}
 
   // paddle에 부딪히는지 여부 판단
   private checkPaddleStrike(vector: Vector, currentData: GameData): boolean {
@@ -389,11 +397,11 @@ export class Animations {
       const max = currentData.currentPosY + 20;
       const min = currentData.currentPosY - 20;
       condition1 =
-        max <= currentData.paddle1MaxMin[0] ||
-        currentData.paddle1MaxMin[1] <= min;
+        max <= currentData.paddle2MaxMin[0] ||
+        currentData.paddle2MaxMin[1] <= min;
       condition2 =
-        min >= currentData.paddle1MaxMin[1] ||
-        currentData.paddle1MaxMin[0] >= max;
+        min >= currentData.paddle2MaxMin[1] ||
+        currentData.paddle2MaxMin[0] >= max;
     } else {
       const max = currentData.currentPosY + 20;
       const min = currentData.currentPosY - 20;
@@ -404,24 +412,40 @@ export class Animations {
         min >= currentData.paddle2MaxMin[1] ||
         currentData.paddle2MaxMin[0] >= max;
     }
-    return condition1 || condition2;
+    const  value = condition1 || condition2;
+	console.log(` 패들 부딪힘! ${value}`);
+	return value;
   }
 
   // 벽에 부딪히는지를 판단한다.
   public checkStrike(currentData: GameData, aniData:Animations): GamePhase[] {
     const ret: GamePhase[] = [];
-	console.log('현재 벡터 : ',currentData.vector);
+	console.log('현재 벡터 : ', currentData.vector );
+	console.log(`현재 각도 : ${currentData.angle}`);
+	console.log(`현재 Y 절편 : ${currentData.yIntercept}`);
+	console.log(`현재 X : ${currentData.currentPosX}`);
+	console.log(`현재 Y : ${currentData.currentPosY}`);
+	console.log(`각도 X : ${currentData.angleX}`);
+	console.log(`각도 Y : ${currentData.angleY}`);
+	console.log(`기준 X : ${currentData.standardX}`);
+	console.log(`기준 Y : ${currentData.standardY}`);
+	console.log(`현재 벡터 : ${currentData.vector}`)
+	console.log(`현재 프레임 : ${currentData.currentFrame} / ${currentData.maxFrame}`)
+	console.log(`현재 페들1 : ${currentData.paddle1}`)
+	console.log(`현재 페들2 : ${currentData.paddle2}`)
     switch (currentData.vector) {
       case Vector.UPRIGHT:
+		console.log('이벤트 발생! : 상우');
         // 벽에 부딪히는지를 확인
-        if (currentData.currentPosY + 20 >= aniData.MAX_HEIGHT) {
-          currentData.currentPosY = aniData.MAX_HEIGHT;
+        if (currentData.currentPosY - 20 <= aniData.min_HEIGHT) {
+          currentData.currentPosY = aniData.min_HEIGHT + 20;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-        if (currentData.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
+        if (currentData.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
           if (aniData.checkPaddleStrike(Vector.UPRIGHT, currentData)) {
-            currentData.currentPosX = aniData.PADDLE_LINE_1;
+			console.log(`paddle 충돌 : ${currentData.currentPosX} / ${currentData.currentPosY}`);
+            currentData.currentPosX = aniData.PADDLE_LINE_2 - 20;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
         }
@@ -432,15 +456,17 @@ export class Animations {
         }
         break;
       case Vector.UPLEFT:
+		console.log('이벤트 발생! : 상좌');
         // 벽에 부딪히는지를 확인
-        if (currentData.currentPosY + 20 >= aniData.MAX_HEIGHT) {
-          currentData.currentPosY = aniData.MAX_HEIGHT;
+        if (currentData.currentPosY - 20 <= aniData.min_HEIGHT) {
+          currentData.currentPosY = aniData.min_HEIGHT + 20;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-        if (currentData.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
+        if (currentData.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
           if (aniData.checkPaddleStrike(Vector.UPLEFT, currentData)) {
-            currentData.currentPosX = aniData.PADDLE_LINE_2;
+			console.log(`paddle 충돌 : ${currentData.currentPosX} / ${currentData.currentPosY}`);
+            currentData.currentPosX = aniData.PADDLE_LINE_1 + 20;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
         }
@@ -451,15 +477,17 @@ export class Animations {
         }
         break;
       case Vector.DOWNRIGHT:
+		console.log('이벤트 발생! : 하우');
         // 벽에 부딪히는지를 확인
-        if (currentData.currentPosY - 20 <= aniData.min_HEIGHT) {
-          currentData.currentPosY = aniData.min_HEIGHT;
+        if (currentData.currentPosY + 20 >= aniData.MAX_HEIGHT) {
+          currentData.currentPosY = aniData.MAX_HEIGHT - 20;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-        if (currentData.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
+        if (currentData.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
           if (aniData.checkPaddleStrike(Vector.DOWNRIGHT, currentData)) {
-            currentData.currentPosX = aniData.PADDLE_LINE_1;
+			console.log(`paddle 충돌 : ${currentData.currentPosX} / ${currentData.currentPosY}`);
+            currentData.currentPosX = aniData.PADDLE_LINE_2 - 20;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
         }
@@ -470,15 +498,17 @@ export class Animations {
         }
         break;
       case Vector.DOWNLEFT:
+		console.log('이벤트 발생! : 하좌');
         // 벽에 부딪히는지를 확인
-        if (currentData.currentPosY - 20 <= aniData.min_HEIGHT) {
-          currentData.currentPosY = -aniData.min_HEIGHT;
+        if (currentData.currentPosY + 20 >= aniData.MAX_HEIGHT) {
+          currentData.currentPosY = aniData.MAX_HEIGHT - 20 ;
           ret.push(GamePhase.HIT_THE_WALL);
         }
         // 패들 라인에 들어가는지 검증하고, 이럴 경우 패들 부딪힘 여부 판단
-        if (currentData.currentPosX + 20 >= aniData.PADDLE_LINE_2) {
+        if (currentData.currentPosX - 20 <= aniData.PADDLE_LINE_1) {
           if (aniData.checkPaddleStrike(Vector.DOWNLEFT, currentData)) {
-            currentData.currentPosX = aniData.PADDLE_LINE_2;
+			console.log(`paddle 충돌 : ${currentData.currentPosX} / ${currentData.currentPosY}`);
+            currentData.currentPosX = aniData.PADDLE_LINE_1 + 20;
             ret.push(GamePhase.HIT_THE_PADDLE);
           }
         }
