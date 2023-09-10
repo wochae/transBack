@@ -62,7 +62,7 @@ export class LoginController {
       intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
       this.loginService.downloadProfileImg(intraInfo);
     } else {
-      user.imgUri = `${backenduri}/img/${user.userIdx}.png}`
+      user.imgUri = `${backenduri}/img/${user.userIdx}.png`
       this.usersService.setUserImg(user.userIdx, user.imgUri);
       this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
       console.log('codeCallback user exist : ', user);

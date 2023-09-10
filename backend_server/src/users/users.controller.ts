@@ -137,7 +137,9 @@ export class UsersController {
         .status(HttpStatus.OK)
         .json({ message: '유저 정보가 업데이트 되었습니다.', result });
     } else {
-      return res.status(201).json({ message: '인증번호가 일치하지 않습니다.', result });
+      return res
+      .status(HttpStatus.OK)
+      .json({ message: '인증번호가 일치하지 않습니다.', result });
     }
   }
 
