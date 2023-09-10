@@ -55,12 +55,15 @@ export class LoginController {
     let intraSimpleInfoDto: IntraSimpleInfoDto;
     intraInfo = await this.loginService.getIntraInfo(query.code);
     const user = await this.usersService.findOneUser(intraInfo.userIdx);
+    
     console.log('codeCallback user : ', user);
     if (!user) {
       console.log('codeCallback user not exist : ', user);
       intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
       this.loginService.downloadProfileImg(intraInfo);
     } else {
+      user.imgUri = `${backenduri}/img/${user.userIdx}.png}`
+      this.usersService.setUserImg(user.userIdx, user.imgUri);
       this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
       console.log('codeCallback user exist : ', user);
       intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
