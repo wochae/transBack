@@ -16,7 +16,6 @@ export class Channel {
   private ban: UserObject[] = [];
   private mute: UserObject[] = [];
   private password: string;
-
   /******************************* 메서드 *******************************/
   // TODO: 생성자가 필요할 듯 하다.
   // constructor(

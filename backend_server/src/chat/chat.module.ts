@@ -11,6 +11,7 @@ import { Mode } from '../entity/chat.entity';
 import { SharedModule } from 'src/shared/shared.module';
 import { ChatController } from './chat.controller';
 import { GameModule } from 'src/game/game.module';
+import { HashedChannelRepository } from './chat.repository';
 
 @Module({
   // TODO: Member 와 관련된 것을 추가해야함
@@ -18,6 +19,7 @@ import { GameModule } from 'src/game/game.module';
     TypeOrmExModule.forCustomRepository([
       // DMChannelRepository,
       DirectMessageRepository,
+      HashedChannelRepository,
     ]),
     GameModule,
     SharedModule,
