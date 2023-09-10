@@ -132,9 +132,15 @@ export class UsersController {
   async patchTFA(@Req() req, @Res() res: Response, @Body() body: any) {
     const tfaAuthDto: TFAuthDto = { code: body.code };
     const result = await this.usersService.patchTFA(body.userIdx, tfaAuthDto);
-    return res
+    if (result) {
+      return res
+        .status(HttpStatus.OK)
+        .json({ message: '유저 정보가 업데이트 되었습니다.', result });
+    } else {
+      return res
       .status(HttpStatus.OK)
-      .json({ message: '유저 정보가 업데이트 되었습니다.', result });
+      .json({ message: '인증번호가 일치하지 않습니다.', result });
+    }
   }
 
   // @UseGuards(AuthGuard)

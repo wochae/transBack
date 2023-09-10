@@ -38,7 +38,7 @@ import {
 } from './dto/chat.transaction.dto';
 import { UserStatusDto } from './dto/update-chat.dto';
 
-const front = process.env.FRONT_REMOTE;
+const front = process.env.FRONTEND;
 
 @WebSocketGateway({
   namespace: 'chat',
