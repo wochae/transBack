@@ -38,10 +38,12 @@ import {
 } from './dto/chat.transaction.dto';
 import { UserStatusDto } from './dto/update-chat.dto';
 
+const front = process.env.FRONT_REMOTE;
+
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000', front],
   },
 })
 export class ChatGateway
@@ -98,7 +100,7 @@ export class ChatGateway
     const userId: number = parseInt(client.handshake.query.userId as string);
 
     // FIXME: 함수로 빼기
-    const user = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -151,40 +153,41 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() chatMainEnterReqDto: ChatMainEnterReqDto,
   ) {
-    const { intra } = chatMainEnterReqDto;
+    const { userNickname } = chatMainEnterReqDto;
 
     // FIXME: 1. connect 된 소켓의 유저 인트라와 요청한 인트라가 일치하는지 확인하는 함수 추가 필요
     const userId: number = parseInt(client.handshake.query.userId as string);
     const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
-    if (checkUser.intra !== intra) {
-      client.disconnect();
-      return this.messanger.setResponseErrorMsgWithLogger(
-        400,
-        'Improper Access',
-        'main_enter',
-        userId,
-      );
-    }
-    //
-    const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
-    // FIXME: 2. 예외처리 함수 만들기
+    // if (checkUser.nickname !== userNickname) {
+    //   client.disconnect();
+    //   return this.messanger.setResponseErrorMsgWithLogger(
+    //     400,
+    //     'Improper Access',
+    //     'main_enter',
+    //     userId,
+    //   );
+    // }
+    const user = checkUser;
+    //  
+    // const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
+    // FIXME: 2. 예외처리 함수 만들기 // 유저 아이디로 찾아서 닉네임 대조만 하면 될 것 같다.
     if (!user) {
       client.disconnect();
       return this.messanger.logWithWarn(
         'enterMainPage',
-        'intra',
-        intra,
+        'nickname',
+        userNickname,
         'Not Found',
       );
     }
-    //
+    
     // FIXME: 3. emit value 만드는 함수로 빼기, DTO 만들기?
     const userObject = {
       imgUri: user.imgUri,
       nickname: user.nickname,
       userIdx: user.userIdx,
     };
-    const friendList = await this.usersService.getFriendList(intra);
+    const friendList = await this.usersService.getFriendList(user.userIdx);
     const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
       user.userIdx,
     );
@@ -201,6 +204,7 @@ export class ChatGateway
       blockList,
       userObject,
     };
+    console.log('main_enter ', main_enter);
     //
     client.emit('main_enter', main_enter);
 
@@ -498,8 +502,8 @@ export class ChatGateway
   ) {
     const { channelIdx, senderIdx, msg, targetIdx } = chatSendMsgReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
-    const target: UserObject = this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    const target = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
     const channel: Channel | DMChannel =
       await this.chatService.findChannelByRoomId(channelIdx);
     if (user.userIdx !== senderIdx) {
@@ -585,7 +589,7 @@ export class ChatGateway
   ) {
     const { password = '' } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    const user = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -617,16 +621,7 @@ export class ChatGateway
   ) {
     const { channelIdx, userIdx, grant } = chatRoomAdminReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
-    if (checkUser.userIdx !== userIdx) {
-      client.disconnect();
-      return this.messanger.setResponseErrorMsgWithLogger(
-        400,
-        'Improper Access',
-        'chat_room_admin',
-        userId,
-      );
-    }
+    
     const channel = this.chat.getProtectedChannel(channelIdx);
     // FIXME: 함수로 빼기
     if (!channel) {
@@ -1066,9 +1061,8 @@ export class ChatGateway
     // FIXME: targetIdx 가 본인인지 확인
     const { targetNickname, targetIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
-    const targetUser: UserObject =
-      this.inMemoryUsers.getUserByIdFromIM(targetIdx);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    const targetUser = await this.inMemoryUsers.getUserByIdFromIM(targetIdx);
     if (targetUser.nickname !== targetNickname) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -1087,7 +1081,7 @@ export class ChatGateway
       );
     }
     const blockInfo = await this.usersService.setBlock(
-      targetNickname,
+      targetIdx,
       user,
       this.inMemoryUsers,
     );
@@ -1115,7 +1109,7 @@ export class ChatGateway
   @SubscribeMessage('chat_get_DMList')
   async getPrivateChannels(@ConnectedSocket() client: Socket) {
     const userId = parseInt(client.handshake.query.userId as string);
-    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userId);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     const channels = await this.chatService.getPrivateChannels(user);
     client.emit('chat_get_DMList', channels);
     return this.messanger.setResponseMsgWithLogger(
@@ -1151,7 +1145,7 @@ export class ChatGateway
     @MessageBody() chatGeneralReqDto: ChatGeneralReqDto,
   ) {
     const { userIdx, channelIdx } = chatGeneralReqDto;
-    const user: UserObject = this.inMemoryUsers.getUserByIdFromIM(userIdx);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userIdx);
     const userId: number = parseInt(client.handshake.query.userId as string);
     if (user.userIdx !== userId) {
       client.disconnect();
@@ -1182,7 +1176,7 @@ export class ChatGateway
       return new ReturnMsgDto(400, 'Bad Request, target user is not online');
     }
     // in memory 로 바꿀까?
-    const target = this.inMemoryUsers.getUserByIdFromIM(targetTuple[0].userIdx);
+    const target = await this.inMemoryUsers.getUserByIdFromIM(targetTuple[0].userIdx);
     // const target = await this.usersService.getUserInfoFromDBById(
     //   targetTuple[0].userIdx,
     // );
@@ -1227,6 +1221,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() userStatus: UserStatusDto,
   ) {
+    console.log('userStatus : ', userStatus);
     const userId: number = parseInt(client.handshake.query.userId as string);
 
     if (Number.isNaN(userId)) return;

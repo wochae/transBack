@@ -18,19 +18,22 @@ export class InMemoryUsers {
   }
 
   private async initInMemoryUsers(): Promise<void> {
-    await this.userObjectRepository.find().then((users) => {
+    const users = await this.userObjectRepository.find();
       this.inMemoryUsers = users;
-    });
-    await this.blockListRepository.find().then((lists) => {
+    
+    const lists = await this.blockListRepository.find();
       this.inMemoryBlockList = lists;
-    });
+    
   }
 
-  getUserByIntraFromIM(intra: string): UserObject {
-    return this.inMemoryUsers.find((user) => user.intra === intra);
+  async getUserByNicknameFromIM(nickname: string): Promise<UserObject> {
+    await this.initInMemoryUsers();
+    return this.inMemoryUsers.find((user) => user.nickname === nickname);
   }
 
-  getUserByIdFromIM(userId: number): UserObject {
+  async getUserByIdFromIM(userId: number): Promise<UserObject> {
+    console.log('getUserByIdFromIM');
+    await this.initInMemoryUsers();
     return this.inMemoryUsers.find((user) => user.userIdx === userId);
   }
 
@@ -59,15 +62,23 @@ export class InMemoryUsers {
     }
   }
 
-  getBlockListByIdFromIM(userId: number): BlockList[] {
+  async getBlockListByIdFromIM(userId: number): Promise<BlockList[]> {
+    await this.initInMemoryUsers();
     return this.inMemoryBlockList.filter((user) => user.userIdx === userId);
   }
 
+  // unused
   setBlockListByIdFromIM(blockList: BlockList): void {
-    this.inMemoryBlockList.push(blockList);
+    const blockListIndex = this.inMemoryBlockList.findIndex(
+      (block) => block.idx === blockList.idx,
+    );
+    this.inMemoryBlockList[blockListIndex] = blockList;
+    if (blockListIndex === -1) {
+      this.inMemoryBlockList.push(blockList);
+    }
   }
 
-  removeBlockListByNicknameFromIM(nickname: string): void {
+  removeBlockListByIntraFromIM(nickname: string): void {
     this.inMemoryBlockList = this.inMemoryBlockList.filter(
       (user) => user.blockedNickname !== nickname,
     );

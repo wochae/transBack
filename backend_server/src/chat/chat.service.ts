@@ -207,8 +207,8 @@ export class ChatService {
     const userChannels: DMChannel[] =
       await this.dmChannelRepository.findDMChannelsByUserIdx(user.userIdx);
     for (const channel of userChannels) {
-      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
-        channel.userIdx1,
+      const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
+        channel.userIdx1
       );
       const isBlocked = blockList.some(
         (user) => user.blockedUserIdx === channel.userIdx2,
@@ -228,8 +228,8 @@ export class ChatService {
         targetUser.userIdx,
       );
     for (const channel of targetChannels) {
-      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
-        channel.userIdx2,
+      const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
+        channel.userIdx2
       );
       const isBlocked = blockList.some(
         (user) => user.blockedUserIdx === channel.userIdx2,
@@ -303,7 +303,7 @@ export class ChatService {
 
   /******************* Save Message Funcions *******************/
 
-  saveMessageInIM(channelIdx: number, senderIdx: number, msg: string) {
+  async saveMessageInIM(channelIdx: number, senderIdx: number, msg: string) {
     const channel = this.chat.getProtectedChannels.find(
       (channel) => channel.getChannelIdx === channelIdx,
     );
@@ -315,10 +315,11 @@ export class ChatService {
       console.log('Channel not found.');
       return;
     }
-    // const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
+    const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
+    
     const message = {
       channelIdx: channelIdx,
-      senderIdx: this.inMemoryUsers.getUserByIdFromIM(senderIdx).userIdx,
+      senderIdx: sender.userIdx,
       msg: msgInfo.getMessage,
       msgDate: msgInfo.getMsgDate,
     };
@@ -608,8 +609,8 @@ export class ChatService {
 
     const channelsInfo = [];
     for (const channel of channels) {
-      const blockList = this.inMemoryUsers.getBlockListByIdFromIM(
-        channel.userIdx1,
+      const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
+        channel.userIdx1
       );
       const isBlocked = blockList.some(
         (user) => user.blockedUserIdx === channel.userIdx2,
@@ -664,7 +665,7 @@ export class ChatService {
     }
     dmMessageListWhenEnterRoom.reverse();
     console.log("의심되는 부분입니다: ", dmMessageListWhenEnterRoom);
-    const targetUser = this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
+    const targetUser = await this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
     const messageInfo = {
       message: dmMessageListWhenEnterRoom,
       totalMsgCount: totalMsgCount,
@@ -673,7 +674,7 @@ export class ChatService {
       userNickname1: channel.userNickname1,
       userNickname2: channel.userNickname2,
       channelIdx: channel.channelIdx,
-      imgUrl: targetUser.imgUri,
+      imgUri: targetUser.imgUri,
     };
     return messageInfo;
   }
@@ -694,9 +695,9 @@ export class ChatService {
     messageList.reverse();
     const messageInfo = await Promise.all(
       messageList.map(async (message) => {
-        const senderIdx = this.inMemoryUsers.getUserByIntraFromIM(
-          message.sender,
-        ).userIdx;
+        const senderIdx = (await this.inMemoryUsers.getUserByNicknameFromIM(
+          message.sender
+        )).userIdx;
         return {
           channelIdx: message.channelIdx,
           senderIdx: senderIdx,

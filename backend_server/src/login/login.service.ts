@@ -7,18 +7,7 @@ import { IntraInfoDto } from 'src/users/dto/user.dto';
 import { CreateUsersDto } from 'src/users/dto/create-users.dto';
 
 import { UserObject } from 'src/entity/users.entity';
-import { UsersService } from 'src/users/users.service';
-import * as config from 'config';
-
-const authConfig = config.get('auth');
-
-
-export const apiUid = authConfig.clientid;
-export const apiSecret = authConfig.clientsecret;
-export const redirectUri = authConfig.redirecturi;
-export const frontcallback = authConfig.frontcallbackuri;
-export const callbackuri = authConfig.callbackuri;
-export const jwtSecret = authConfig.secret;
+import { UsersService, apiUid, apiSecret, frontcallback, jwtSecret, checking} from 'src/users/users.service';
 
 export const intraApiTokenUri = 'https://api.intra.42.fr/oauth/token';
 export const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
@@ -31,6 +20,7 @@ export class LoginService {
   private logger: Logger = new Logger('LoginService');
 
   async getAccessToken(code: string): Promise<any> {
+    console.log('checking', checking);
     this.logger.log(`getAccessToken : code= ${code}`);
     const body = {
       grant_type: 'authorization_code',
@@ -39,6 +29,7 @@ export class LoginService {
       code: code,
       redirect_uri: frontcallback,
     };
+    console.log('body', body);
     try {
       const response = await axios.post(intraApiTokenUri, body);
       this.logger.log(`getAccessToken: response.data.access_token : ${response.data.access_token}`)
