@@ -30,7 +30,7 @@ import {
   ReturnMsgDto,
 } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
-const front = process.env.FRONT_REMOTE;
+const front = process.env.FRONTEND;
 @WebSocketGateway({
   namespace: 'game',
   cors: {
