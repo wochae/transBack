@@ -31,6 +31,7 @@ import { GameBasicAnswerDto } from './dto/game.basic.answer.dto';
 import { GamePingReceiveDto } from './dto/game.ping.dto';
 import { GameStartDto } from './dto/game.start.dto';
 import { KeyPressDto } from './dto/key.press.dto';
+import { GamePhase } from './enum/game.phase';
 
 @WebSocketGateway({
   namespace: 'game/playroom',
@@ -185,8 +186,6 @@ export class GameGateway
         'Frame is changed',
         'game_move_paddle',
       );
-    //TODO: key 입력 넣기
-    //TODO: latency check
   }
 
   @SubscribeMessage('game_pause_score')
@@ -196,25 +195,49 @@ export class GameGateway
   ) {
     const userIdx = data.userIdx;
     const ret = this.gameService.checkReady(userIdx);
+    const target = this.gameService.findGameRoomById(userIdx);
     if (ret === null) client.disconnect(true);
-    else if (ret === true) {
+    else if (
+      ret === true &&
+      (target.gameObj.gamePhase = GamePhase.SET_NEW_GAME)
+    ) {
       const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
-      setTimeout(this.gameService.readyToSendPing, 1000, roomId, this.server);
+      setTimeout(() => {
+        this.gameService.readyToSendPing(roomId, this.server);
+      }, 1200);
       this.gameService.uncheckReady(userIdx);
+    } else if (
+      ret === true &&
+      (target.gameObj.gamePhase = GamePhase.MATCH_END)
+    ) {
+      this.gameService.uncheckReady(userIdx);
+      const roomId = target.deleteRoom();
+      this.gameService.deleteplayRoomByRoomId(roomId);
     }
     return this.messanger.setResponseMsgWithLogger(
       200,
       'please Wait. Both Player is ready',
       'game_pause_score',
     );
-    // TODO: ready check
-    // TODO: reset Game
-    // TODO: Start Game
   }
 
   @SubscribeMessage('game_force_quit')
-  getQuitSignal(@MessageBody() userIdx: number) {}
+  getQuitSignal(@MessageBody() data: GameBasicAnswerDto) {}
 
   @SubscribeMessage('game_queue_quit')
-  quitQueue(@MessageBody() userIdx: number) {}
+  quitQueue(@MessageBody() data: GameBasicAnswerDto) {
+    if (this.gameService.pullOutQueuePlayerByUserId(data.userIdx)) {
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'success to quit queue from list',
+        'game_queue_quit',
+      );
+    } else {
+      return this.messanger.setResponseMsgWithLogger(
+        400,
+        'failed to quit queue from list',
+        'game_queue_quit',
+      );
+    }
+  }
 }

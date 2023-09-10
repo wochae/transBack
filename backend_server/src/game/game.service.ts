@@ -30,11 +30,12 @@ import { Vector } from './enum/game.vector.enum';
 
 @Injectable()
 export class GameService {
-  private playRoom: GameRoom[];
-  private normalQueue: GameQueue;
-  private rankQueue: GameQueue;
-  private friendQueue: GameQueue;
-  private onLinePlayer: [GamePlayer, GameType][];
+  private playRoom: GameRoom[]; // 플레이 룸
+  private normalQueue: GameQueue; // 게임을 위한 큐
+  private rankQueue: GameQueue; // 게임을 위한 큐
+  private friendQueue: GameQueue; // 게임을 위한 큐
+  private onLinePlayer: [GamePlayer, GameType][]; // online player
+  private processedUserIdxList: number[]; // disconnect 처리한
   private nameCnt: number;
   private today: string;
   private frameData: GameFrameDataDto;
@@ -51,6 +52,7 @@ export class GameService {
     this.rankQueue = new GameQueue();
     this.friendQueue = new GameQueue();
     this.onLinePlayer = [];
+    this.processedUserIdxList = [];
     this.nameCnt = 0;
     const currentDate = new Date();
     const year = currentDate.getFullYear();
@@ -90,9 +92,16 @@ export class GameService {
     return player;
   }
 
+  private checkProccessedOrNot(userIdx: number) {
+    const index = this.processedUserIdxList.findIndex((Idx) => Idx === userIdx);
+    if (index === -1) return;
+    this.processedUserIdxList.splice(index, 1);
+  }
+
   // 큐에 플레이어를 넣어둔다.
   putInQueue(player: GamePlayer) {
     const type = player.getOption().gameType;
+    this.checkProccessedOrNot(player.getUserObject().userIdx);
     this.onLinePlayer.push([player, player.getOption().gameType]);
     switch (type) {
       case GameType.FRIEND:
@@ -226,7 +235,7 @@ export class GameService {
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
     this.playRoom.push(room);
-	room.setNewGame(room);
+    room.setNewGame(room);
     room.setGamePhase(GamePhase.MAKE_ROOM);
     // setTimeout(() => {
     // 	server.to(roomName).emit('game_queue_success', new GameQueueSuccessDto(channel.gameIdx, players))
@@ -424,7 +433,7 @@ export class GameService {
     if (targetRoom.latencyCnt[latencyIdx] === 3) {
       if (targetRoom.latencyCnt[0] >= 3 && targetRoom.latencyCnt[1] >= 3) {
         targetRoom.stopInterval();
-		targetRoom.setGamePhase(GamePhase.SET_NEW_GAME);
+        targetRoom.setGamePhase(GamePhase.SET_NEW_GAME);
         this.sendSetFrameRate(userIdx);
         targetRoom.latencyCnt.splice(0, 2);
         targetRoom.latencyCnt.push(0);
@@ -471,7 +480,7 @@ export class GameService {
       targetRoom.latency[0] >= targetRoom.latency[1]
         ? targetRoom.latency[0]
         : targetRoom.latency[1];
-	// targetRoom.intervalPeriod
+    // targetRoom.intervalPeriod
     return targetRoom.setLatency(targetLatency, targetRoom);
   }
 
@@ -488,7 +497,7 @@ export class GameService {
       }
     }
     // targetRoom.setNewGame(targetRoom);
-	console.log(`game Phase : ${targetRoom.getGamePhase()}`);
+    console.log(`game Phase : ${targetRoom.getGamePhase()}`);
     if (targetRoom.getGamePhase() != GamePhase.SET_NEW_GAME) return;
     targetRoom.setGamePhase(GamePhase.ON_PLAYING);
     console.log(`target Interval Ms : ${targetRoom.getIntervalMs()}`);
@@ -506,30 +515,27 @@ export class GameService {
     gameService: GameService,
   ) {
     room.makeNextFrame(room);
-	console.log(`좌표 X : ${room.getGameData().currentPos[0]}`);
-	console.log(`좌표 Y : ${room.getGameData().currentPos[1]}`);
-	console.log(`각도 계산용 X : ${room.getGameData().standardPos[0]}`);
-	console.log(`각도 계산용 Y : ${room.getGameData().standardPos[1]}`);
-	console.log(`기준 좌표 X : ${room.getGameData().anglePos[0]}`);
-	console.log(`기준 좌표 Y : ${room.getGameData().anglePos[1]}`);
-	console.log(`기준 각도 a : ${room.getGameData().linearEquation[0]}`);
-	console.log(`기준 각도 b : ${room.getGameData().linearEquation[1]}`);
-	console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
-	console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
-	if (room.getGameData().vector === Vector.UPLEFT) {
-		console.log(`벡터 : UP-LEFT`)
-	}
-	else if (room.getGameData().vector === Vector.UPRIGHT) {
-		console.log(`벡터 : UP-RIGHT`)
-	}
-	else if (room.getGameData().vector === Vector.DOWNLEFT) {
-		console.log(`벡터 : DOWN-LEFT`)
-	}
-	else if (room.getGameData().vector === Vector.DOWNRIGHT) {
-		console.log(`벡터 : DOWN-RIGHT`)
-	}
+    console.log(`좌표 X : ${room.getGameData().currentPos[0]}`);
+    console.log(`좌표 Y : ${room.getGameData().currentPos[1]}`);
+    console.log(`각도 계산용 X : ${room.getGameData().standardPos[0]}`);
+    console.log(`각도 계산용 Y : ${room.getGameData().standardPos[1]}`);
+    console.log(`기준 좌표 X : ${room.getGameData().anglePos[0]}`);
+    console.log(`기준 좌표 Y : ${room.getGameData().anglePos[1]}`);
+    console.log(`기준 각도 a : ${room.getGameData().linearEquation[0]}`);
+    console.log(`기준 각도 b : ${room.getGameData().linearEquation[1]}`);
+    console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
+    console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
+    if (room.getGameData().vector === Vector.UPLEFT) {
+      console.log(`벡터 : UP-LEFT`);
+    } else if (room.getGameData().vector === Vector.UPRIGHT) {
+      console.log(`벡터 : UP-RIGHT`);
+    } else if (room.getGameData().vector === Vector.DOWNLEFT) {
+      console.log(`벡터 : DOWN-LEFT`);
+    } else if (room.getGameData().vector === Vector.DOWNRIGHT) {
+      console.log(`벡터 : DOWN-RIGHT`);
+    }
     const status: GamePhase = room.getGamePhase();
-	console.log(`Status : ${status}`);
+    console.log(`Status : ${status}`);
     if (status === GamePhase.SET_NEW_GAME || status === GamePhase.MATCH_END) {
       room.stopInterval();
       if (status === GamePhase.SET_NEW_GAME) {
@@ -607,5 +613,54 @@ export class GameService {
     const result = new GameResultDto(record);
 
     return result;
+  }
+
+  public deleteplayRoomByRoomId(roomId: string) {
+    let room = this.playRoom.find((room) => room.roomId === roomId);
+    let target1 = room.users[0];
+    let target2 = room.users[1];
+    let target1Index = this.onLinePlayer.findIndex(
+      (target) =>
+        target[0].getUserObject().userIdx === target1.getUserObject().userIdx,
+    );
+    if (target1Index != -1) this.onLinePlayer.splice(target1Index, 1);
+    let target2Index = this.onLinePlayer.findIndex(
+      (target) =>
+        target[0].getUserObject().userIdx === target2.getUserObject().userIdx,
+    );
+    target1Index = undefined;
+    target2Index = undefined;
+    room = undefined;
+    this.processedUserIdxList.push(target1.getUserObject().userIdx.valueOf());
+    this.processedUserIdxList.push(target2.getUserObject().userIdx.valueOf());
+    target1.setUserObject(undefined);
+    target2.setUserObject(undefined);
+    target1 = undefined;
+    target2 = undefined;
+    if (target2Index != -1) this.onLinePlayer.splice(target2Index, 1);
+    const index = this.playRoom.findIndex((room) => room.roomId === roomId);
+    this.playRoom.splice(index, 1);
+    roomId = undefined;
+  }
+
+  public async pullOutQueuePlayerByUserId(userIdx: number): Promise<boolean> {
+    const targetIndexFromOnlineMember = this.onLinePlayer.findIndex(
+      (player) => player[0].getUserObject().userIdx === userIdx,
+    );
+    if (targetIndexFromOnlineMember === -1) return;
+    let player = this.onLinePlayer.splice(targetIndexFromOnlineMember, 1);
+    let targetQueue: GameQueue;
+    if (player[0][1] === GameType.NORMAL) targetQueue = this.normalQueue;
+    else if (player[0][1] === GameType.RANK) targetQueue = this.rankQueue;
+    targetQueue.deletePlayer(userIdx);
+    player[0][0].getSocket().disconnect(true);
+    player[0][0].setSocket(undefined);
+    player[0][0].getUserObject().isOnline = OnlineStatus.ONLINE;
+    await this.inMemoryUsers.saveUserByUserIdFromIM(
+      player[0][0].getUserObject().userIdx,
+    );
+    player[0][0].setUserObject(undefined);
+    this.processedUserIdxList.push(userIdx);
+    player = undefined;
   }
 }

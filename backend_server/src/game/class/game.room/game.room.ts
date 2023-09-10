@@ -108,25 +108,24 @@ export class GameRoom {
   public setLatency(latency: number, room: GameRoom): number {
     console.log(`target latency -> ${latency}`);
     let maxFps;
-    if (latency < 8) {
+    if (latency < 15) {
       maxFps = 60;
-    } else if (latency >= 8 && latency < 15) {
+    } else if (latency >= 15 && latency < 100) {
       maxFps = 30;
-    } else if (latency >= 15 && latency < 20) {
-      maxFps = 24;
-    } else if (latency >= 20) {
+    } else if (latency >= 100) {
       maxFps = 10;
+    } else {
+      //TODO: Error Handling
     }
-	maxFps = 30;
     room.gameObj.frameData[1] = maxFps;
-	room.animation.setUnitDistance(maxFps);
+    room.animation.setUnitDistance(maxFps);
     console.log(`MaxFPS? -> ${maxFps}`);
     if (maxFps == 60) room.intervalPeriod = 15;
     else if (maxFps == 30) room.intervalPeriod = 30;
     else if (maxFps == 24) room.intervalPeriod = 40;
     else room.intervalPeriod = 80;
-	room.keyPress[0].setPressedNumberByMaxFps(maxFps);
-	room.keyPress[1].setPressedNumberByMaxFps(maxFps);
+    room.keyPress[0].setPressedNumberByMaxFps(maxFps);
+    room.keyPress[1].setPressedNumberByMaxFps(maxFps);
     return maxFps;
   }
 
@@ -151,33 +150,33 @@ export class GameRoom {
   }
 
   public keyPressed(userIdx: number, value: number) {
-	console.log(`key pressed by : ${userIdx}`);
+    console.log(`key pressed by : ${userIdx}`);
     if (this.users[0].getUserObject().userIdx === userIdx) {
       this.keyPress[0].pushKey(value);
-	  console.log(`key value : ${this.keyPress[0].getHowManyKey()}`);
+      console.log(`key value : ${this.keyPress[0].getHowManyKey()}`);
     } else if (this.users[1].getUserObject().userIdx === userIdx) {
       this.keyPress[1].pushKey(value);
-	  console.log(`key value : ${this.keyPress[1].getHowManyKey()}`);
+      console.log(`key value : ${this.keyPress[1].getHowManyKey()}`);
     }
   }
 
   public makeNextFrame(room: GameRoom) {
     room.gameObj = room.animation.makeFrame(room, room.keyPress);
     room.gameObj = room.physics.checkPhysics(room.gameObj, room.physics);
-	room.gameObj = room.checkScore(room.gameObj);
+    room.gameObj = room.checkScore(room.gameObj);
   }
 
   public checkScore(gameData: GameData): GameData {
-	if (gameData.gamePhase === GamePhase.HIT_THE_GOAL_POST) {
-	  if (gameData.score[0] === 5 || gameData.score[1] === 5) {
-		gameData.gamePhase = GamePhase.MATCH_END;
-	  } else {
-		gameData.gamePhase = GamePhase.SET_NEW_GAME;
-	  }
-	} else {
-		gameData.gamePhase = GamePhase.ON_PLAYING;
-	}
-	return gameData;
+    if (gameData.gamePhase === GamePhase.HIT_THE_GOAL_POST) {
+      if (gameData.score[0] === 5 || gameData.score[1] === 5) {
+        gameData.gamePhase = GamePhase.MATCH_END;
+      } else {
+        gameData.gamePhase = GamePhase.SET_NEW_GAME;
+      }
+    } else {
+      gameData.gamePhase = GamePhase.ON_PLAYING;
+    }
+    return gameData;
   }
 
   public getChannel(): GameChannel {
@@ -221,7 +220,7 @@ export class GameRoom {
       (this.gameObj.standardPos[0] - this.gameObj.currentPos[0]);
     this.gameObj.linearEquation[1] =
       this.gameObj.standardPos[1] -
-      this.gameObj.linearEquation[0] * this.gameObj.currentPos[0];
+      this.gameObj.linearEquation[0] * this.gameObj.standardPos[0];
   }
 
   //   public setRenewLinearEquation(room: GameRoom) {
@@ -245,16 +244,16 @@ export class GameRoom {
     this.gameObj.gamePhase = value;
   }
 
-  public deleteRoom() {
-    this.roomId = undefined;
+  public deleteRoom(): string {
+    this.roomId;
     this.intervalId = undefined;
     this.intervalPeriod = undefined; // 서버 -(좌표)-> 클라이언트 -(키 입력)-> 서버  -(좌표, 키 입력)-> 클라이언트
     this.users[0].getSocket().disconnect(true);
     this.users[0].setSocket(undefined);
     this.users[1].getSocket().disconnect(true);
     this.users[1].setSocket(undefined);
-    this.users[0].setUserObject(undefined);
-    this.users[1].setUserObject(undefined);
+    // this.users[0].setUserObject(undefined);
+    // this.users[1].setUserObject(undefined);
     this.gameObj = undefined;
     this.latency = undefined;
     this.latencyCnt = undefined;
@@ -266,5 +265,6 @@ export class GameRoom {
     this.history[0] = undefined;
     this.history[1] = undefined;
     this.channel = undefined;
+    return this.roomId;
   }
 }

@@ -29,17 +29,23 @@ export class Physics {
     if (
       engine.checkHitThePaddle(gameData.currentPos, gameData.vector, engine)
     ) {
-		console.log(`paddle 1 범위 ${gameData.paddle1[1][0]} / ${gameData.paddle1[1][1]}`)
-		console.log(`paddle 2 범위 ${gameData.paddle2[1][0]} / ${gameData.paddle2[1][1]}`)
+      console.log(
+        `paddle 1 범위 ${gameData.paddle1[1][0]} / ${gameData.paddle1[1][1]}`,
+      );
+      console.log(
+        `paddle 2 범위 ${gameData.paddle2[1][0]} / ${gameData.paddle2[1][1]}`,
+      );
       if (engine.needToCorrection(gameData)) {
-		console.log("페들 입력시 여기로 들어갈까?!");
+        console.log('페들 입력시 여기로 들어갈까?!');
         gameData.gamePhase = GamePhase.HIT_THE_PADDLE;
         gameData = engine.correctLinearEquation(gameData, engine);
-		// wall 부딪힘 여부 판단 재 판단(순간적으로 두번 부딪히는지 여부를 확인하기 위해)
-		if (engine.checkHitTheWall(gameData.currentPos, gameData.vector, engine)) {
-		gameData.gamePhase = GamePhase.HIT_THE_WALL;
-		gameData = engine.correctLinearEquation(gameData, engine);
-		}
+        // wall 부딪힘 여부 판단 재 판단(순간적으로 두번 부딪히는지 여부를 확인하기 위해)
+        if (
+          engine.checkHitTheWall(gameData.currentPos, gameData.vector, engine)
+        ) {
+          gameData.gamePhase = GamePhase.HIT_THE_WALL;
+          gameData = engine.correctLinearEquation(gameData, engine);
+        }
       }
     }
     // Score 획득 여부 판단
@@ -48,8 +54,8 @@ export class Physics {
     ) {
       gameData = engine.checkGameScore(gameData, engine);
     }
-	if (gameData.gamePhase !== GamePhase.HIT_THE_GOAL_POST)
-		gameData.gamePhase = GamePhase.ON_PLAYING
+    if (gameData.gamePhase !== GamePhase.HIT_THE_GOAL_POST)
+      gameData.gamePhase = GamePhase.ON_PLAYING;
     return gameData;
   }
 
@@ -65,30 +71,36 @@ export class Physics {
         gameData.paddle1[1][1] >= gameData.currentPos[1]
       )
         ret = true;
-	  else {
-		if (gameData.currentPos[0] === -450) {
-			const min = gameData.currentPos[1] - 20;
-			const max = gameData.currentPos[1] + 20;
-			if ((gameData.paddle1[1][0] <= min && gameData.paddle1[1][1] >= min) || (gameData.paddle1[1][0] <= max && gameData.paddle1[1][1] >= max)) {
-				ret = true;
-			}
-		}
-	  }
+      else {
+        if (gameData.currentPos[0] === -450) {
+          const min = gameData.currentPos[1] - 20;
+          const max = gameData.currentPos[1] + 20;
+          if (
+            (gameData.paddle1[1][0] <= min && gameData.paddle1[1][1] >= min) ||
+            (gameData.paddle1[1][0] <= max && gameData.paddle1[1][1] >= max)
+          ) {
+            ret = true;
+          }
+        }
+      }
     } else {
       if (
         gameData.paddle2[1][0] <= gameData.currentPos[1] &&
         gameData.paddle2[1][1] >= gameData.currentPos[1]
       )
         ret = true;
-	  else {
-		if (gameData.currentPos[0] === 450) {
-			const min = gameData.currentPos[1] - 20;
-			const max = gameData.currentPos[1] + 20;
-			if ((gameData.paddle2[1][0] <= min && gameData.paddle2[1][1] >= min) || (gameData.paddle2[1][0] <= max && gameData.paddle2[1][1] >= max)) {
-				ret = true;
-			}
-		}
-	  }
+      else {
+        if (gameData.currentPos[0] === 450) {
+          const min = gameData.currentPos[1] - 20;
+          const max = gameData.currentPos[1] + 20;
+          if (
+            (gameData.paddle2[1][0] <= min && gameData.paddle2[1][1] >= min) ||
+            (gameData.paddle2[1][0] <= max && gameData.paddle2[1][1] >= max)
+          ) {
+            ret = true;
+          }
+        }
+      }
     }
     return ret;
   }
@@ -98,14 +110,13 @@ export class Physics {
       gameData.anglePos[1] *= -1;
       gameData.standardPos[0] = gameData.currentPos[0].valueOf();
       gameData.standardPos[1] = gameData.currentPos[1].valueOf();
-	  gameData.standardPos[0] += gameData.anglePos[0].valueOf();
-	  gameData.standardPos[1] += gameData.anglePos[1].valueOf();
+      gameData.standardPos[0] += gameData.anglePos[0].valueOf();
+      gameData.standardPos[1] += gameData.anglePos[1].valueOf();
       if (
         gameData.vector === Vector.UPLEFT ||
         gameData.vector === Vector.UPRIGHT
       ) {
         gameData.vector += 2;
-
       } else if (
         gameData.vector === Vector.DOWNLEFT ||
         gameData.vector === Vector.DOWNRIGHT
@@ -124,9 +135,9 @@ export class Physics {
           gameData.paddle1[0] + 10 < gameData.currentPos[1]
         )
           gameData.anglePos = engine.changeAngleForPaddle(gameData);
-		else {
-			gameData.anglePos[0] *= -1;
-		}
+        else {
+          gameData.anglePos[0] *= -1;
+        }
         gameData.vector += 1;
         // TODO: angle 보정치 전달
       } else if (
@@ -138,9 +149,9 @@ export class Physics {
           gameData.paddle2[0] + 10 < gameData.currentPos[1]
         )
           gameData.anglePos = engine.changeAngleForPaddle(gameData);
-		else {
-			gameData.anglePos[0] *= -1;
-		}
+        else {
+          gameData.anglePos[0] *= -1;
+        }
         gameData.vector -= 1;
       }
 
@@ -229,7 +240,7 @@ export class Physics {
         paddle[1][1] = engine.MIN_HEIGTH + 80;
       }
     }
-	return paddle;
+    return paddle;
   }
 
   private checkHitTheWall(
