@@ -91,8 +91,8 @@ export class GameRoom {
       frameData: [0, 0],
       linearEquation: [0, 0],
       vector: Vector.UPRIGHT,
-      paddle1: [0, [-40, 40]],
-      paddle2: [0, [-40, 40]],
+      paddle1: [0, [-45, 45]],
+      paddle2: [0, [-45, 45]],
       score: [0, 0],
       gamePhase: GamePhase.SET_NEW_GAME,
       gameType: room.gameObj.gameType,
@@ -117,6 +117,7 @@ export class GameRoom {
     } else if (latency >= 20) {
       maxFps = 10;
     }
+	maxFps = 30;
     room.gameObj.frameData[1] = maxFps;
 	room.animation.setUnitDistance(maxFps);
     console.log(`MaxFPS? -> ${maxFps}`);

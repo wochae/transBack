@@ -199,12 +199,12 @@ export class Physics {
       gameData.vector === Vector.UPLEFT ||
       gameData.vector === Vector.DOWNLEFT
     ) {
-      if (gameData.currentPos[0] - 20 <= engine.MIN_WIDTH) {
+      if (gameData.currentPos[0] <= engine.MIN_WIDTH) {
         gameData.score[1]++;
         gameData.gamePhase = GamePhase.HIT_THE_GOAL_POST;
       }
     } else {
-      if (gameData.currentPos[0] + 20 >= engine.MAX_WIDTH) {
+      if (gameData.currentPos[0] >= engine.MAX_WIDTH) {
         gameData.score[0]++;
         gameData.gamePhase = GamePhase.HIT_THE_GOAL_POST;
       }
