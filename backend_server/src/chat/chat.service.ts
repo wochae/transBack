@@ -404,7 +404,7 @@ export class ChatService {
 
   // 이 함수는 로그인 시 비밀번호 검증에 사용될 수 있습니다.
   async comparePasswords(enteredPassword: string, hashedPassword: string): Promise<boolean> {
-    return bcrypt.compare(enteredPassword, hashedPassword);
+    return await bcrypt.compare(enteredPassword, hashedPassword);
   }
 
   async enterProtectedRoom(user: UserObject, channel: Channel) {
