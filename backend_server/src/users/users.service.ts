@@ -41,20 +41,17 @@ import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.respo
 import * as dotenv from 'dotenv';
 dotenv.config();
 const mailConfig = config.get('mail');
-
 export const apiUid = process.env.CLIENT_ID;
 export const apiSecret = process.env.SECRET_KEY;
-export const frontcallback = process.env.FRONT_CALLBACK_URI;
-export const callbackuri = process.env.NEXT_PUBLIC_REDIRECTURL;
+export const frontcallback = `${process.env.FRONTEND}/login/auth`;
 export const jwtSecret = process.env.JWT_SECRET;
-export const checking = {apiUid, apiSecret, frontcallback, callbackuri, jwtSecret};
+export const checking = {apiUid, apiSecret, frontcallback, jwtSecret};
 
 
 const mailId = process.env.MAIL_USER;
 const mailpw = process.env.MAIL_PW;
-const backenduri = process.env.BACKEND_LOCAL;
+const backenduri = process.env.BACKEND;
 
-const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
 @Injectable()
 export class UsersService {
   constructor(

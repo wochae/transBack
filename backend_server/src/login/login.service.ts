@@ -7,7 +7,7 @@ import { IntraInfoDto } from 'src/users/dto/user.dto';
 import { CreateUsersDto } from 'src/users/dto/create-users.dto';
 
 import { UserObject } from 'src/entity/users.entity';
-import { UsersService, apiUid, apiSecret, callbackuri, frontcallback, jwtSecret, checking} from 'src/users/users.service';
+import { UsersService, apiUid, apiSecret, frontcallback, jwtSecret, checking} from 'src/users/users.service';
 
 export const intraApiTokenUri = 'https://api.intra.42.fr/oauth/token';
 export const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';

@@ -22,7 +22,7 @@ import { CertificateObject } from 'src/entity/certificate.entity';
 import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import { IntraSimpleInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
-const backenduri = process.env.BACKEND_LOCAL;
+const backenduri = process.env.BACKEND;
 
 @Controller()
 export class LoginController {
