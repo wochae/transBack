@@ -33,10 +33,11 @@ import { GameStartDto } from './dto/game.start.dto';
 import { KeyPressDto } from './dto/key.press.dto';
 import { GamePhase } from './enum/game.phase';
 
+const front = process.env.FRONTEND;
 @WebSocketGateway({
   namespace: 'game/playroom',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000', front],
   },
 })
 @UseFilters(new WsExceptionFilter())

@@ -41,9 +41,20 @@ import * as config from 'config';
 import { SendEmailDto, TFAUserDto, TFAuthDto } from './dto/tfa.dto';
 import * as fs from 'fs/promises'; // fs.promises를 사용하여 비동기적인 파일 처리
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
-
+import * as dotenv from 'dotenv';
+dotenv.config();
 const mailConfig = config.get('mail');
-const intraApiMyInfoUri = 'https://api.intra.42.fr/v2/me';
+export const apiUid = process.env.CLIENT_ID;
+export const apiSecret = process.env.SECRET_KEY;
+export const frontcallback = `${process.env.FRONTEND}/login/auth`;
+export const jwtSecret = process.env.JWT_SECRET;
+export const checking = {apiUid, apiSecret, frontcallback, jwtSecret};
+
+
+const mailId = process.env.MAIL_USER;
+const mailpw = process.env.MAIL_PW;
+const backenduri = process.env.BACKEND;
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -177,7 +188,7 @@ export class UsersService {
   };
 
   async setBlock(
-    targetNickname: string,
+    targetIdx: number,
     user: UserObject,
     inMemory: InMemoryUsers,
   ): Promise<BlockInfoDto[]> {
@@ -186,34 +197,44 @@ export class UsersService {
       await queryRunner.connect();
       await queryRunner.startTransaction();
       const blockInfo = await this.blockedListRepository.blockTarget(
-        targetNickname,
+        targetIdx,
         user,
         this.userObjectRepository,
       );
-      // check inmemory
-      const checkTarget = await this.blockedListRepository.findOne({
-        where: {
-          userIdx: user.userIdx,
-          blockedNickname: targetNickname,
-        },
+      const friend = await this.friendListRepository.findOneBy({
+        userIdx: user.userIdx,
+        friendIdx: targetIdx,
       });
-      if (!checkTarget) {
-        inMemory.removeBlockListByNicknameFromIM(targetNickname);
-      } else {
-        inMemory.setBlockListByIdFromIM(blockInfo);
+      // 친구일 경우, 지워주고, 채팅방에 멤버인 경우엔 그 경우를 지나지 않는다.
+      // 만약에 친구인 경우에 앞에서 블락된 후 친구가 사라졌을 거고, 언블락을 시도하면 친구리스트엔 없을테니 이 조건문엔 들어가지 않음. 그래서 언블락이 가능함.
+      if (friend) {
+        await this.friendListRepository.delete(friend.idx);
       }
+      // check inmemory
+      // const checkTarget = await this.blockedListRepository.find({
+      //   where: {
+      //     userIdx: user.userIdx,
+      //   },
+      // });
+      // 이런 경우 이전에 내가 누군가를 블락해서 디비에 저장을 했는데, 그 사람이 닉네임을 변경하면, 그 사람을 닉네임으로 찾을 수가 없다.
+      // if (!checkTarget) {
+      //   inMemory.removeBlockListByIntraFromIM(targetNickname);
+      // } else {
+      //   inMemory.setBlockListByIdFromIM(blockInfo);
+      // }
       await queryRunner.commitTransaction();
+      
     } catch (err) {
       await queryRunner.rollbackTransaction();
       return;
     } finally {
       await queryRunner.release();
     }
-    const blockList = inMemory.getBlockListByIdFromIM(user.userIdx);
+    const blockList = await inMemory.getBlockListByIdFromIM(user.userIdx);
     const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
       return {
-        userNickname: res.blockedNickname,
-        userIdx: res.blockedUserIdx,
+        blockedNickname: res.blockedNickname,
+        blockedUserIdx: res.blockedUserIdx,
       };
     });
     return blockInfoList;
@@ -226,7 +247,7 @@ export class UsersService {
   ): Promise<boolean> {
     //  inmemory 에서 가져오기
     // jaekim 이 jeekim 을 차단, jeekim 이 jaekim 에게 문자
-    const blockList = inMemory.getBlockListByIdFromIM(target.userIdx);
+    const blockList = await inMemory.getBlockListByIdFromIM(target.userIdx);
     const check = blockList.find((res) => res.blockedUserIdx === user.userIdx);
     if (check) return true;
     else return false;
@@ -281,8 +302,7 @@ export class UsersService {
       userIdx: userIdx,
       intra: intra,
       nickname: intra,
-      // imgUri: `http://localhost:4000/img/${userIdx}.png`,
-      imgUri: `http://paulryu9309.ddns.net:4000/img/${userIdx}.png`,
+      imgUri: `${backenduri}/${userIdx}.png`,
       rankpoint: 0,
       isOnline: OnlineStatus.ONLINE,
       available: true,
@@ -317,10 +337,10 @@ export class UsersService {
   }
 
   async getFriendList(
-    intra: string,
+    userIdx: number,
   ): Promise<{ friendNickname: string; friendIdx: number; isOnline: OnlineStatus }[]> {
     const user: UserObject = await this.userObjectRepository.findOne({
-      where: { intra: intra },
+      where: { userIdx },
     });
     return this.friendListRepository.getFriendList(
       user.userIdx,
@@ -393,7 +413,7 @@ export class UsersService {
 
     if (code !== undefined || auth.check2Auth === false) {
       if (this.mailCodeList.get(userIdx) !== code || code === undefined)
-        throw new BadRequestException('Invalid or Expired.');
+        return { checkTFA: false };
       this.mailCodeList.delete(userIdx);
       if (auth.check2Auth === true) return { checkTFA: true };
     }

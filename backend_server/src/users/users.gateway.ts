@@ -16,10 +16,11 @@ import { WsExceptionFilter } from 'src/ws.exception.filter';
 import { WsValidationPipe } from 'src/ws.exception.pipe';
 import { AuthGuard } from 'src/auth/auth.guard';
 
+const front = process.env.FRONTEND;
 @WebSocketGateway({
   namespace: 'users',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000'],
+    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000', front],
   },
 })
 @UseFilters(new WsExceptionFilter())

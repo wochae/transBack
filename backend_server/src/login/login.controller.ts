@@ -19,9 +19,10 @@ import { IntraInfoDto } from 'src/users/dto/user.dto';
 import { UsersService } from 'src/users/users.service';
 import { plainToClass } from 'class-transformer';
 import { CertificateObject } from 'src/entity/certificate.entity';
-import { UserObject } from 'src/entity/users.entity';
+import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import { IntraSimpleInfoDto, JwtPayloadDto } from 'src/auth/dto/auth.dto';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
+const backenduri = process.env.BACKEND;
 
 @Controller()
 export class LoginController {
@@ -54,19 +55,23 @@ export class LoginController {
     let intraSimpleInfoDto: IntraSimpleInfoDto;
     intraInfo = await this.loginService.getIntraInfo(query.code);
     const user = await this.usersService.findOneUser(intraInfo.userIdx);
+    
     console.log('codeCallback user : ', user);
     if (!user) {
       console.log('codeCallback user not exist : ', user);
       intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
       this.loginService.downloadProfileImg(intraInfo);
     } else {
+      user.imgUri = `${backenduri}/img/${user.userIdx}.png`
+      this.usersService.setUserImg(user.userIdx, user.imgUri);
+      this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
       console.log('codeCallback user exist : ', user);
       intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
     }
-    const anyImg = await this.usersService.checkFileExists(user.imgUri);
-    if (!anyImg)
+    const anyImg = await this.usersService.checkFileExists(`public/img/${intraSimpleInfoDto.userIdx}.png`);
+    if (!anyImg && !intraSimpleInfoDto.imgUri)
     {
-      intraSimpleInfoDto.imgUri = "http://paulryu9309.ddns.net:4000/img/0.png";
+      intraSimpleInfoDto.imgUri = `${backenduri}/img/0.png`;
       await this.usersService.setUserImg(intraSimpleInfoDto.userIdx, intraSimpleInfoDto.imgUri);
     }
     const payload = { id: intraInfo.userIdx, email: intraInfo.email };

@@ -10,29 +10,29 @@ import { time } from 'console';
 @CustomRepository(BlockList)
 export class BlockListRepository extends Repository<BlockList> {
   async blockTarget(
-    targetNickname: string,
+    targetIdx: number,
     user: UserObject,
     userList: UserObjectRepository,
   ): Promise<BlockList> {
     const data = await userList.findOne({
-      where: { nickname: targetNickname },
+      where: { userIdx: targetIdx },
     });
     if (!data) {
-      throw new Error(`There is a no name, ${targetNickname}`);
+      throw new Error(`There is no user`);
     }
 
     const check = await this.findOne({
       where: { userIdx: user.userIdx, blockedUserIdx: data.userIdx },
     });
-    if (check) {
-      await this.remove(check);
-    } else if (!check) {
+    if (check) { // 이미 차단한 유저라면
+      await this.remove(check); // 차단 해제
+    } else if (!check) { // 차단하지 않은 유저라면
       const target = this.create({
         userIdx: user.userIdx,
         blockedUserIdx: data.userIdx,
         blockedNickname: data.nickname,
       });
-      await this.save(target);
+      await this.save(target); // 차단
       return target;
     }
   }
