@@ -80,14 +80,12 @@ export class GameService {
     const getPerson = await this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
     if (getPerson === undefined) return null;
 
-    const player = new GamePlayer(await getPerson);
+    const player = new GamePlayer(getPerson);
     player.setOptions(data);
-    if ((await getPerson).isOnline === OnlineStatus.ONLINE)
-      (await getPerson).isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
+    if (getPerson.isOnline === OnlineStatus.ONLINE)
+      getPerson.isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
     const target = await this.inMemoryUsers.saveUserByUserIdFromIM(
-      (
-        await getPerson
-      ).userIdx,
+      getPerson.userIdx,
     );
     if (target === null) return null;
     player.setUserObject(target);
