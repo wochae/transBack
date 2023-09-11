@@ -185,9 +185,11 @@ export class ChatGateway
         mode,
       }),
     );
+    const dmChannelList = await this.chatService.getPrivateChannels(user);
     const main_enter = {
       friendList,
       channelList,
+      dmChannelList,
       blockList,
       userObject,
     };
