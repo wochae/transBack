@@ -66,7 +66,7 @@ export class LoginController {
       this.usersService.setUserImg(user.userIdx, user.imgUri);
       this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
       console.log('codeCallback user exist : ', user);
-      intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
+      intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth, user.available);
     }
     const anyImg = await this.usersService.checkFileExists(`public/img/${intraSimpleInfoDto.userIdx}.png`);
     if (!anyImg && !intraSimpleInfoDto.imgUri)
@@ -80,6 +80,7 @@ export class LoginController {
     intraInfo.check2Auth = intraSimpleInfoDto.check2Auth;
     intraInfo.imgUri = intraSimpleInfoDto.imgUri;
     intraInfo.nickname = intraSimpleInfoDto.nickname;
+    intraInfo.available = intraSimpleInfoDto.available;
 
     res.cookie('authorization', (await jwt).toString(), { httpOnly: true, path: '*' });
     res.header('Cache-Control', 'no-store');

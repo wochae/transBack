@@ -761,10 +761,10 @@ export class ChatGateway
       );
     }
     const channel = this.chat.getProtectedChannel(channelIdx);
-    const user: UserObject = channel.getMember.find((member) => {
+    const user: UserObject = channel?.getMember.find((member) => {
       return member.userIdx === userIdx;
     });
-    if (user === undefined) {
+    if (!user) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
         400,

@@ -61,6 +61,7 @@ export class LoginService {
         email: userInfo.email,
         check2Auth: false,
         nickname: userInfo.login,
+        available: false,
       };
     } catch (error) {
       // 에러 핸들링
