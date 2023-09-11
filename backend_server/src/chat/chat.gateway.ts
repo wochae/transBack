@@ -155,23 +155,10 @@ export class ChatGateway
     @MessageBody() chatMainEnterReqDto: ChatMainEnterReqDto,
   ) {
     const { userNickname } = chatMainEnterReqDto;
-
-    // FIXME: 1. connect 된 소켓의 유저 인트라와 요청한 인트라가 일치하는지 확인하는 함수 추가 필요
     const userId: number = parseInt(client.handshake.query.userId as string);
     const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
-    // if (checkUser.nickname !== userNickname) {
-    //   client.disconnect();
-    //   return this.messanger.setResponseErrorMsgWithLogger(
-    //     400,
-    //     'Improper Access',
-    //     'main_enter',
-    //     userId,
-    //   );
-    // }
     const user = checkUser;
-    //  
-    // const user = await this.inMemoryUsers.getUserByIntraFromIM(intra);
-    // FIXME: 2. 예외처리 함수 만들기 // 유저 아이디로 찾아서 닉네임 대조만 하면 될 것 같다.
+    
     if (!user) {
       client.disconnect();
       return this.messanger.logWithWarn(
@@ -182,7 +169,6 @@ export class ChatGateway
       );
     }
     
-    // FIXME: 3. emit value 만드는 함수로 빼기, DTO 만들기?
     const userObject = {
       imgUri: user.imgUri,
       nickname: user.nickname,
@@ -205,12 +191,9 @@ export class ChatGateway
       blockList,
       userObject,
     };
-    console.log('main_enter ', main_enter);
-    //
     client.emit('main_enter', main_enter);
 
     // API: MAIN_ENTER_1
-    // FIXME: DTO 만들기?
     await this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
     const BR_main_enter = {
       targetNickname: user.nickname,
@@ -265,7 +248,6 @@ export class ChatGateway
       );
     }
     //
-    // FIXME: game 기록도 인메모리에서 관리하기로 했었나?? 전적 데이터 추가 필요
     const target_profile = new chatGetProfileDto(
       target.nickname,
       target.imgUri,
@@ -624,7 +606,6 @@ export class ChatGateway
   ) {
     const { channelIdx, userIdx, grant } = chatRoomAdminReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
-    
     const channel = this.chat.getProtectedChannel(channelIdx);
     // FIXME: 함수로 빼기
     if (!channel) {
@@ -1088,7 +1069,8 @@ export class ChatGateway
       user,
       this.inMemoryUsers,
     );
-    client.emit('chat_block', blockInfo);
+    const friendList = await this.usersService.getFriendList(user.userIdx);
+    client.emit('chat_block', { blockInfo, friendList });
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done block',
@@ -1179,7 +1161,9 @@ export class ChatGateway
       return new ReturnMsgDto(400, 'Bad Request, target user is not online');
     }
     // in memory 로 바꿀까?
-    const target = await this.inMemoryUsers.getUserByIdFromIM(targetTuple[0].userIdx);
+    const target = await this.inMemoryUsers.getUserByIdFromIM(
+      targetTuple[0].userIdx,
+    );
     // const target = await this.usersService.getUserInfoFromDBById(
     //   targetTuple[0].userIdx,
     // );

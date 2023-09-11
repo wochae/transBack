@@ -39,8 +39,8 @@ lerna-debug.log*
 /node_modules
 
 # env
+.env*
 .env
-
 # config
 /config
 
