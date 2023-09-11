@@ -6,7 +6,7 @@ import { InMemoryUsers } from 'src/users/users.provider';
 import { UsersService } from 'src/users/users.service';
 import { GamePlayer } from './class/game.player/game.player';
 import { GameOptionDto } from './dto/game.option.dto';
-import { OnlineStatus } from 'src/entity/users.entity';
+import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import {
   GameStatus,
   GameType,
@@ -21,7 +21,7 @@ import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { GameQueueSuccessDto } from './dto/game.queue.suceess.dto';
 import { GamePingDto, GamePingReceiveDto } from './dto/game.ping.dto';
-import { GamePauseScpreDto } from './dto/game.pause.score.dto';
+import { GamePauseScoreDto } from './dto/game.pause.score.dto';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 import { GameFrameDataDto } from './dto/game.frame.data.dto';
 import { KeyPressDto } from './dto/key.press.dto';
@@ -85,7 +85,9 @@ export class GameService {
     if ((await getPerson).isOnline === OnlineStatus.ONLINE)
       (await getPerson).isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
     const target = await this.inMemoryUsers.saveUserByUserIdFromIM(
-      (await getPerson).userIdx,
+      (
+        await getPerson
+      ).userIdx,
     );
     if (target === null) return null;
     player.setUserObject(target);
@@ -536,21 +538,42 @@ export class GameService {
     }
     const status: GamePhase = room.getGamePhase();
     console.log(`Status : ${status}`);
-    if (status === GamePhase.SET_NEW_GAME || status === GamePhase.MATCH_END) {
+    if (
+      status === GamePhase.SET_NEW_GAME ||
+      status === GamePhase.MATCH_END ||
+      status === GamePhase.FORCE_QUIT
+    ) {
       room.stopInterval();
       if (status === GamePhase.SET_NEW_GAME) {
         server
           .to(room.roomId)
           .emit(
             'game_pause_score',
-            new GamePauseScpreDto(room.users, room.gameObj, GameStatus.ONGOING),
+            new GamePauseScoreDto(room.users, room.gameObj, GameStatus.ONGOING),
           );
+      } else if (status === GamePhase.FORCE_QUIT) {
+        // TODO: 강제 종료 로직
+        server
+          .to(room.roomId)
+          .emit(
+            'game_pause_score',
+            new GamePauseScoreDto(room.users, room.gameObj, GameStatus.JUDGE),
+          );
+        await this.gameChannelRepository.save(room.channel);
+        await this.gameRecordRepository.save(room.history[0]);
+        await this.gameRecordRepository.save(room.history[1]);
+        await this.inMemoryUsers.saveUserByUserIdFromIM(
+          room.users[0].getUserObject().userIdx,
+        );
+        await this.inMemoryUsers.saveUserByUserIdFromIM(
+          room.users[1].getUserObject().userIdx,
+        );
       } else if (status === GamePhase.MATCH_END) {
         server
           .to(room.roomId)
           .emit(
             'game_pause_score',
-            new GamePauseScpreDto(room.users, room.gameObj, GameStatus.END),
+            new GamePauseScoreDto(room.users, room.gameObj, GameStatus.END),
           );
       }
       await this.gameChannelRepository.save(room.getChannel());
@@ -662,5 +685,57 @@ export class GameService {
     player[0][0].setUserObject(undefined);
     this.processedUserIdxList.push(userIdx);
     player = undefined;
+  }
+
+  private changeChannelforWinnerAndLoser(
+    winner: UserObject,
+    loser: UserObject,
+    winnerIndex: number,
+    room: GameRoom,
+  ): GameRoom {
+    return room;
+  }
+
+  private changeHistoryForWinnerAndLoser(
+    winner: UserObject,
+    loser: UserObject,
+    winnerIndex: number,
+    room: GameRoom,
+    histories: GameRecord[],
+  ): GameRecord[] {
+    return histories;
+  }
+
+  public forceQuitMatch(loser: number, server: Server): boolean {
+    let room = this.findGameRoomById(loser);
+    room.stopInterval();
+    let histories = room.getHistories();
+    const p1 = room.users[0].getUserObject();
+    const p2 = room.users[1].getUserObject();
+    if (p1.userIdx === loser) {
+      room = this.changeChannelforWinnerAndLoser(p1, p2, 1, room);
+      histories = this.changeHistoryForWinnerAndLoser(
+        p1,
+        p2,
+        1,
+        room,
+        histories,
+      );
+    } else {
+      room = this.changeChannelforWinnerAndLoser(p1, p2, 0, room);
+      histories = this.changeHistoryForWinnerAndLoser(
+        p1,
+        p2,
+        0,
+        room,
+        histories,
+      );
+    }
+    room.history = histories;
+    room.gameObj.gamePhase = GamePhase.FORCE_QUIT;
+    setTimeout(() => {
+      this.startRendering(room, server, this);
+    }, 100);
+    return true;
   }
 }

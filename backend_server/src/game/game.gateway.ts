@@ -215,7 +215,14 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_force_quit')
-  getQuitSignal(@MessageBody() data: GameBasicAnswerDto) {}
+  getQuitSignal(@MessageBody() data: GameBasicAnswerDto) {
+    this.gameService.forceQuitMatch(data.userIdx, this.server);
+
+    // 누군지 파악
+    // 내용 조작
+    // MatchEnd 상태로 변경
+    // 정상 처리 로직으로 다시 개입되어 정리 되도록 만들기
+  }
 
   @SubscribeMessage('game_queue_quit')
   quitQueue(@MessageBody() data: GameBasicAnswerDto) {
