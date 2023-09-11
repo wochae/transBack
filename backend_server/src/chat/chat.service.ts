@@ -129,7 +129,7 @@ export class ChatService {
     client: UserObject,
     target: UserObject,
     channelIdx: number,
-    msg: SendDMDto,
+    // msg: SendDMDto,
   ): Promise<boolean> {
     const queryRunner = this.dataSource.createQueryRunner();
     let ret = true;
@@ -207,12 +207,13 @@ export class ChatService {
     client: Socket,
     user: UserObject,
     targetUser: UserObject,
-    msg: SendDMDto,
+    // msg: SendDMDto,
     checkBlock: boolean,
   ) {
     const channelIdx = await this.setNewChannelIdx();
     // TODO: 예외처리 필요
-    await this.createDmChannel(user, targetUser, channelIdx, msg);
+    await this.createDmChannel(user, targetUser, channelIdx);
+    // await this.createDmChannel(user, targetUser, channelIdx, msg);
 
     const userChannelsInfo = [];
     const targetChannelsInfo = [];
