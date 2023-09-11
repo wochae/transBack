@@ -68,7 +68,7 @@ export class LoginController {
       }
       user.imgUri = `${backenduri}/img/${user.userIdx}.png`
       this.usersService.setUserImg(user.userIdx, user.imgUri);
-      this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
+      
       console.log('codeCallback user exist : ', user);
       intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth, user.available);
     }
@@ -85,9 +85,11 @@ export class LoginController {
     intraInfo.imgUri = intraSimpleInfoDto.imgUri;
     intraInfo.nickname = intraSimpleInfoDto.nickname;
     intraInfo.available = intraSimpleInfoDto.available;
+    this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
 
-    res.cookie('authorization', (await jwt).toString(), { httpOnly: true, path: '*' });
+    res.cookie('authorization', intraInfo.token, { httpOnly: true, path: '*' });
     res.header('Cache-Control', 'no-store');
+    // res.setHeader('Authorization', `Bearer ${intraInfo.token}`);
     console.log(`codeCallback intraInfo : `, intraInfo);
 
     console.log("success");

@@ -136,7 +136,7 @@ export class UsersController {
   async patchTFA(@Req() req, @Res() res: Response, @Body() body: any) {
     const tfaAuthDto: TFAuthDto = { code: body.code };
     const result = await this.usersService.patchTFA(body.userIdx, tfaAuthDto);
-    if (result) {
+    if (result.checkTFA) {
       return res
         .status(HttpStatus.OK)
         .json({ message: '유저 정보가 업데이트 되었습니다.', result });
