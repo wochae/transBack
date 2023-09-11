@@ -37,7 +37,11 @@ const front = process.env.FRONTEND;
 @WebSocketGateway({
   namespace: 'game/playroom',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000', front],
+    origin: [
+      'http://paulryu9309.ddns.net:3000',
+      'http://localhost:3000',
+      front,
+    ],
   },
 })
 @UseFilters(new WsExceptionFilter())

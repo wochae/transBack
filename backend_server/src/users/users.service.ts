@@ -28,10 +28,7 @@ import { OnlineStatus, UserObject } from '../entity/users.entity';
 import { CertificateObject } from '../entity/certificate.entity';
 import { FriendList } from '../entity/friendList.entity';
 import { DataSource } from 'typeorm';
-import {
-  IntraInfoDto,
-  UserEditprofileDto,
-} from './dto/user.dto';
+import { IntraInfoDto, UserEditprofileDto } from './dto/user.dto';
 import { ExceptionsHandler } from '@nestjs/core/exceptions/exceptions-handler';
 import { DMChannelRepository } from 'src/chat/DM.repository';
 import { BlockList } from 'src/entity/blockList.entity';
@@ -64,7 +61,7 @@ export class UsersService {
     private friendListRepository: FriendListRepository,
     private certificateRepository: CertificateRepository,
     private readonly mailerService: MailerService,
-  ) { }
+  ) {}
 
   private messanger: LoggerWithRes = new LoggerWithRes('UsersService');
 
@@ -72,9 +69,8 @@ export class UsersService {
     return this.userObjectRepository.findOneBy({ userIdx });
   }
 
-  async setUserImg(userIdx: number, img: string)
-  {
-    const user = await this.userObjectRepository.findOneBy({userIdx})
+  async setUserImg(userIdx: number, img: string) {
+    const user = await this.userObjectRepository.findOneBy({ userIdx });
     user.imgUri = img;
     return this.userObjectRepository.save(user);
   }
@@ -82,13 +78,20 @@ export class UsersService {
   async updateUserNick(updateUsersDto: UserEditprofileDto) {
     const { userIdx, userNickname, imgData } = updateUsersDto;
     const user = await this.userObjectRepository.findOneBy({ userIdx });
-    if (!user) { throw new BadRequestException('유저가 존재하지 않습니다.'); }
+    if (!user) {
+      throw new BadRequestException('유저가 존재하지 않습니다.');
+    }
     // 존재하는 닉네임인지 확인
-    const isNicknameExist = await this.userObjectRepository.findOneBy({ nickname: userNickname });
-    if (!isNicknameExist) { // 닉네임이 존재하지 않는다면
+    const isNicknameExist = await this.userObjectRepository.findOneBy({
+      nickname: userNickname,
+    });
+    if (!isNicknameExist) {
+      // 닉네임이 존재하지 않는다면
       user.nickname = userNickname;
-      return await this.userObjectRepository.save(user);  
-    } else { return false; } // 닉네임이 이미 존재한다면
+      return await this.userObjectRepository.save(user);
+    } else {
+      return false;
+    } // 닉네임이 이미 존재한다면
   }
 
   private async createDirectoryIfNotExists(dirPath) {
@@ -111,8 +114,6 @@ export class UsersService {
     }
   }
 
-
-
   async updateImgFile(filepath: string, filename: string, imgData: string) {
     if (imgData === '') return;
     // imgUri를 저장할 경로를 만들고 그 안에 이미지 파일을 생성해야 함.
@@ -122,7 +123,7 @@ export class UsersService {
 
     const completeFilePath = `${filepath}/${filename}.${fileExtension}`; // 완전한 파일 경로 생성
     const fileExists = await this.checkFileExists(completeFilePath);
-  
+
     if (fileExists) {
       await fs.unlink(completeFilePath); // 파일이 존재한다면 삭제
     }
@@ -143,12 +144,16 @@ export class UsersService {
   */
   async updateUser(userEditImgDto: UserEditprofileDto): Promise<UserObject> {
     const { userIdx, userNickname, imgData } = userEditImgDto;
-  
+
     const user = await this.findOneUser(userIdx);
     if (userNickname !== '') {
       user.nickname = userNickname;
       try {
-        await this.updateUserNick({ userIdx, userNickname: userNickname, imgData: user.imgUri });
+        await this.updateUserNick({
+          userIdx,
+          userNickname: userNickname,
+          imgData: user.imgUri,
+        });
         return await this.userObjectRepository.findOneBy({ userIdx });
       } catch (err) {
         throw new HttpException('update user error', HttpStatus.FORBIDDEN);
@@ -158,7 +163,7 @@ export class UsersService {
       return await this.userObjectRepository.findOneBy({ userIdx });
     }
   }
-  
+
   async saveToken(
     createCertificateDto: CreateCertificateDto,
   ): Promise<CertificateObject> {
@@ -184,8 +189,11 @@ export class UsersService {
           return beforeSaveToken;
         } // 같다면 그대로
       }
-    } catch (e) { console.log("토큰 디비에 문제가 있다."); throw new InternalServerErrorException(e); }
-  };
+    } catch (e) {
+      console.log('토큰 디비에 문제가 있다.');
+      throw new InternalServerErrorException(e);
+    }
+  }
 
   async setBlock(
     targetIdx: number,
@@ -196,7 +204,7 @@ export class UsersService {
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      const blockInfo = await this.blockedListRepository.blockTarget(
+      await this.blockedListRepository.blockTarget(
         targetIdx,
         user,
         this.userObjectRepository,
@@ -223,7 +231,6 @@ export class UsersService {
       //   inMemory.setBlockListByIdFromIM(blockInfo);
       // }
       await queryRunner.commitTransaction();
-      
     } catch (err) {
       await queryRunner.rollbackTransaction();
       return;
@@ -231,7 +238,7 @@ export class UsersService {
       await queryRunner.release();
     }
     const blockList = await inMemory.getBlockListByIdFromIM(user.userIdx);
-    const blockInfoList: BlockInfoDto[] = blockList.map((res) => {
+    const blockInfoList: BlockInfoDto[] = blockList?.map((res) => {
       return {
         blockedNickname: res.blockedNickname,
         blockedUserIdx: res.blockedUserIdx,
@@ -256,7 +263,7 @@ export class UsersService {
   async findUserByIntra(intra: string): Promise<UserObject> {
     return this.userObjectRepository.findOne({ where: { intra: intra } });
   }
-   /*
+  /*
     export class FriendListResDto {
       FriendDto[] {
         frindNickname : string;
@@ -269,7 +276,9 @@ export class UsersService {
     insertFriendDto: FollowFriendDto,
     user: UserObject,
   ): Promise<FriendListResDto> {
-    const target = await this.userObjectRepository.findOneBy({userIdx: insertFriendDto.targetIdx});
+    const target = await this.userObjectRepository.findOneBy({
+      userIdx: insertFriendDto.targetIdx,
+    });
     const list = await this.friendListRepository.insertFriend(
       insertFriendDto,
       user,
@@ -281,7 +290,6 @@ export class UsersService {
       isOnline: target.isOnline, // 여기서 user.isOnline 값을 추가
     }));
     return updatedList;
-    
   }
 
   async deleteFriend(
@@ -309,15 +317,20 @@ export class UsersService {
       win: 0,
       lose: 0,
       email: email,
-      check2Auth: false
+      check2Auth: false,
     });
     user = await this.userObjectRepository.save(user);
     return user;
   }
-  
+
   async validateUser(intraInfo: IntraInfoDto): Promise<IntraSimpleInfoDto> {
     let user = await this.createUser(intraInfo);
-    return new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
+    return new IntraSimpleInfoDto(
+      user.userIdx,
+      user.nickname,
+      user.imgUri,
+      user.check2Auth,
+    );
   }
 
   async getAllUsersFromDB(): Promise<UserObject[]> {
@@ -338,7 +351,9 @@ export class UsersService {
 
   async getFriendList(
     userIdx: number,
-  ): Promise<{ friendNickname: string; friendIdx: number; isOnline: OnlineStatus }[]> {
+  ): Promise<
+    { friendNickname: string; friendIdx: number; isOnline: OnlineStatus }[]
+  > {
     const user: UserObject = await this.userObjectRepository.findOne({
       where: { userIdx },
     });
@@ -390,18 +405,20 @@ export class UsersService {
       });
   }
 
-  async patchUserTFA(userIdx: number, check2Auth: boolean){
+  async patchUserTFA(userIdx: number, check2Auth: boolean) {
     const auth = await this.userObjectRepository.findOneBy({ userIdx });
     auth.check2Auth = check2Auth;
     return await this.userObjectRepository.save(auth);
   }
 
   async getTFA(userIdx: number): Promise<TFAUserDto> {
-    const authenticated = await this.certificateRepository.findOneBy({ userIdx });
+    const authenticated = await this.certificateRepository.findOneBy({
+      userIdx,
+    });
     if (!authenticated) throw new NotFoundException('Not Found User.');
     return { checkTFA: authenticated.check2Auth };
   }
-  // tfa 를 사용하는지 안 하는지, 그리고 한다고 하면 그 때 2차 인증에 대해서 인증이 된 유저인지 확인이 필요함. 
+  // tfa 를 사용하는지 안 하는지, 그리고 한다고 하면 그 때 2차 인증에 대해서 인증이 된 유저인지 확인이 필요함.
   // check2Auth (2차 인증 사용 여부), checkTFA (2차 인증 사용 유저가 인증을 성공했을 때)
   async patchTFA(
     userIdx: number,
