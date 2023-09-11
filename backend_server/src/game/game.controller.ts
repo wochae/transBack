@@ -1,15 +1,34 @@
-import { Controller, Get, Param, Query } from "@nestjs/common";
-import { GameService } from "./game.service";
-import { UsersService } from "src/users/users.service";
-import { UserProfileGameRecordDto } from "./dto/game.record.dto";
-import { RecordResult } from "./enum/game.type.enum";
+import { Controller } from '@nestjs/common';
+import {
+  Get,
+  Post,
+  Query,
+  Body,
+  HttpStatus,
+  Req,
+  Res,
+  Param,
+} from '@nestjs/common';
+import { GameService } from './game.service';
+import { UserProfileGameRecordDto } from './dto/game.record.dto';
+import { GameOptionDto } from './dto/game.option.dto';
+import { UsersService } from 'src/users/users.service';
+import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 
 @Controller('game')
 export class GameController {
+  messanger: LoggerWithRes = new LoggerWithRes('GameController');
+
   constructor(
     private readonly gameService: GameService,
-    private readonly usersService: UsersService,
-  ) { }
+    private readonly usersService: UsersService, // private readonly inMemoryUsers: InMemoryUsers,
+  ) {
+    this.messanger.logWithMessage(
+      'GameCostructor',
+      'GameController',
+      'Initialized!',
+    );
+  }
 
   // PROFILE_INIFINITY
   @Get('records')
@@ -17,31 +36,62 @@ export class GameController {
     @Query('userIdx') userIdx: number,
     @Query('page') page: number,
   ) {
-    console.log('getRecord', userIdx, page)
+    console.log('getRecord', userIdx, page);
     const user = await this.usersService.findOneUser(userIdx);
-    const records = await this.gameService.getGameRecordsByInfinity(userIdx, page);
+    const records = await this.gameService.getGameRecordsByInfinity(
+      userIdx,
+      page,
+    );
     const userProfileGameRecordDto: UserProfileGameRecordDto = {
       userInfo: {
         win: user.win,
-        lose: user.lose
+        lose: user.lose,
       },
       gameList: records,
-    }
+    };
     return userProfileGameRecordDto;
   }
 
-/*
-
-UserProfileGameRecordDto {
-  userInfo : UserRecordInfoDto;
-  gameList : GameRecord[];
+  @Post()
+  async postGameOptions(@Req() req, @Res() res, @Body() option: GameOptionDto) {
+    const message = '플레이어가 큐에 등록 되었습니다.';
+    const errorMessage = '플레이어가 큐에 등록되지 못하였습니다.';
+    let status: boolean;
+    const target = await this.gameService.makePlayer(option);
+    if (target === null) status = false;
+    else {
+      this.gameService.putInQueue(target);
+      status = true;
+    }
+    if (status === false)
+      return res.status(HttpStatus.SERVICE_UNAVAILABLE).json(errorMessage);
+    return res.status(HttpStatus.OK).json(message);
+  }
 }
 
-UserRecordInfoDto {
-  userNickname : string;
-  win: number;
-  lose: number;
-}
+@Controller('game-result')
+export class GameResultController {
+  messanger: LoggerWithRes = new LoggerWithRes('GameController');
 
-*/
+  constructor(private readonly gameService: GameService) {
+    this.messanger.logWithMessage(
+      'GameCostructor',
+      'GameController',
+      'Initialized!',
+    );
+  }
+
+  @Get()
+  getHistory(
+    @Req() req,
+    @Res() res,
+    @Param('gameKey') gameKey: string,
+    @Param('userIdx') userIdx: string,
+  ) {
+    const gIdx = parseInt(gameKey);
+    const uIdx = parseInt(userIdx);
+    return res
+      .status(HttpStatus.OK)
+      .json(this.gameService.getHistoryByGameId(gIdx, uIdx));
+  }
 }

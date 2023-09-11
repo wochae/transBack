@@ -1,36 +1,54 @@
 import { UserObject } from 'src/entity/users.entity';
 import { Socket } from 'socket.io';
+import { GameOptionDto } from '../../dto/game.option.dto';
+
 export class GamePlayer {
-  userIdx: number;
-  userObject: UserObject;
-  socket: Socket;
-  paddlePosY: number;
-  latency: number; //ms
-  score: number;
+  private userObject: UserObject;
+  private socket: Socket | null;
+  private options: GameOptionDto | null;
+  private ready: boolean;
 
-  constructor(userIdx: number, userObject: UserObject, socket: Socket) {
-    this.userIdx = userIdx;
-    this.userObject = userObject;
+  constructor(user: UserObject) {
+    this.userObject = user;
+    this.socket = null;
+    this.options = null;
+    this.ready = false;
+  }
+
+  setSocket(socket: Socket) {
     this.socket = socket;
-    // this.paddlePosY = 0;
-    this.latency = -1;
-    this.score = 0;
   }
 
-  //   public resetPlayer() {
-  //     this.paddlePosY = 0;
-  //   }
-
-  public setLatency(value: number) {
-    this.latency = value;
+  setOptions(data: GameOptionDto) {
+    this.options = data;
   }
 
-  public getLatency(): number {
-    return this.latency;
+  setUserObject(target: UserObject) {
+    this.userObject = target;
   }
 
-  public setScore(): number {
-    this.score += 1;
-    return this.score;
+  getUserObject() {
+    return this.userObject;
+  }
+
+  getOption() {
+    return this.options;
+  }
+
+  getSocket() {
+    return this.socket;
+  }
+
+  setReady(userIdx: number) {
+    if (this.userObject.userIdx === userIdx) this.ready = true;
+    else this.ready = false;
+  }
+
+  getReady(): boolean {
+    return this.ready;
+  }
+
+  emitToClient(event: string, data: any) {
+    if (this.socket instanceof Socket) this.socket.emit(event, data);
   }
 }

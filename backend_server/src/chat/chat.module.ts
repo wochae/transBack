@@ -11,6 +11,8 @@ import { Mode } from '../entity/chat.entity';
 import { SharedModule } from 'src/shared/shared.module';
 import { ChatController } from './chat.controller';
 import { GameModule } from 'src/game/game.module';
+import { GameRecordRepository } from 'src/game/game.record.repository';
+import { GameChannelRepository } from 'src/game/game.channel.repository';
 import { HashedChannelRepository } from './chat.repository';
 
 @Module({
@@ -19,12 +21,13 @@ import { HashedChannelRepository } from './chat.repository';
     TypeOrmExModule.forCustomRepository([
       // DMChannelRepository,
       DirectMessageRepository,
+      GameRecordRepository,
+      GameChannelRepository,
       HashedChannelRepository,
     ]),
-    GameModule,
     SharedModule,
   ],
-  providers: [ChatGateway, ChatService, Chat, SharedModule],
+  providers: [ChatGateway, ChatService, Chat],
   controllers: [ChatController],
 })
 export class ChatModule {
@@ -35,19 +38,7 @@ export class ChatModule {
     private readonly usersService: UsersService,
   ) {}
 
-  async onModuleInit() {
-    // await this.initializeInMemoryDataFromDatabase();
-  }
-
-  //   async initializeInMemoryDataFromDatabase() {
-  //     const usersFromDatabase = await this.usersService.getAllUsersFromDB();
-  //     this.inMemoryUsers.inMemoryUsers = await usersFromDatabase;
-
-  //     const blockListFromDatabase =
-  //       await this.usersService.getAllBlockedListFromDB();
-  //     this.inMemoryUsers.inMemoryBlockList = blockListFromDatabase;
-  //     console.log('111111', this.inMemoryUsers.inMemoryUsers);
-  //   }
+  async onModuleInit() {}
 
   public get getInMemoryUsers(): InMemoryUsers {
     return this.inMemoryUsers;

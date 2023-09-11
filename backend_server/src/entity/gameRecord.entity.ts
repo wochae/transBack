@@ -7,6 +7,8 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
   JoinColumn,
+  ManyToMany,
+  CreateDateColumn,
 } from 'typeorm';
 import { GameChannel } from './gameChannel.entity';
 import { RecordType, RecordResult } from 'src/game/enum/game.type.enum';
@@ -37,14 +39,14 @@ export class GameRecord extends BaseEntity {
   @Column()
   score: string;
 
-  @Column()
+  @CreateDateColumn()
   matchDate: Date;
 
   @ManyToOne(() => UserObject, (matchUser) => matchUser)
   @JoinColumn([{ name: 'matchUserIdx', referencedColumnName: 'userIdx' }])
   matchUser: UserObject;
 
-  @ManyToOne(() => GameChannel, (channel) => channel.record)
+  @ManyToOne(() => GameChannel, (channel) => channel.records)
   @JoinColumn([{ name: 'gameIdx', referencedColumnName: 'gameIdx' }])
   channel: GameChannel;
 

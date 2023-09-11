@@ -9,11 +9,11 @@ export class GameFinalReadyDto {
   secondLatency: number;
 
   constructor(target: GameRoom) {
-    this.userNicknameFirst = target.user1.userObject.nickname;
-    this.userIdxFirst = target.user1.userIdx;
-    this.firstLatency = target.user1.getLatency();
-    this.userNicknameSecond = target.user2.userObject.nickname;
-    this.userIdxSecond = target.user2.userIdx;
-    this.secondLatency = target.user2.getLatency();
+    // this.userNicknameFirst = target.user1.userObject.nickname;
+    // this.userIdxFirst = target.user1.userIdx;
+    // this.firstLatency = target.user1.getLatency();
+    // this.userNicknameSecond = target.user2.userObject.nickname;
+    // this.userIdxSecond = target.user2.userIdx;
+    // this.secondLatency = target.user2.getLatency();
   }
 }

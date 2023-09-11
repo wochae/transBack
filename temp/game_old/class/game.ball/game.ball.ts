@@ -1,5 +1,5 @@
-import { GameBallEventDto } from 'src/game/dto/game.ball.event.dto';
-import { Vector } from 'src/game/enum/game.vector.enum';
+import { GameBallEventDto } from 'src/temp/game_old/dto/game.ball.event.dto';
+import { Vector } from 'src/temp/game_old/enum/game.vector.enum';
 
 export class GameBall {
   initX: number;
@@ -61,7 +61,7 @@ export class GameBall {
     } else if (right == false && up == true) {
       ret = Vector.UPLEFT;
     } else {
-      ret = Vector.DWONLEFT;
+      ret = Vector.DOWNLEFT;
     }
 
     return ret;
@@ -103,12 +103,12 @@ export class GameBall {
     //     this.vector = Vector.DOWNRIGHT;
     //     break;
     //   case Vector.UPLEFT:
-    //     this.vector = Vector.DWONLEFT;
+    //     this.vector = Vector.DOWNLEFT;
     //     break;
     //   case Vector.DOWNRIGHT:
     //     this.vector = Vector.UPRIGHT;
     //     break;
-    //   case Vector.DWONLEFT:
+    //   case Vector.DOWNLEFT:
     //     this.vector = Vector.UPLEFT;
     //     break;
     // }
@@ -134,7 +134,7 @@ export class GameBall {
       case Vector.DOWNRIGHT:
         this.nextY = -300;
         break;
-      case Vector.DWONLEFT:
+      case Vector.DOWNLEFT:
         this.nextY = -300;
         break;
     }
