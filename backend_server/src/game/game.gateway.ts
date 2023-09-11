@@ -13,20 +13,8 @@ import { GameService } from './game.service';
 // import { ReturnMsgDto } from './dto/error.message.dto';
 import { Logger, UseFilters, UseGuards } from '@nestjs/common';
 import { WsExceptionFilter } from 'src/ws.exception.filter';
-import { UsersService } from 'src/users/users.service';
-import { GameLatencyGetDto } from './dto/game.latency.get.dto';
-import { GamePaddleMoveDto } from './dto/game.paddle.move.dto';
-import { GameScoreDto } from './dto/game.score.dto';
-import { GameBallEventDto } from './dto/game.ball.event.dto';
-import { GameFriendMatchDto } from './dto/game.friend.match.dto';
-import { GameType } from './enum/game.type.enum';
-import {
-  LoggerWithRes,
-  ReturnMsgDto,
-} from 'src/shared/class/shared.response.msg/shared.response.msg';
+import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { InMemoryUsers } from 'src/users/users.provider';
-import { GamePlayer } from './class/game.player/game.player';
 import { GameBasicAnswerDto } from './dto/game.basic.answer.dto';
 import { GamePingReceiveDto } from './dto/game.ping.dto';
 import { GameStartDto } from './dto/game.start.dto';
@@ -37,7 +25,11 @@ const front = process.env.FRONTEND;
 @WebSocketGateway({
   namespace: 'game/playroom',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000', front],
+    origin: [
+      'http://paulryu9309.ddns.net:3000',
+      'http://localhost:3000',
+      front,
+    ],
   },
 })
 @UseFilters(new WsExceptionFilter())

@@ -77,7 +77,7 @@ export class GameService {
 
   // player 만들기
   async makePlayer(data: GameOptionDto): Promise<GamePlayer | null> {
-    const getPerson = this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
+    const getPerson = await this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
     if (getPerson === undefined) return null;
 
     const player = new GamePlayer(getPerson);

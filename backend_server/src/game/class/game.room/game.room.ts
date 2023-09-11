@@ -1,19 +1,14 @@
 import { GameRecord } from 'src/entity/gameRecord.entity';
-import { UserObject } from 'src/entity/users.entity';
 import { GamePlayer } from '../game.player/game.player';
 import { GameSpeed, GameType, MapNumber } from 'src/game/enum/game.type.enum';
-import { GameOptionDto } from 'src/game/dto/game.option.dto';
 import { Vector } from 'src/game/enum/game.vector.enum';
 import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameData } from 'src/game/enum/game.data.enum';
-import { FrameData, Fps } from 'src/game/enum/frame.data.enum';
 import { KeyPress } from 'src/game/class/key.press/key.press';
 import { Animations } from 'src/game/class/animation/animation';
 import { GamePhase } from 'src/game/enum/game.phase';
-import { RecordResult } from 'src/game/enum/game.type.enum';
-import { Socket, Server } from 'socket.io';
 import { Physics } from '../physics/physics';
-import { max } from 'class-validator';
+
 /**
  * 연산의 핵심. 간단한 데이터를 제외하곤 여기서 연산이 이루어 진다.
  */
