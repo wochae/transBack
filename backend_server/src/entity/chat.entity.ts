@@ -10,6 +10,7 @@ import {
   ManyToOne,
   JoinColumn,
   ManyToMany,
+  PrimaryColumn,
 } from 'typeorm';
 
 export enum Mode {
@@ -75,4 +76,13 @@ export class DirectMessage extends BaseEntity {
   @ManyToMany(() => DMChannel, (targetMessage) => targetMessage.channelIdx)
   @JoinColumn({ name: 'channelIdx', referencedColumnName: 'channelIdx' })
   targetMessage: DMChannel;
+}
+
+@Entity('hashed_channel')
+export class HashedChannel extends BaseEntity {
+  @PrimaryColumn()
+  channelIdx: number;
+
+  @Column()
+  hasedPassword: string;
 }

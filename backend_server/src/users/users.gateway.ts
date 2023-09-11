@@ -16,7 +16,7 @@ import { WsExceptionFilter } from 'src/ws.exception.filter';
 import { WsValidationPipe } from 'src/ws.exception.pipe';
 import { AuthGuard } from 'src/auth/auth.guard';
 
-const front = process.env.FRONT_REMOTE;
+const front = process.env.FRONTEND;
 @WebSocketGateway({
   namespace: 'users',
   cors: {

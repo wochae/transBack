@@ -430,7 +430,7 @@ export class UsersService {
 
     if (code !== undefined || auth.check2Auth === false) {
       if (this.mailCodeList.get(userIdx) !== code || code === undefined)
-        throw new BadRequestException('Invalid or Expired.');
+        return { checkTFA: false };
       this.mailCodeList.delete(userIdx);
       if (auth.check2Auth === true) return { checkTFA: true };
     }

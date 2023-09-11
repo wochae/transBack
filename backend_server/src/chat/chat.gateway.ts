@@ -38,7 +38,7 @@ import {
 } from './dto/chat.transaction.dto';
 import { UserStatusDto } from './dto/update-chat.dto';
 
-const front = process.env.FRONT_REMOTE;
+const front = process.env.FRONTEND;
 
 @WebSocketGateway({
   namespace: 'chat',
@@ -427,7 +427,9 @@ export class ChatGateway
           'channel',
           'Protected Channel',
         );
-        if (channel.getPassword !== password) {
+        const hashedChannel = await this.chatService.findHashedChannelByChannelIdx(channel.getRoomId);
+        const compared = await this.chatService.comparePasswords(password, hashedChannel.hasedPassword);
+        if (!compared) {
           return this.messanger.setResponseErrorMsgWithLogger(
             400,
             'Fail to Enter Protected Channel',
