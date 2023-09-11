@@ -73,6 +73,7 @@ export class ChatGateway
 
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    this.messanger.logWithMessage('handle Connection', `user`, `${user}`, '');
     if (!user) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(

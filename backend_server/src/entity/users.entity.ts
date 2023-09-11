@@ -6,6 +6,8 @@ import {
   OneToMany,
   JoinColumn,
   PrimaryColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { FriendList } from './friendList.entity';
 import { BlockList } from './blockList.entity';
@@ -59,6 +61,12 @@ export class UserObject extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   check2Auth: boolean;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 
   @OneToMany(() => FriendList, (idx) => idx.userIdx, {
     onDelete: 'CASCADE',

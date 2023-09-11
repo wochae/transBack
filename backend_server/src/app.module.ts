@@ -55,7 +55,7 @@ const mailPassword = process.env.MAIL_PW;
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, InMemoryUsers],
+  providers: [AppService, ],
 })
 export class AppModule {
 }

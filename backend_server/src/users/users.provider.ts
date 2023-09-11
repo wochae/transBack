@@ -19,11 +19,10 @@ export class InMemoryUsers {
 
   private async initInMemoryUsers(): Promise<void> {
     const users = await this.userObjectRepository.find();
-      this.inMemoryUsers = users;
-    
+    this.inMemoryUsers = users;
+
     const lists = await this.blockListRepository.find();
-      this.inMemoryBlockList = lists;
-    
+    this.inMemoryBlockList = lists;
   }
 
   async getUserByNicknameFromIM(nickname: string): Promise<UserObject> {
@@ -37,18 +36,17 @@ export class InMemoryUsers {
     return this.inMemoryUsers.find((user) => user.userIdx === userId);
   }
 
-  async saveUserByUdFromIM(userId: number): Promise<boolean> {
+  async saveUserByUserIdFromIM(userId: number): Promise<UserObject | null> {
     try {
       const targetUser = this.inMemoryUsers.find(
         (user) => user.userIdx === userId,
       );
-      this.userObjectRepository.save(targetUser).then(() => {
-        return true;
-      });
+      const ret = await this.userObjectRepository.save(targetUser);
+      return ret;
     } catch (error) {
       if (error instanceof QueryFailedError)
         throw new NotFoundException(`Failed to create user: ` + error.message);
-      return false;
+      return null;
     }
   }
 

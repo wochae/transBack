@@ -1,29 +1,48 @@
-import { WaitPlayerTuple } from '../game.wait.queue/game.wait.queue';
+import { queue } from 'rxjs';
+import { GamePlayer } from '../game.player/game.player';
 
 export class GameQueue {
-  queueData: WaitPlayerTuple[];
+  playerList: GamePlayer[];
 
   constructor() {
-    this.queueData = [];
+    this.playerList = [];
   }
 
-  public Enqueue(player: WaitPlayerTuple) {
-    this.queueData.push(player);
+  getLength(): number {
+    return this.playerList.length;
   }
 
-  public DequeueList(): WaitPlayerTuple[] | null {
-    if (this.queueData.length < 2) return null;
-    const data: WaitPlayerTuple[] = [];
-    data.push(this.queueData[0]);
-    data.push(this.queueData[1]);
-    this.queueData.splice(0, 2);
-    return data;
+  pushPlayer(player: GamePlayer): number {
+    return this.playerList.push(player);
   }
 
-  public isEmpty(): boolean {
-    return this.queueData.length == 0 ? true : false;
+  popPlayer(userIdx: number): GamePlayer[] {
+    const user1Idx = this.playerList.findIndex(
+      (user) => user.getUserObject().userIdx === userIdx,
+    );
+    const list = this.playerList.splice(user1Idx, 1);
+    const target = this.playerList.splice(0, 1)[0];
+    list.push(target);
+    return list;
   }
-  public size() {
-    return this.queueData.length;
+
+  deletePlayer(userIdx: number) {
+    let i = 0;
+    for (const queueMember of this.playerList) {
+      if (queueMember.getUserObject().userIdx === userIdx)
+        this.playerList.splice(i, 1);
+      i++;
+    }
+  }
+
+  findPlayerById(userIdx: number): GamePlayer | null {
+    let target: GamePlayer | null;
+    target = null;
+    for (const queue of this.playerList) {
+      if (queue.getUserObject().userIdx === userIdx) {
+        target = queue;
+      }
+    }
+    return target;
   }
 }
