@@ -425,7 +425,9 @@ export class ChatGateway
           'channel',
           'Protected Channel',
         );
-        if (channel.getPassword !== password) {
+        const hashedChannel = await this.chatService.findHashedChannelByChannelIdx(channel.getRoomId);
+        const compared = await this.chatService.comparePasswords(password, hashedChannel.hasedPassword);
+        if (!compared) {
           return this.messanger.setResponseErrorMsgWithLogger(
             400,
             'Fail to Enter Protected Channel',

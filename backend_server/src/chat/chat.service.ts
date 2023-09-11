@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { Channel } from './class/chat.channel/channel.class';
 import {
   Chat,
@@ -14,7 +15,7 @@ import {
   Transaction,
 } from 'typeorm';
 import { Permission, UserObject } from 'src/entity/users.entity';
-import { DMChannel, DirectMessage, Mode } from '../entity/chat.entity';
+import { DMChannel, DirectMessage, HashedChannel, Mode } from '../entity/chat.entity';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
 import { InMemoryUsers } from 'src/users/users.provider';
@@ -22,6 +23,7 @@ import { Socket } from 'socket.io';
 import { Message } from './class/chat.message/message.class';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
+import { HashedChannelRepository } from './chat.repository';
 
 @Injectable()
 export class ChatService {
@@ -30,6 +32,7 @@ export class ChatService {
     private dataSource: DataSource,
     private dmChannelRepository: DMChannelRepository,
     private directMessagesRepository: DirectMessageRepository,
+    private hashedChannelRepository: HashedChannelRepository,
     // TODO: gateway에서도 InmemoryUsers 를 사용하는데, service 로 옮기자
     private inMemoryUsers: InMemoryUsers,
   ) {}
@@ -76,6 +79,16 @@ export class ChatService {
       return null;
     }
     return protectedChannel;
+  }
+
+  findHashedChannelByChannelIdx(channelIdx: number): Promise<HashedChannel> {
+    const hashedChannel = this.hashedChannelRepository.findOneBy({
+      channelIdx: channelIdx,
+    });
+    if (hashedChannel == undefined) {
+      return null;
+    }
+    return hashedChannel;
   }
 
   findPublicChannelByRoomId(roomId: number): Channel {
@@ -282,6 +295,10 @@ export class ChatService {
       channel.setMode = Mode.PUBLIC;
     } else if (password !== '') {
       channel.setMode = Mode.PROTECTED;
+      const hashedPassword = await this.hashPassword(password);
+      const hashed = this.hashedChannelRepository.create({channelIdx: channelIdx, hasedPassword: hashedPassword});
+      this.hashedChannelRepository.save(hashed);
+      console.log('hashed', hashed);
     }
     channel.setPassword = password;
     this.chat.setProtectedChannels = channel;
@@ -377,6 +394,17 @@ export class ChatService {
       channelIdx: channel.getChannelIdx,
     };
     return channelInfo;
+  }
+  async hashPassword(password: string): Promise<string> {
+    const saltRounds = 10; // 솔트(암호화 추가 요소) 사용 및 10번의 해싱 라운드를 적용합니다.
+    const salt = await bcrypt.genSalt(saltRounds);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    return hashedPassword;
+  }
+
+  // 이 함수는 로그인 시 비밀번호 검증에 사용될 수 있습니다.
+  async comparePasswords(enteredPassword: string, hashedPassword: string): Promise<boolean> {
+    return await bcrypt.compare(enteredPassword, hashedPassword);
   }
 
   async enterProtectedRoom(user: UserObject, channel: Channel) {
