@@ -46,7 +46,7 @@ export class GameGateway
   handleDisconnect(client: Socket) {
     const userIdx: number = parseInt(client.handshake.query.userId as string);
     if (Number.isNaN(userIdx)) return;
-    if (!this.gameService.checkProcessedOrNot(userIdx)) {
+    if (!this.gameService.findUserIdxProcessedOrNot(userIdx)) {
       this.gameService.forceQuitForForceDisconnect(userIdx, this.server);
     }
     return;

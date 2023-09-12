@@ -61,7 +61,7 @@ export class GameController {
     const target = await this.gameService.makePlayer(option);
     if (target === null) status = false;
     else {
-      this.gameService.putInQueue(target);
+      this.gameService.putInQueue(target, null);
       status = true;
     }
     if (status === false)
@@ -78,8 +78,15 @@ export class GameController {
     const message = '친선전이 준비 되었습니다.';
     const errorMessage = '친선전이 실패하였습니다.';
     let status: boolean;
-    if (this.gameService.checkInviteGameIsReady(option)) status = true;
-    else status = await this.gameService.makePlayersForInviteGame(option);
+    const basicOption = new GameOptionDto(
+      option.gameType,
+      option.userIdx,
+      option.speed,
+      option.mapNumber,
+    );
+    const target = await this.gameService.makePlayer(basicOption);
+    if (target === null) status = false;
+    else this.gameService.putInQueue(target, option);
     if (status === false)
       return res.status(HttpStatus.SERVICE_UNAVAILABLE).json(errorMessage);
     return res.status(HttpStatus.OK).json(message);

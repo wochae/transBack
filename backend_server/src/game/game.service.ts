@@ -35,7 +35,7 @@ export class GameService {
   private playRoom: GameRoom[]; // 플레이 룸
   private normalQueue: GameQueue; // 게임을 위한 큐
   private rankQueue: GameQueue; // 게임을 위한 큐
-  //   private friendQueue: GameQueue; // 게임을 위한 큐
+  private friendQueue: [GamePlayer, GameInviteOptionDto][]; // 게임을 위한 큐
   private onLinePlayer: [GamePlayer, GameType][]; // online player
   private processedUserIdxList: number[]; // disconnect 처리한
   private nameCnt: number;
@@ -52,7 +52,7 @@ export class GameService {
     this.playRoom = [];
     this.normalQueue = new GameQueue();
     this.rankQueue = new GameQueue();
-    // this.friendQueue = new GameQueue();
+    this.friendQueue = [];
     this.onLinePlayer = [];
     this.processedUserIdxList = [];
     this.nameCnt = 0;
@@ -101,20 +101,23 @@ export class GameService {
   }
 
   // 큐에 플레이어를 넣어둔다.
-  putInQueue(player: GamePlayer) {
-    const type = player.getOption().gameType;
-    this.checkProccessedOrNot(player.getUserObject().userIdx);
-    this.onLinePlayer.push([player, player.getOption().gameType]);
-    switch (type) {
-      case GameType.FRIEND:
-        this.friendQueue.pushPlayer(player);
-        break;
-      case GameType.NORMAL:
-        this.normalQueue.pushPlayer(player);
-        break;
-      case GameType.RANK:
-        this.rankQueue.pushPlayer(player);
-        break;
+  putInQueue(player: GamePlayer, option: null | GameInviteOptionDto) {
+    if (option === null) {
+      const type = player.getOption().gameType;
+      this.checkProccessedOrNot(player.getUserObject().userIdx);
+      this.onLinePlayer.push([player, player.getOption().gameType]);
+      switch (type) {
+        case GameType.NORMAL:
+          this.normalQueue.pushPlayer(player);
+          break;
+        case GameType.RANK:
+          this.rankQueue.pushPlayer(player);
+          break;
+      }
+    } else {
+      this.checkProccessedOrNot(player.getUserObject().userIdx);
+      this.onLinePlayer.push([player, player.getOption().gameType]);
+      this.friendQueue.push([player, option]);
     }
   }
 
@@ -134,20 +137,42 @@ export class GameService {
   // 큐 내부를 파악하고, 게임 상대가 준비되었는지 확인한다.
   checkQueue(userIdx: number): GamePlayer[] {
     // console.log(`userIdx 확인 전 : ` + userIdx)
-    let target: [GamePlayer, GameType];
-    for (const member of this.onLinePlayer) {
-      if (member[0].getUserObject().userIdx === userIdx) {
-        target = member;
-        break;
-      }
-    }
+    const target: [GamePlayer, GameType] = this.onLinePlayer.find(
+      (user) => user[0].getUserObject().userIdx === userIdx,
+    );
     // console.log(`UserIdx 확인 후` + target[0].getUserObject().userIdx)
     const type = target[1];
-    let targetQueue: GameQueue;
+    let targetQueue: GameQueue | [GamePlayer, GameInviteOptionDto][];
     switch (type) {
       case GameType.FRIEND:
         targetQueue = this.friendQueue;
-        break;
+        const player1 = targetQueue.find(
+          (player) =>
+            player[0].getUserObject().userIdx ===
+            target[0].getUserObject().userIdx,
+        );
+        const player2 = targetQueue.find(
+          (player) =>
+            player[0].getUserObject().userIdx === player1[1].targetIdx,
+        );
+        if (player2 === undefined) return undefined;
+        else {
+          const player1Index = targetQueue.findIndex(
+            (player) =>
+              player[0].getUserObject().userIdx ===
+              target[0].getUserObject().userIdx,
+          );
+          targetQueue.splice(player1Index, 1);
+          const player2Index = targetQueue.findIndex(
+            (player) =>
+              player[0].getUserObject().userIdx === player1[1].targetIdx,
+          );
+          targetQueue.splice(player2Index);
+          const list: GamePlayer[] = [];
+          list.push(player1[0]);
+          list.push(player2[0]);
+          return list;
+        }
       case GameType.NORMAL:
         targetQueue = this.normalQueue;
         break;
@@ -155,8 +180,11 @@ export class GameService {
         targetQueue = this.rankQueue;
         break;
     }
-    if (targetQueue.getLength() >= 2) {
-      console.log('here it is!!!');
+    if (
+      (type === GameType.NORMAL || type === GameType.RANK) &&
+      targetQueue.getLength() >= 2
+    ) {
+      //   console.log('here it is!!!');
       const list = targetQueue.popPlayer(target[0].getUserObject().userIdx);
       return list;
     } else return undefined;
@@ -776,7 +804,7 @@ export class GameService {
     }, 50);
     return true;
   }
-  public checkProcessedOrNot(userIdx: number): boolean {
+  public findUserIdxProcessedOrNot(userIdx: number): boolean {
     const target = this.processedUserIdxList.find((value) => value === userIdx);
     if (target === undefined) return false;
     return true;
@@ -795,18 +823,21 @@ export class GameService {
     return this.forceQuitMatch(userIdx, server);
   }
 
-  public checkInviteGameIsReady(option: GameInviteOptionDto): boolean {
-    const userIdx = option.userIdx;
-    const target = this.playRoom.find(
-      (room) =>
-        room.users[0].getUserObject().userIdx === userIdx ||
-        room.users[1].getUserObject().userIdx === userIdx,
-    );
-    if (target === undefined) return false;
-    return true;
-  }
+  //   public checkInviteGameIsReady(option: GameInviteOptionDto): boolean {
+  //     const userIdx = option.userIdx;
+  //     const target = this.playRoom.find(
+  //       (room) =>
+  //         room.users[0].getUserObject().userIdx === userIdx ||
+  //         room.users[1].getUserObject().userIdx === userIdx,
+  //     );
+  //     if (target === undefined) return false;
+  //     return true;
+  //   }
 
   public makePlayerRoomForInviteGame(option: GameInviteOptionDto): boolean {
+    const user = this.inMemoryUsers.getUserByIdFromIM(option.userIdx);
+    const targetUser = this.inMemoryUsers.getUserByIdFromIM(option.targetIdx);
+
     return true;
   }
 }
