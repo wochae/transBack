@@ -35,7 +35,7 @@ export class UserObject extends BaseEntity {
   @Column({ type: 'varchar', unique: true })
   intra: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: 'varchar', default: ''})
   nickname: string;
 
   @Column({ type: 'varchar', nullable: true })
