@@ -7,5 +7,6 @@ export enum GamePhase {
   HIT_THE_GOAL_POST,
   PAUSE_PLAYING,
   MATCH_END,
+  FORCE_QUIT,
   RESULT_SAVED,
 }

@@ -2,7 +2,7 @@ import { GameData } from '../enum/game.data.enum';
 import { GameStatus } from '../enum/game.type.enum';
 import { GamePlayer } from '../class/game.player/game.player';
 
-export class GamePauseScpreDto {
+export class GamePauseScoreDto {
   userIdx1: number;
   userScore1: number;
   userIdx2: number;
