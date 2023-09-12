@@ -78,6 +78,7 @@ export class LoginController {
       intraSimpleInfoDto.imgUri = `${backenduri}/img/0.png`;
       await this.usersService.setUserImg(intraSimpleInfoDto.userIdx, intraSimpleInfoDto.imgUri);
     }
+    console.log()
     const payload = { id: intraInfo.userIdx, email: intraInfo.email };
     const jwt = await this.loginService.issueToken(payload);
     intraInfo.token = (jwt).toString();
@@ -85,7 +86,8 @@ export class LoginController {
     intraInfo.imgUri = intraSimpleInfoDto.imgUri;
     intraInfo.nickname = intraSimpleInfoDto.nickname;
     intraInfo.available = intraSimpleInfoDto.available;
-    this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
+    const settedUser = await this.usersService.findOneUser(intraInfo.userIdx);
+    this.usersService.setIsOnline(settedUser, OnlineStatus.ONLINE);
 
     res.cookie('authorization', intraInfo.token, { httpOnly: true, path: '*' });
     res.header('Cache-Control', 'no-store');
