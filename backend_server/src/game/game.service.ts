@@ -207,7 +207,7 @@ export class GameService {
   }
 
   // play room 을 구성한다.
-  async makePlayerRoom(players: GamePlayer[], server: Server) {
+  async makePlayerRoom(players: GamePlayer[], server: Server, userIdx: number) {
     const roomName = this.makeRoomName();
     this.messanger.logWithMessage('makePlayerRoom', '', '', `${roomName}`);
 
@@ -268,12 +268,21 @@ export class GameService {
       room.gameObj.gameSpeed,
       room.gameObj.gameMapNumber,
     );
-    setTimeout(() => {
-      server.to(room.roomId).emit('game_queue_success', data);
-    }, 1000);
-    // console.log('server', server);
-    // console.log('------------------------')
-    // this.messanger.logWithMessage("makePlyerRoom", "", "" ,"server emit to room");
+    if (room.users[0].getUserObject().userIdx === userIdx) {
+      setTimeout(() => {
+        room.users[1].getSocket().emit('game_queue_success', data);
+      }, 500);
+      setTimeout(() => {
+        room.users[0].getSocket().emit('game_queue_success', data);
+      }, 1000);
+    } else {
+      setTimeout(() => {
+        room.users[0].getSocket().emit('game_queue_success', data);
+      }, 500);
+      setTimeout(() => {
+        room.users[1].getSocket().emit('game_queue_success', data);
+      }, 1000);
+    }
   }
 
   // play room 의 이름을 설정한다.

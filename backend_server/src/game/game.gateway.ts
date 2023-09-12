@@ -82,7 +82,7 @@ export class GameGateway
         'you are ready',
         'handleConnection',
       );
-    } else this.gameService.makePlayerRoom(players, this.server);
+    } else this.gameService.makePlayerRoom(players, this.server, userIdx);
     // this.messanger.logWithMessage("handleConnection", "", "","connection handling is successed");
     return this.messanger.setResponseMsgWithLogger(
       200,
