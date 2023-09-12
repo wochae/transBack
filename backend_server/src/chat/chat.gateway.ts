@@ -185,9 +185,11 @@ export class ChatGateway
         mode,
       }),
     );
+    const dmChannelList = await this.chatService.getPrivateChannels(user);
     const main_enter = {
       friendList,
       channelList,
+      dmChannelList,
       blockList,
       userObject,
     };
@@ -270,7 +272,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() chatGeneralReqDto: ChatGeneralReqDto,
   ) {
-    const { targetNickname, targetIdx, msg } = chatGeneralReqDto;
+    const { targetNickname, targetIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     // 오프라인일 수도 있기 때문에 db 에서 가져옴
     const targetUser: UserObject =
@@ -312,7 +314,7 @@ export class ChatGateway
       );
     }
     // FIXME: 함수로 빼기
-    const message: SendDMDto = { msg: msg };
+    // const message: SendDMDto = { msg: msg };
     const checkBlock = await this.usersService.checkBlockList(
       user,
       this.inMemoryUsers,
@@ -322,7 +324,7 @@ export class ChatGateway
       client,
       user,
       targetUser,
-      message,
+      // message,
       checkBlock,
     );
     if (!newChannel) {
