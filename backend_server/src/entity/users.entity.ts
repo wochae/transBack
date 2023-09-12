@@ -35,7 +35,7 @@ export class UserObject extends BaseEntity {
   @Column({ type: 'varchar', unique: true })
   intra: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: 'varchar', default: ''})
   nickname: string;
 
   @Column({ type: 'varchar', nullable: true })
@@ -44,7 +44,7 @@ export class UserObject extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   rankpoint: number;
 
-  @Column({ type: 'enum', default: OnlineStatus.ONLINE, enum: OnlineStatus })
+  @Column({ type: 'enum', default: OnlineStatus.OFFLINE, enum: OnlineStatus })
   isOnline: OnlineStatus;
 
   @Column({ type: 'boolean', default: false })
