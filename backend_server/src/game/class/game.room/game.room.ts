@@ -247,8 +247,6 @@ export class GameRoom {
     this.users[0].setSocket(undefined);
     this.users[1].getSocket().disconnect(true);
     this.users[1].setSocket(undefined);
-    // this.users[0].setUserObject(undefined);
-    // this.users[1].setUserObject(undefined);
     this.gameObj = undefined;
     this.latency = undefined;
     this.latencyCnt = undefined;
