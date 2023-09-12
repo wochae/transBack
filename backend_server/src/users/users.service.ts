@@ -40,7 +40,6 @@ import * as fs from 'fs/promises'; // fs.promises를 사용하여 비동기적�
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 import * as dotenv from 'dotenv';
 dotenv.config();
-const mailConfig = config.get('mail');
 export const apiUid = process.env.CLIENT_ID;
 export const apiSecret = process.env.SECRET_KEY;
 export const frontcallback = `${process.env.FRONTEND}/login/auth`;
@@ -81,18 +80,22 @@ export class UsersService {
     if (!user) {
       throw new BadRequestException('유저가 존재하지 않습니다.');
     }
-    // 존재하는 닉네임인지 확인
-    const isNicknameExist = await this.userObjectRepository.findOneBy({
-      nickname: userNickname,
-    });
-    if (!isNicknameExist) {
-      // 닉네임이 존재하지 않는다면
-      user.nickname = userNickname;
-      return await this.userObjectRepository.save(user);
-    } else {
-      return false;
-    } // 닉네임이 이미 존재한다면
+    if (user.available === false && user.nickname === '') { // 초기 생성이 된 유저인 경우만 닉네임을 변경
+        // 존재하는 닉네임인지 확인
+      const isNicknameExist = await this.userObjectRepository.findOneBy({
+        nickname: userNickname,
+      });
+      if (!isNicknameExist) {
+        // 닉네임이 존재하지 않는다면
+        user.nickname = userNickname; // 입력한 닉네임으로 변경해주고 실질적으로 사용할 수 있는 유저로 변경
+        user.available = true;
+        return await this.userObjectRepository.save(user);
+      } else {
+        return false;
+      } // 닉네임이 이미 존재한다면
+    }
   }
+    
 
   private async createDirectoryIfNotExists(dirPath) {
     try {
@@ -146,7 +149,7 @@ export class UsersService {
     const { userIdx, userNickname, imgData } = userEditImgDto;
 
     const user = await this.findOneUser(userIdx);
-    if (userNickname !== '') {
+    if (user.available === false && user.nickname === '') {
       user.nickname = userNickname;
       try {
         await this.updateUserNick({
@@ -309,11 +312,11 @@ export class UsersService {
     let user = this.userObjectRepository.create({
       userIdx: userIdx,
       intra: intra,
-      nickname: intra,
+      nickname: "",
       imgUri: `${backenduri}/${userIdx}.png`,
       rankpoint: 0,
       isOnline: OnlineStatus.ONLINE,
-      available: true,
+      available: false,
       win: 0,
       lose: 0,
       email: email,
@@ -330,6 +333,7 @@ export class UsersService {
       user.nickname,
       user.imgUri,
       user.check2Auth,
+      user.available,
     );
   }
 

@@ -62,11 +62,15 @@ export class LoginController {
       intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
       this.loginService.downloadProfileImg(intraInfo);
     } else {
+      if (user.isOnline !== OnlineStatus.OFFLINE) {
+        console.log('codeCallback user already online : ');
+        return res.status(400).json({ message: '이미 로그인 되어있습니다.' });
+      }
       user.imgUri = `${backenduri}/img/${user.userIdx}.png`
       this.usersService.setUserImg(user.userIdx, user.imgUri);
-      this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
+      
       console.log('codeCallback user exist : ', user);
-      intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth);
+      intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth, user.available);
     }
     const anyImg = await this.usersService.checkFileExists(`public/img/${intraSimpleInfoDto.userIdx}.png`);
     if (!anyImg && !intraSimpleInfoDto.imgUri)
@@ -80,9 +84,12 @@ export class LoginController {
     intraInfo.check2Auth = intraSimpleInfoDto.check2Auth;
     intraInfo.imgUri = intraSimpleInfoDto.imgUri;
     intraInfo.nickname = intraSimpleInfoDto.nickname;
+    intraInfo.available = intraSimpleInfoDto.available;
+    this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
 
-    res.cookie('authorization', (await jwt).toString(), { httpOnly: true, path: '*' });
+    res.cookie('authorization', intraInfo.token, { httpOnly: true, path: '*' });
     res.header('Cache-Control', 'no-store');
+    // res.setHeader('Authorization', `Bearer ${intraInfo.token}`);
     console.log(`codeCallback intraInfo : `, intraInfo);
 
     console.log("success");

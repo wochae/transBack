@@ -47,7 +47,7 @@ export class UserObject extends BaseEntity {
   @Column({ type: 'enum', default: OnlineStatus.ONLINE, enum: OnlineStatus })
   isOnline: OnlineStatus;
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: 'boolean', default: false })
   available: boolean;
 
   @Column({ type: 'int', default: 0 })
