@@ -85,7 +85,6 @@ export class LoginController {
     intraInfo.imgUri = intraSimpleInfoDto.imgUri;
     intraInfo.nickname = intraSimpleInfoDto.nickname;
     intraInfo.available = intraSimpleInfoDto.available;
-    const settedUser = await this.usersService.findOneUser(intraInfo.userIdx);
     this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
 
     res.cookie('authorization', intraInfo.token, { httpOnly: true, path: '*' });
