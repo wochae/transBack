@@ -14,6 +14,7 @@ import { UserProfileGameRecordDto } from './dto/game.record.dto';
 import { GameOptionDto } from './dto/game.option.dto';
 import { UsersService } from 'src/users/users.service';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
+import { GameInviteOptionDto } from './dto/game.invite.option.dto';
 
 @Controller('game')
 export class GameController {
@@ -63,6 +64,22 @@ export class GameController {
       this.gameService.putInQueue(target);
       status = true;
     }
+    if (status === false)
+      return res.status(HttpStatus.SERVICE_UNAVAILABLE).json(errorMessage);
+    return res.status(HttpStatus.OK).json(message);
+  }
+
+  @Post()
+  async postInviteGameOptions(
+    @Req() req,
+    @Res() res,
+    @Body() option: GameInviteOptionDto,
+  ) {
+    const message = '친선전이 준비 되었습니다.';
+    const errorMessage = '친선전이 실패하였습니다.';
+    let status: boolean;
+    if (this.gameService.checkInviteGameIsReady(option)) status = true;
+    else status = await this.gameService.makePlayersForInviteGame(option);
     if (status === false)
       return res.status(HttpStatus.SERVICE_UNAVAILABLE).json(errorMessage);
     return res.status(HttpStatus.OK).json(message);

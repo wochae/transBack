@@ -20,20 +20,22 @@ import { Socket, Server } from 'socket.io';
 import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { GameQueueSuccessDto } from './dto/game.queue.suceess.dto';
-import { GamePingDto, GamePingReceiveDto } from './dto/game.ping.dto';
+import { GamePingDto } from './dto/game.ping.dto';
 import { GamePauseScoreDto } from './dto/game.pause.score.dto';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 import { GameFrameDataDto } from './dto/game.frame.data.dto';
 import { KeyPressDto } from './dto/key.press.dto';
 import { GameResultDto } from './dto/game.result.dto';
 import { Vector } from './enum/game.vector.enum';
+import { GameForceQuitDto } from './dto/game.force.quit.dto';
+import { GameInviteOptionDto } from './dto/game.invite.option.dto';
 
 @Injectable()
 export class GameService {
   private playRoom: GameRoom[]; // 플레이 룸
   private normalQueue: GameQueue; // 게임을 위한 큐
   private rankQueue: GameQueue; // 게임을 위한 큐
-  private friendQueue: GameQueue; // 게임을 위한 큐
+  //   private friendQueue: GameQueue; // 게임을 위한 큐
   private onLinePlayer: [GamePlayer, GameType][]; // online player
   private processedUserIdxList: number[]; // disconnect 처리한
   private nameCnt: number;
@@ -50,7 +52,7 @@ export class GameService {
     this.playRoom = [];
     this.normalQueue = new GameQueue();
     this.rankQueue = new GameQueue();
-    this.friendQueue = new GameQueue();
+    // this.friendQueue = new GameQueue();
     this.onLinePlayer = [];
     this.processedUserIdxList = [];
     this.nameCnt = 0;
@@ -222,16 +224,6 @@ export class GameService {
       channel,
       100,
     );
-    // room.sockets = [];
-    // room.sockets.push(players[0].getSocket());
-    // room.sockets.push(players[1].getSocket());
-    // room.server = server;
-    // room.sockets[0].leave('default');
-    // room.sockets[1].leave('default');
-    // room.sockets[0].join(room.roomId);
-    // room.sockets[1].join(room.roomId);
-    //  console.log(`현재 방 개수 : ` + this.playRoom.push(room));
-
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
     this.playRoom.push(room);
@@ -405,7 +397,11 @@ export class GameService {
   }
 
   // 핑의 수신 용도
-  public receivePing(userIdx: number, latency: number): boolean {
+  public receivePing(
+    userIdx: number,
+    latency: number,
+    server: Server,
+  ): boolean {
     // this.messanger.logWithMessage("receive ping", "" , "" , "start here");
     const targetRoom = this.findGameRoomById(userIdx);
     // this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.roomId}`);
@@ -434,7 +430,7 @@ export class GameService {
       if (targetRoom.latencyCnt[0] >= 3 && targetRoom.latencyCnt[1] >= 3) {
         targetRoom.stopInterval();
         targetRoom.setGamePhase(GamePhase.SET_NEW_GAME);
-        this.sendSetFrameRate(userIdx);
+        if (this.sendSetFrameRate(userIdx, server) === -1) return false;
         targetRoom.latencyCnt.splice(0, 2);
         targetRoom.latencyCnt.push(0);
         targetRoom.latencyCnt.push(0);
@@ -444,7 +440,11 @@ export class GameService {
     return false;
   }
 
-  public checkLatencyOnPlay(target: GameRoom, keyData: KeyPressDto) {
+  public checkLatencyOnPlay(
+    target: GameRoom,
+    keyData: KeyPressDto,
+    server: Server,
+  ) {
     let latencyCnt;
     let latencyIdx;
     if (target.users[0].getUserObject().userIdx === keyData.userIdx)
@@ -462,11 +462,10 @@ export class GameService {
         target.latencyCnt[0] >= target.getMaxFps() &&
         target.latency[1] >= target.getMaxFps()
       ) {
-        this.sendSetFrameRate(keyData.userIdx);
+        if (this.sendSetFrameRate(keyData.userIdx, server) === -1) return false;
         target.latencyCnt.splice(0, 2);
         target.latencyCnt.push(0);
         target.latencyCnt.push(0);
-        // target.gamePhase = GamePhase.SET_NEW_GAME;
         return true;
       }
     }
@@ -474,12 +473,26 @@ export class GameService {
   }
 
   // 받은 핑을 통해 프레임 Max 값을 설정하고, 레이턴시를 지정한다.
-  public sendSetFrameRate(userIdx: number): number {
+  public sendSetFrameRate(userIdx: number, server: Server): number {
     const targetRoom = this.findGameRoomById(userIdx);
     const targetLatency =
       targetRoom.latency[0] >= targetRoom.latency[1]
         ? targetRoom.latency[0]
         : targetRoom.latency[1];
+    const gap = Math.abs(targetRoom.latency[0] - targetRoom.latency[1]);
+    if (gap >= 100) {
+      server
+        .to(targetRoom.roomId)
+        .emit(
+          'game_force_quit',
+          new GameForceQuitDto(
+            `Networking states is bad to continue proper game.`,
+          ),
+        );
+
+      targetRoom.deleteRoom();
+      return -1;
+    }
     // targetRoom.intervalPeriod
     return targetRoom.setLatency(targetLatency, targetRoom);
   }
@@ -515,27 +528,27 @@ export class GameService {
     gameService: GameService,
   ) {
     room.makeNextFrame(room);
-    console.log(`좌표 X : ${room.getGameData().currentPos[0]}`);
-    console.log(`좌표 Y : ${room.getGameData().currentPos[1]}`);
-    console.log(`각도 계산용 X : ${room.getGameData().standardPos[0]}`);
-    console.log(`각도 계산용 Y : ${room.getGameData().standardPos[1]}`);
-    console.log(`기준 좌표 X : ${room.getGameData().anglePos[0]}`);
-    console.log(`기준 좌표 Y : ${room.getGameData().anglePos[1]}`);
-    console.log(`기준 각도 a : ${room.getGameData().linearEquation[0]}`);
-    console.log(`기준 각도 b : ${room.getGameData().linearEquation[1]}`);
-    console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
-    console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
-    if (room.getGameData().vector === Vector.UPLEFT) {
-      console.log(`벡터 : UP-LEFT`);
-    } else if (room.getGameData().vector === Vector.UPRIGHT) {
-      console.log(`벡터 : UP-RIGHT`);
-    } else if (room.getGameData().vector === Vector.DOWNLEFT) {
-      console.log(`벡터 : DOWN-LEFT`);
-    } else if (room.getGameData().vector === Vector.DOWNRIGHT) {
-      console.log(`벡터 : DOWN-RIGHT`);
-    }
+    // console.log(`좌표 X : ${room.getGameData().currentPos[0]}`);
+    // console.log(`좌표 Y : ${room.getGameData().currentPos[1]}`);
+    // console.log(`각도 계산용 X : ${room.getGameData().standardPos[0]}`);
+    // console.log(`각도 계산용 Y : ${room.getGameData().standardPos[1]}`);
+    // console.log(`기준 좌표 X : ${room.getGameData().anglePos[0]}`);
+    // console.log(`기준 좌표 Y : ${room.getGameData().anglePos[1]}`);
+    // console.log(`기준 각도 a : ${room.getGameData().linearEquation[0]}`);
+    // console.log(`기준 각도 b : ${room.getGameData().linearEquation[1]}`);
+    // console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
+    // console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
+    // if (room.getGameData().vector === Vector.UPLEFT) {
+    //   console.log(`벡터 : UP-LEFT`);
+    // } else if (room.getGameData().vector === Vector.UPRIGHT) {
+    //   console.log(`벡터 : UP-RIGHT`);
+    // } else if (room.getGameData().vector === Vector.DOWNLEFT) {
+    //   console.log(`벡터 : DOWN-LEFT`);
+    // } else if (room.getGameData().vector === Vector.DOWNRIGHT) {
+    //   console.log(`벡터 : DOWN-RIGHT`);
+    // }
     const status: GamePhase = room.getGamePhase();
-    console.log(`Status : ${status}`);
+    // console.log(`Status : ${status}`);
     if (
       status === GamePhase.SET_NEW_GAME ||
       status === GamePhase.MATCH_END ||
@@ -549,6 +562,7 @@ export class GameService {
             'game_pause_score',
             new GamePauseScoreDto(room.users, room.gameObj, GameStatus.ONGOING),
           );
+        return;
       } else if (status === GamePhase.FORCE_QUIT) {
         // TODO: 강제 종료 로직
         server
@@ -566,6 +580,23 @@ export class GameService {
         await this.inMemoryUsers.saveUserByUserIdFromIM(
           room.users[1].getUserObject().userIdx,
         );
+        const name =
+          room.history[0].result === RecordResult.LOSE
+            ? room.history[0].matchUserNickname
+            : room.history[1].matchUserNickname;
+        server
+          .to(room.roomId)
+          .emit(
+            'game_force_quit',
+            new GameForceQuitDto(`Game is forcely quit, Because of ${name}`),
+          );
+        this.processedUserIdxList.push(
+          room.users[0].getUserObject().userIdx.valueOf(),
+        );
+        this.processedUserIdxList.push(
+          room.users[1].getUserObject().userIdx.valueOf(),
+        );
+        this.deleteplayRoomByRoomId(room.roomId);
       } else if (status === GamePhase.MATCH_END) {
         server
           .to(room.roomId)
@@ -614,8 +645,15 @@ export class GameService {
           user1.rankpoint -= 100 * correctionValue2;
         }
       }
+      this.processedUserIdxList.push(
+        room.users[0].getUserObject().userIdx.valueOf(),
+      );
+      this.processedUserIdxList.push(
+        room.users[1].getUserObject().userIdx.valueOf(),
+      );
       await this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
       await this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
+      this.deleteplayRoomByRoomId(room.roomId);
     } else if (status === GamePhase.ON_PLAYING) {
       gameService.frameData.setData(room.getGameData(), Date.now());
       server.to(room.roomId).emit('game_frame', gameService.frameData);
@@ -688,52 +726,87 @@ export class GameService {
   private changeChannelforWinnerAndLoser(
     winner: UserObject,
     loser: UserObject,
-    winnerIndex: number,
     room: GameRoom,
   ): GameRoom {
+    winner.isOnline = OnlineStatus.OFFLINE;
+    winner.win++;
+    loser.isOnline = OnlineStatus.OFFLINE;
+    loser.lose++;
+    if (room.gameObj.gameType === GameType.RANK) {
+      const correctionValue1 = loser.rankpoint / winner.rankpoint;
+      const correctionValue2 = winner.rankpoint / loser.rankpoint;
+      winner.rankpoint += 100 * correctionValue1;
+      loser.rankpoint -= 100 * correctionValue2;
+    }
+    const channel: GameChannel = room.channel;
+    channel.status = RecordResult.DONE;
     return room;
   }
 
   private changeHistoryForWinnerAndLoser(
-    winner: UserObject,
-    loser: UserObject,
     winnerIndex: number,
-    room: GameRoom,
     histories: GameRecord[],
   ): GameRecord[] {
+    histories[winnerIndex].result = RecordResult.WIN;
+    let loserIndex: number;
+    if (winnerIndex - 1 === 0) {
+      loserIndex = 0;
+    } else loserIndex = 1;
+    histories[loserIndex].result = RecordResult.LOSE;
     return histories;
   }
 
   public forceQuitMatch(loser: number, server: Server): boolean {
     let room = this.findGameRoomById(loser);
-    room.stopInterval();
+    // room.stopInterval();
     let histories = room.getHistories();
     const p1 = room.users[0].getUserObject();
     const p2 = room.users[1].getUserObject();
     if (p1.userIdx === loser) {
-      room = this.changeChannelforWinnerAndLoser(p1, p2, 1, room);
-      histories = this.changeHistoryForWinnerAndLoser(
-        p1,
-        p2,
-        1,
-        room,
-        histories,
-      );
+      room = this.changeChannelforWinnerAndLoser(p2, p1, room);
+      histories = this.changeHistoryForWinnerAndLoser(1, histories);
     } else {
-      room = this.changeChannelforWinnerAndLoser(p1, p2, 0, room);
-      histories = this.changeHistoryForWinnerAndLoser(
-        p1,
-        p2,
-        0,
-        room,
-        histories,
-      );
+      room = this.changeChannelforWinnerAndLoser(p1, p2, room);
+      histories = this.changeHistoryForWinnerAndLoser(0, histories);
     }
     room.history = histories;
     room.gameObj.gamePhase = GamePhase.FORCE_QUIT;
     setTimeout(() => {
       this.startRendering(room, server, this);
-    }, 100);
+    }, 50);
+    return true;
+  }
+  public checkProcessedOrNot(userIdx: number): boolean {
+    const target = this.processedUserIdxList.find((value) => value === userIdx);
+    if (target === undefined) return false;
+    return true;
+  }
+
+  public popOutProcessedUserIdx(userIdx: number) {
+    const targetIdx = this.processedUserIdxList.findIndex(
+      (value) => value === userIdx,
+    );
+    if (targetIdx === -1) return;
+    this.processedUserIdxList.splice(targetIdx, 1);
+    return;
+  }
+
+  public forceQuitForForceDisconnect(userIdx: number, server: Server): boolean {
+    return this.forceQuitMatch(userIdx, server);
+  }
+
+  public checkInviteGameIsReady(option: GameInviteOptionDto): boolean {
+    const userIdx = option.userIdx;
+    const target = this.playRoom.find(
+      (room) =>
+        room.users[0].getUserObject().userIdx === userIdx ||
+        room.users[1].getUserObject().userIdx === userIdx,
+    );
+    if (target === undefined) return false;
+    return true;
+  }
+
+  public makePlayerRoomForInviteGame(option: GameInviteOptionDto): boolean {
     return true;
   }
 }

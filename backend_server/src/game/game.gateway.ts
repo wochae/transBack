@@ -20,6 +20,7 @@ import { GamePingReceiveDto } from './dto/game.ping.dto';
 import { GameStartDto } from './dto/game.start.dto';
 import { KeyPressDto } from './dto/key.press.dto';
 import { GamePhase } from './enum/game.phase';
+import { check } from 'prettier';
 
 const front = process.env.FRONTEND;
 @WebSocketGateway({
@@ -45,23 +46,19 @@ export class GameGateway
   handleDisconnect(client: Socket) {
     const userIdx: number = parseInt(client.handshake.query.userId as string);
     if (Number.isNaN(userIdx)) return;
-    // TODO: 큐, 방에서 모두 나가도록 처리(게임중이라면)
-    // TODO: online 멤버에서 나가기 처리
+    if (!this.gameService.checkProcessedOrNot(userIdx)) {
+      this.gameService.forceQuitForForceDisconnect(userIdx, this.server);
+    }
+    return;
   }
 
   handleConnection(client: Socket) {
-    this.messanger.logWithMessage(
-      'handleConnection',
-      '',
-      '',
-      'connection handling is start',
-    );
-
     const userIdx: number = parseInt(
       client.handshake.query.userId as string,
       10,
     );
     if (Number.isNaN(userIdx)) return;
+    this.gameService.popOutProcessedUserIdx(userIdx); // 처리된 사용자지만, 새로이 들어왔다면 다시 빼고 관리 이루어짐
     if (!this.gameService.setSocketToPlayer(client, userIdx)) {
       this.messanger.logWithWarn(
         'handleConnection',
@@ -105,18 +102,13 @@ export class GameGateway
   ) {
     const userIdx = data.userIdx;
     const ret = this.gameService.checkReady(userIdx);
-    // console.log('ret', ret)
-    // console.log('data', data)
-    // console.log("success", this.server.sockets)
     if (ret === null) client.disconnect(true);
     else if (ret === true) {
       console.log('game ready');
-      // this.messanger.logWithMessage("getReadyForGame", "", "", "ping is ready");
       const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
       setTimeout(() => {
         this.gameService.readyToSendPing(roomId, this.server);
       }, 1200);
-      // this.gameService.readyToSendPing(roomId, this.server);
       this.gameService.uncheckReady(userIdx);
       return this.messanger.setResponseMsgWithLogger(
         200,
@@ -124,7 +116,6 @@ export class GameGateway
         'game_queue_susccess',
       );
     }
-    // this.messanger.logWithMessage("game_queue_success", "", "","game_queue_success is successed");
     return this.messanger.setResponseMsgWithLogger(
       201,
       'game is ready',
@@ -134,13 +125,10 @@ export class GameGateway
 
   @SubscribeMessage('game_ping_receive')
   async getUserPong(@MessageBody() data: GamePingReceiveDto) {
-    // this.messanger.logWithMessage("game_ping", "", "","game_ping is started");
-    // this.messanger.logWithMessage("game_ping", "", "",`user : ${data.userIdx}`);
-    // console.log("game_ping_receive", this.server.sockets);
     const time = Date.now();
     const latency = (time - data.serverTime) / 2;
 
-    if (this.gameService.receivePing(data.userIdx, latency)) {
+    if (this.gameService.receivePing(data.userIdx, latency, this.server)) {
       const targetRoom = this.gameService.findGameRoomById(data.userIdx);
       this.server
         .to(targetRoom.roomId)
@@ -151,7 +139,7 @@ export class GameGateway
         this.gameService.startGame(data.userIdx, this.server, this.gameService);
       }, 5000);
       return this.messanger.setResponseMsgWithLogger(
-        this.gameService.sendSetFrameRate(data.userIdx),
+        this.gameService.sendSetFrameRate(data.userIdx, this.server),
         'Your max fps is checked',
         'getUserPong',
       );
@@ -168,7 +156,7 @@ export class GameGateway
     const targetRoom = this.gameService.findGameRoomById(data.userIdx);
     console.log(`key board signal = ${data.userIdx} : ${data.paddle}`);
     targetRoom.keyPressed(data.userIdx, data.paddle);
-    if (this.gameService.checkLatencyOnPlay(targetRoom, data)) {
+    if (this.gameService.checkLatencyOnPlay(targetRoom, data, this.server)) {
       return this.messanger.setResponseMsgWithLogger(
         202,
         'Frame is changed',
@@ -217,12 +205,7 @@ export class GameGateway
 
   @SubscribeMessage('game_force_quit')
   getQuitSignal(@MessageBody() data: GameBasicAnswerDto) {
-    this.gameService.forceQuitMatch(data.userIdx, this.server);
-
-    // 누군지 파악
-    // 내용 조작
-    // MatchEnd 상태로 변경
-    // 정상 처리 로직으로 다시 개입되어 정리 되도록 만들기
+    // this.gameService.forceQuitMatch(data.userIdx, this.server);
   }
 
   @SubscribeMessage('game_queue_quit')
