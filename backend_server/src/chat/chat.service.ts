@@ -563,6 +563,7 @@ export class ChatService {
   /******************* Funcions about Exit Room *******************/
 
   goToLobby(client: Socket, channel: Channel, user: UserObject) {
+    console.log('chat Service : goToLobby');
     const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
     const isAdmin: boolean = channel.getAdmin.some(
       (member) => member.userIdx === user.userIdx,
@@ -584,8 +585,9 @@ export class ChatService {
         mode: channel.mode,
       };
     });
+    client.emit('chat_goto_lobby', channelsInfo);
     client.leave(`chat_room_${channel.getChannelIdx}`);
-    return channelsInfo;
+    
   }
 
   exitAnnounce(channel: Channel) {
