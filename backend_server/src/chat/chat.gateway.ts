@@ -540,18 +540,6 @@ export class ChatGateway
             msgDate: msgInfo.msgDate,
           };
         });
-      const checkBlock = await this.usersService.checkBlockList(
-        user,
-        this.inMemoryUsers,
-        target,
-      );
-      if (checkBlock) {
-        return this.messanger.setResponseMsgWithLogger(
-          200,
-          'Blocked User',
-          'chat_send_msg',
-        );
-      }
       this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else {
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -1043,8 +1031,6 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() chatGeneralReqDto: ChatGeneralReqDto,
   ) {
-    // FIXME: targetnickname 과 targetIdx 가 서로 맞는지 비교
-    // FIXME: targetIdx 가 본인인지 확인
     const { targetNickname, targetIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
