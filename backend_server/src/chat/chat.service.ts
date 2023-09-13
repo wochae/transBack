@@ -15,7 +15,12 @@ import {
   Transaction,
 } from 'typeorm';
 import { Permission, UserObject } from 'src/entity/users.entity';
-import { DMChannel, DirectMessage, HashedChannel, Mode } from '../entity/chat.entity';
+import {
+  DMChannel,
+  DirectMessage,
+  HashedChannel,
+  Mode,
+} from '../entity/chat.entity';
 import { DMChannelRepository, DirectMessageRepository } from './DM.repository';
 import { SendDMDto } from './dto/send-dm.dto';
 import { InMemoryUsers } from 'src/users/users.provider';
@@ -222,7 +227,7 @@ export class ChatService {
       await this.dmChannelRepository.findDMChannelsByUserIdx(user.userIdx);
     for (const channel of userChannels) {
       const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
-        channel.userIdx1
+        channel.userIdx1,
       );
       const isBlocked = blockList.some(
         (user) => user.blockedUserIdx === channel.userIdx2,
@@ -243,7 +248,7 @@ export class ChatService {
       );
     for (const channel of targetChannels) {
       const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
-        channel.userIdx2
+        channel.userIdx2,
       );
       const isBlocked = blockList.some(
         (user) => user.blockedUserIdx === channel.userIdx2,
@@ -297,7 +302,10 @@ export class ChatService {
     } else if (password !== '') {
       channel.setMode = Mode.PROTECTED;
       const hashedPassword = await this.hashPassword(password);
-      const hashed = this.hashedChannelRepository.create({channelIdx: channelIdx, hasedPassword: hashedPassword});
+      const hashed = this.hashedChannelRepository.create({
+        channelIdx: channelIdx,
+        hasedPassword: hashedPassword,
+      });
       this.hashedChannelRepository.save(hashed);
       console.log('hashed', hashed);
     }
@@ -334,7 +342,7 @@ export class ChatService {
       return;
     }
     const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
-    
+
     const message = {
       channelIdx: channelIdx,
       senderIdx: sender.userIdx,
@@ -404,7 +412,10 @@ export class ChatService {
   }
 
   // 이 함수는 로그인 시 비밀번호 검증에 사용될 수 있습니다.
-  async comparePasswords(enteredPassword: string, hashedPassword: string): Promise<boolean> {
+  async comparePasswords(
+    enteredPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
     return await bcrypt.compare(enteredPassword, hashedPassword);
   }
 
@@ -638,20 +649,11 @@ export class ChatService {
 
     const channelsInfo = [];
     for (const channel of channels) {
-      const blockList = await this.inMemoryUsers.getBlockListByIdFromIM(
-        channel.userIdx1
-      );
-      const isBlocked = blockList.some(
-        (user) => user.blockedUserIdx === channel.userIdx2,
-      );
-
-      if (!isBlocked) {
-        channelsInfo.push({
-          targetNickname: channel.userNickname2,
-          channelIdx: channel.channelIdx,
-          mode: Mode.PRIVATE,
-        });
-      }
+      channelsInfo.push({
+        targetNickname: channel.userNickname2,
+        channelIdx: channel.channelIdx,
+        mode: Mode.PRIVATE,
+      });
     }
     return channelsInfo;
   }
@@ -676,7 +678,7 @@ export class ChatService {
     // // 전체 개수를 5로 나눈다. 나눈 값이 10이라고 하면  7 + i, 8 + i, 9 + i, 10 + i 인텍스의 메시지를 더한다. (i는 0부터 5까지)
     const dmMessageListWhenEnterRoom = [];
     let totalPage = Math.floor(totalMsgCount / 5);
-    if ((totalMsgCount % 5) != 0) {
+    if (totalMsgCount % 5 != 0) {
       totalPage += 1;
     }
     console.log('totalPage: ', totalPage);
@@ -685,7 +687,7 @@ export class ChatService {
     for (let j = 0; j < 4; j++) {
       console.log(pageForStart);
       for (let i = 0; i < 5; i++) {
-        let num = i + (pageForStart * 5);
+        let num = i + pageForStart * 5;
         if (dmMessageList[num]) {
           dmMessageListWhenEnterRoom.push(dmMessageList[num]);
         }
@@ -693,8 +695,10 @@ export class ChatService {
       pageForStart += 1;
     }
     dmMessageListWhenEnterRoom.reverse();
-    console.log("의심되는 부분입니다: ", dmMessageListWhenEnterRoom);
-    const targetUser = await this.inMemoryUsers.getUserByIdFromIM(channel.userIdx2);
+    console.log('의심되는 부분입니다: ', dmMessageListWhenEnterRoom);
+    const targetUser = await this.inMemoryUsers.getUserByIdFromIM(
+      channel.userIdx2,
+    );
     const messageInfo = {
       message: dmMessageListWhenEnterRoom,
       totalMsgCount: totalMsgCount,
@@ -719,14 +723,14 @@ export class ChatService {
       const num = i + (Number(page) - 1) * 5;
       if (messages[num]) {
         messageList.push(messages[num]);
-      } 
+      }
     }
     messageList.reverse();
     const messageInfo = await Promise.all(
       messageList.map(async (message) => {
-        const senderIdx = (await this.inMemoryUsers.getUserByNicknameFromIM(
-          message.sender
-        )).userIdx;
+        const senderIdx = (
+          await this.inMemoryUsers.getUserByNicknameFromIM(message.sender)
+        ).userIdx;
         return {
           channelIdx: message.channelIdx,
           senderIdx: senderIdx,
