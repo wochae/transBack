@@ -372,6 +372,10 @@ export class UsersService {
     return this.userObjectRepository.setIsOnline(user, isOnline);
   }
 
+  async initServerUsers() {
+    await this.userObjectRepository.initServerUsers();
+  }
+
   async getUserObjectFromDB(idValue: number): Promise<UserObject> {
     return this.userObjectRepository.findOne({ where: { userIdx: idValue } });
   }
