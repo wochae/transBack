@@ -292,12 +292,12 @@ export class Physics {
     ret = false;
     if (vector === Vector.DOWNLEFT || vector === Vector.UPLEFT) {
       if (ballData[0] - 20 <= engine.MIN_WIDTH) {
-        ballData[0] = engine.MIN_WIDTH + 20;
+        ballData[0] = engine.MIN_WIDTH - 20;
         ret = true;
       }
     } else if (vector === Vector.DOWNRIGHT || vector === Vector.UPRIGHT) {
       if (ballData[0] + 20 >= engine.MAX_WIDTH) {
-        ballData[0] = engine.MAX_WIDTH - 20;
+        ballData[0] = engine.MAX_WIDTH + 20;
         ret = true;
       }
     }
