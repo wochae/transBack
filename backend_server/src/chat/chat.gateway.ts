@@ -118,12 +118,12 @@ export class ChatGateway
       channel.getMember.some((member) => member.userIdx === user.userIdx),
     );
     channelForLeave?.forEach((channel) => {
-      channel.removeMember(user);
+      this.chatService.goToLobby(client, channel, user);
       const roomIsEmpty = this.chatService.checkEmptyChannel(channel);
       if (roomIsEmpty) {
         const channels = this.chatService.removeEmptyChannel(channel);
       }
-      client.leave(`chat_room_${channel.getChannelIdx}`);
+      this.announceExit(channel);
     });
     const dmChannelList: Promise<DMChannel[]> =
       this.chatService.findPrivateChannelByUserIdx(user.userIdx);
@@ -139,6 +139,7 @@ export class ChatGateway
     } else {
       await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
     }
+    console.log(notDmChannelList);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Disconnect Done',
@@ -741,6 +742,10 @@ export class ChatGateway
   ) {
     const { channelIdx, userIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
+    if (!client) {
+      console.log("여기니?", client);
+      return ;
+    }
     if (userId != userIdx) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -755,6 +760,7 @@ export class ChatGateway
       return member.userIdx === userIdx;
     });
     if (!user) {
+      console.log("여기니?", user);
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
@@ -764,7 +770,6 @@ export class ChatGateway
       );
     }
     const channelInfo = this.chatService.goToLobby(client, channel, user);
-    client.emit('chat_goto_lobby', channelInfo);
     this.messanger.logWithMessage(
       'chat_goto_lobby',
       'user',
@@ -783,10 +788,13 @@ export class ChatGateway
         'BR_chat_room_delete',
       );
     }
-
     // API: MAIN_CHAT_8
-    const announce = this.chatService.exitAnnounce(channel);
-    this.server.to(`chat_room_${channelIdx}`).emit('chat_room_exit', announce);
+    this.announceExit(channel);
+  }
+  async announceExit(channel: Channel) {
+    const announce = await this.chatService.exitAnnounce(channel);
+    console.log("announce : ",announce);
+    this.server.to(`chat_room_${channel.getChannelIdx}`).emit('chat_room_exit', announce);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done exit room',
