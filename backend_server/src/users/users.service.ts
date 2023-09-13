@@ -313,7 +313,7 @@ export class UsersService {
       userIdx: userIdx,
       intra: intra,
       nickname: "",
-      imgUri: `${backenduri}/${userIdx}.png`,
+      imgUri: `${backenduri}/img/${userIdx}.png`,
       rankpoint: 0,
       isOnline: OnlineStatus.ONLINE,
       available: false,
