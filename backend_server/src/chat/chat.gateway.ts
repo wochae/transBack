@@ -43,7 +43,11 @@ const front = process.env.FRONTEND;
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000', front],
+    origin: [
+      'http://paulryu9309.ddns.net:3000',
+      'http://localhost:3000',
+      front,
+    ],
   },
 })
 export class ChatGateway
@@ -67,7 +71,7 @@ export class ChatGateway
   }
 
   async handleConnection(client: Socket) {
-    console.log('@@@@@@', client.handshake.query.userId);
+    console.log('Client UserId : ', client.handshake.query.userId);
     const userId: number = parseInt(client.handshake.query.userId as string);
     if (Number.isNaN(userId)) return;
 
@@ -132,12 +136,24 @@ export class ChatGateway
         client.leave(`chat_room_${channel.channelIdx}`);
       });
     });
+    const friendList = await this.usersService.getFriendList(user.userIdx);
     if (user.isOnline === OnlineStatus.ONGAME) {
       setTimeout(async () => {
-        await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE), 100;
+        await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
+        this.server.emit('set_chat_user_status_db', {
+          nickname: user.nickname,
+          userIdx: user.userIdx,
+          isOnline: OnlineStatus.ONGAME,
+        }),
+          100;
       });
     } else {
       await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
+      this.server.emit('set_chat_user_status_db', {
+        nickname: user.nickname,
+        userIdx: user.userIdx,
+        isOnline: OnlineStatus.OFFLINE,
+      });
     }
     return this.messanger.setResponseMsgWithLogger(
       200,
@@ -158,7 +174,7 @@ export class ChatGateway
     const userId: number = parseInt(client.handshake.query.userId as string);
     const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
     const user = checkUser;
-    
+
     if (!user) {
       client.disconnect();
       return this.messanger.logWithWarn(
@@ -168,7 +184,7 @@ export class ChatGateway
         'Not Found',
       );
     }
-    
+
     const userObject = {
       imgUri: user.imgUri,
       nickname: user.nickname,
@@ -409,8 +425,14 @@ export class ChatGateway
           'channel',
           'Protected Channel',
         );
-        const hashedChannel = await this.chatService.findHashedChannelByChannelIdx(channel.getRoomId);
-        const compared = await this.chatService.comparePasswords(password, hashedChannel.hasedPassword);
+        const hashedChannel =
+          await this.chatService.findHashedChannelByChannelIdx(
+            channel.getRoomId,
+          );
+        const compared = await this.chatService.comparePasswords(
+          password,
+          hashedChannel.hasedPassword,
+        );
         if (!compared) {
           return this.messanger.setResponseErrorMsgWithLogger(
             400,
