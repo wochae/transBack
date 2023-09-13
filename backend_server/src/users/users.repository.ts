@@ -31,4 +31,13 @@ export class UserObjectRepository extends Repository<UserObject> {
     await this.update(user.userIdx, { isOnline: user.isOnline });
     return user.isOnline;
   }
+
+  async initServerUsers(): Promise<void> {
+    const users = await this.find();
+    await Promise.all(
+      users.map(async (user) => {
+        await this.update(user.userIdx, { isOnline: 1 });
+      }),
+    );
+  }
 }

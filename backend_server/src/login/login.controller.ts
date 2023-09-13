@@ -85,7 +85,8 @@ export class LoginController {
     intraInfo.imgUri = intraSimpleInfoDto.imgUri;
     intraInfo.nickname = intraSimpleInfoDto.nickname;
     intraInfo.available = intraSimpleInfoDto.available;
-    this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
+    const userOnline = await this.usersService.findOneUser(intraInfo.userIdx)
+    this.usersService.setIsOnline(userOnline, OnlineStatus.ONLINE);
 
     res.cookie('authorization', intraInfo.token, { httpOnly: true, path: '*' });
     res.header('Cache-Control', 'no-store');
@@ -97,10 +98,10 @@ export class LoginController {
     return res.status(200).json(intraInfo);
   }
 
-  @Post('logout')
-  @Header('Set-Cookie', 'Authentication=; Path=/; HttpOnly; Max-Age=0')
-  logout() {
+  @Get('logout')
+  async logout(@Res() res: Response): Promise<void> {
     this.logger.log('logout');
-    return { message: '로그아웃 되었습니다.' };
+    await this.usersService.initServerUsers();
+    res.status(200).json({ message: '로그아웃 되었습니다.' });
   }
 }
