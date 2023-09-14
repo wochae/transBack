@@ -70,7 +70,9 @@ export class GameService {
   async getGameRecordsByInfinity(userIdx: number, page: number): Promise<UserProfileGameDto[]>{
     const skip = page * 3; // items per page fixed
     const records = await this.gameRecordRepository.find({
-      select: ['matchUserIdx', 'matchUserNickname', 'score', 'type', 'result'],
+      select: [
+        // 'idx','gameIdx',
+        'matchUserIdx', 'matchUserNickname', 'score', 'type', 'result'],
       where: { userIdx },
       order: { matchDate: 'DESC' },
       skip,
