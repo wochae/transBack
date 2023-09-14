@@ -2,7 +2,7 @@ import { RecordResult, RecordType } from "../enum/game.type.enum";
 
 export class UserProfileGameRecordDto {
     userInfo : UserRecordInfoDto;
-    gameList : UserProfileGameDto[];
+    gameRecord : UserProfileGameDto[];
 }
   
 export class UserRecordInfoDto {

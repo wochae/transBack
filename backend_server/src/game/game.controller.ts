@@ -10,7 +10,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { GameService } from './game.service';
-import { UserProfileGameRecordDto } from './dto/game.record.dto';
+import { UserProfileGameDto, UserProfileGameRecordDto } from './dto/game.record.dto';
 import { GameOptionDto } from './dto/game.option.dto';
 import { UsersService } from 'src/users/users.service';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
@@ -45,11 +45,12 @@ export class GameController {
     );
     const userProfileGameRecordDto: UserProfileGameRecordDto = {
       userInfo: {
-        win: user.win,
-        lose: user.lose,
+        win: null,
+        lose: null,
       },
-      gameList: records,
+      gameRecord: records,
     };
+    console.log('getRecord', userProfileGameRecordDto);
     return userProfileGameRecordDto;
   }
 
