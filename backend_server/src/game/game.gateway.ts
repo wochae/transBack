@@ -159,7 +159,7 @@ export class GameGateway
   @SubscribeMessage('game_move_paddle')
   getKeyPressData(@MessageBody() data: KeyPressDto) {
     const targetRoom = this.gameService.findGameRoomById(data.userIdx);
-    console.log(`key board signal = ${data.userIdx} : ${data.paddle}`);
+    // console.log(`key board signal = ${data.userIdx} : ${data.paddle}`);
     targetRoom.keyPressed(data.userIdx, data.paddle);
     if (this.gameService.checkLatencyOnPlay(targetRoom, data, this.server)) {
       return this.messanger.setResponseMsgWithLogger(

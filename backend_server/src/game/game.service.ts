@@ -86,7 +86,7 @@ export class GameService {
       skip,
       take: 3,
     });
-    console.log('getGameRecordsByInfinity', records);
+    // console.log('getGameRecordsByInfinity', records);
     return records;
   }
 
@@ -441,7 +441,7 @@ export class GameService {
     }
     target.intervalId = setInterval(() => {
       this.sendPingToRoom(target, server);
-    }, 1000);
+    }, 15);
   }
 
   // 실제 초반 레이턴시 확정을 위한 핑 보내는 메서드
@@ -488,8 +488,8 @@ export class GameService {
     }
     // TODO: Lateyncy cnt to change
     console.log(`target ${latencyIdx} : ${targetRoom.latencyCnt[latencyIdx]}`);
-    if (targetRoom.latencyCnt[latencyIdx] === 3) {
-      if (targetRoom.latencyCnt[0] >= 3 && targetRoom.latencyCnt[1] >= 3) {
+    if (targetRoom.latencyCnt[latencyIdx] === 30) {
+      if (targetRoom.latencyCnt[0] >= 30 && targetRoom.latencyCnt[1] >= 30) {
         targetRoom.stopInterval();
         targetRoom.setGamePhase(GamePhase.SET_NEW_GAME);
         if (this.sendSetFrameRate(userIdx, server) === -1) return false;
@@ -590,27 +590,7 @@ export class GameService {
     gameService: GameService,
   ) {
     room.makeNextFrame(room);
-    // console.log(`좌표 X : ${room.getGameData().currentPos[0]}`);
-    // console.log(`좌표 Y : ${room.getGameData().currentPos[1]}`);
-    // console.log(`각도 계산용 X : ${room.getGameData().standardPos[0]}`);
-    // console.log(`각도 계산용 Y : ${room.getGameData().standardPos[1]}`);
-    // console.log(`기준 좌표 X : ${room.getGameData().anglePos[0]}`);
-    // console.log(`기준 좌표 Y : ${room.getGameData().anglePos[1]}`);
-    // console.log(`기준 각도 a : ${room.getGameData().linearEquation[0]}`);
-    // console.log(`기준 각도 b : ${room.getGameData().linearEquation[1]}`);
-    // console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
-    // console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
-    // if (room.getGameData().vector === Vector.UPLEFT) {
-    //   console.log(`벡터 : UP-LEFT`);
-    // } else if (room.getGameData().vector === Vector.UPRIGHT) {
-    //   console.log(`벡터 : UP-RIGHT`);
-    // } else if (room.getGameData().vector === Vector.DOWNLEFT) {
-    //   console.log(`벡터 : DOWN-LEFT`);
-    // } else if (room.getGameData().vector === Vector.DOWNRIGHT) {
-    //   console.log(`벡터 : DOWN-RIGHT`);
-    // }
     const status: GamePhase = room.getGamePhase();
-    // console.log(`Status : ${status}`);
     if (
       status === GamePhase.SET_NEW_GAME ||
       status === GamePhase.MATCH_END ||

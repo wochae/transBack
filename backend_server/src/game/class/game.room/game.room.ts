@@ -167,19 +167,120 @@ export class GameRoom {
   }
 
   public keyPressed(userIdx: number, value: number) {
-    console.log(`key pressed by : ${userIdx}`);
+    // console.log(`key pressed by : ${userIdx}`);
     if (this.users[0].getUserObject().userIdx === userIdx) {
       this.keyPress[0].pushKey(value);
-      console.log(`key value : ${this.keyPress[0].getHowManyKey()}`);
+      //   console.log(`key value : ${this.keyPress[0].getHowManyKey()}`);
     } else if (this.users[1].getUserObject().userIdx === userIdx) {
       this.keyPress[1].pushKey(value);
-      console.log(`key value : ${this.keyPress[1].getHowManyKey()}`);
+      //   console.log(`key value : ${this.keyPress[1].getHowManyKey()}`);
     }
   }
 
   public makeNextFrame(room: GameRoom) {
     room.gameObj = room.animation.makeFrame(room, room.keyPress);
+    console.log(`${room.gameObj.frameData[0]} / ${room.gameObj.frameData[1]}`);
+    console.log(`============================================`);
+    console.log(
+      `공 좌표 [X , Y] : [${room.getGameData().currentPos[0]} , ${
+        room.getGameData().currentPos[1]
+      }]`,
+    );
+    console.log(
+      `각도 계산용 [X , Y] : [${room.getGameData().standardPos[0]} , ${
+        room.getGameData().standardPos[1]
+      }]`,
+    );
+    console.log(
+      `기준 각도 좌표 [X , Y] : [${room.getGameData().anglePos[0]} , ${
+        room.getGameData().anglePos[1]
+      }]`,
+    );
+    console.log(`기울기 a : ${room.getGameData().linearEquation[0]}`);
+    console.log(`절편 b : ${room.getGameData().linearEquation[1]}`);
+    console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
+    console.log(
+      `페들 1 [min , Max] : [${room.getGameData().paddle1[1][0]} , ${
+        room.getGameData().paddle1[1][1]
+      }]`,
+    );
+    console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
+    console.log(
+      `페들 2 [min , Max]: [${room.getGameData().paddle2[1][0]} , ${
+        room.getGameData().paddle2[1][1]
+      }]`,
+    );
+    if (room.getGameData().vector === Vector.UPLEFT) {
+      console.log(`벡터 : UP-LEFT`);
+    } else if (room.getGameData().vector === Vector.UPRIGHT) {
+      console.log(`벡터 : UP-RIGHT`);
+    } else if (room.getGameData().vector === Vector.DOWNLEFT) {
+      console.log(`벡터 : DOWN-LEFT`);
+    } else if (room.getGameData().vector === Vector.DOWNRIGHT) {
+      console.log(`벡터 : DOWN-RIGHT`);
+    }
+    console.log(`============================================`);
+
     room.gameObj = room.physics.checkPhysics(room.gameObj, room.physics);
+
+    if (
+      room.gameObj.gamePhase === GamePhase.HIT_THE_PADDLE ||
+      room.gameObj.gamePhase === GamePhase.HIT_THE_WALL ||
+      room.gameObj.gamePhase === GamePhase.HIT_THE_GOAL_POST
+    ) {
+      if (room.gameObj.gamePhase === GamePhase.HIT_THE_GOAL_POST) {
+        console.log('Hit The Post!!!');
+      } else if (room.gameObj.gamePhase === GamePhase.HIT_THE_PADDLE) {
+        console.log('Hit The Paddle!!!');
+      } else {
+        console.log('Hit The Wall!!!');
+      }
+      console.log(
+        `${room.gameObj.frameData[0]} / ${room.gameObj.frameData[1]}`,
+      );
+      console.log(`============================================`);
+      console.log(
+        `공 좌표 [X , Y] : [${room.getGameData().currentPos[0]} , ${
+          room.getGameData().currentPos[1]
+        }]`,
+      );
+      console.log(
+        `각도 계산용 [X , Y] : [${room.getGameData().standardPos[0]} , ${
+          room.getGameData().standardPos[1]
+        }]`,
+      );
+      console.log(
+        `기준 각도 좌표 [X , Y] : [${room.getGameData().anglePos[0]} , ${
+          room.getGameData().anglePos[1]
+        }]`,
+      );
+      console.log(`기울기 a : ${room.getGameData().linearEquation[0]}`);
+      console.log(`절편 b : ${room.getGameData().linearEquation[1]}`);
+      console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
+      console.log(
+        `페들 1 [min , Max] : [${room.getGameData().paddle1[1][0]} , ${
+          room.getGameData().paddle1[1][1]
+        }]`,
+      );
+      console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
+      console.log(
+        `페들 2 [min , Max]: [${room.getGameData().paddle2[1][0]} , ${
+          room.getGameData().paddle2[1][1]
+        }]`,
+      );
+      if (room.getGameData().vector === Vector.UPLEFT) {
+        console.log(`벡터 : UP-LEFT`);
+      } else if (room.getGameData().vector === Vector.UPRIGHT) {
+        console.log(`벡터 : UP-RIGHT`);
+      } else if (room.getGameData().vector === Vector.DOWNLEFT) {
+        console.log(`벡터 : DOWN-LEFT`);
+      } else if (room.getGameData().vector === Vector.DOWNRIGHT) {
+        console.log(`벡터 : DOWN-RIGHT`);
+      }
+      console.log(`============================================`);
+    }
+    if (room.gameObj.gamePhase !== GamePhase.HIT_THE_GOAL_POST)
+      room.gameObj.gamePhase = GamePhase.ON_PLAYING;
     room.gameObj = room.checkScore(room.gameObj);
   }
 

@@ -29,12 +29,12 @@ export class Physics {
     if (
       engine.checkHitThePaddle(gameData.currentPos, gameData.vector, engine)
     ) {
-      console.log(
-        `paddle 1 범위 ${gameData.paddle1[1][0]} / ${gameData.paddle1[1][1]}`,
-      );
-      console.log(
-        `paddle 2 범위 ${gameData.paddle2[1][0]} / ${gameData.paddle2[1][1]}`,
-      );
+      //   console.log(
+      //     `paddle 1 범위 ${gameData.paddle1[1][0]} / ${gameData.paddle1[1][1]}`,
+      //   );
+      //   console.log(
+      //     `paddle 2 범위 ${gameData.paddle2[1][0]} / ${gameData.paddle2[1][1]}`,
+      //   );
       if (engine.needToCorrection(gameData)) {
         console.log('페들 입력시 여기로 들어갈까?!');
         gameData.gamePhase = GamePhase.HIT_THE_PADDLE;
@@ -56,8 +56,6 @@ export class Physics {
       engine,
       gameData,
     );
-    if (gameData.gamePhase !== GamePhase.HIT_THE_GOAL_POST)
-      gameData.gamePhase = GamePhase.ON_PLAYING;
     return gameData;
   }
 
