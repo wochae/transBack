@@ -765,8 +765,8 @@ export class ChatGateway
     const { channelIdx, userIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     if (!client) {
-      console.log("여기니?", client);
-      return ;
+      console.log('여기니?', client);
+      return;
     }
     if (userId != userIdx) {
       client.disconnect();
@@ -782,7 +782,7 @@ export class ChatGateway
       return member.userIdx === userIdx;
     });
     if (!user) {
-      console.log("여기니?", user);
+      console.log('여기니?', user);
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
@@ -815,8 +815,10 @@ export class ChatGateway
   }
   async announceExit(channel: Channel) {
     const announce = await this.chatService.exitAnnounce(channel);
-    console.log("announce : ",announce);
-    this.server.to(`chat_room_${channel.getChannelIdx}`).emit('chat_room_exit', announce);
+    console.log('announce : ', announce);
+    this.server
+      .to(`chat_room_${channel.getChannelIdx}`)
+      .emit('chat_room_exit', announce);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done exit room',
@@ -1171,9 +1173,30 @@ export class ChatGateway
 
   @SubscribeMessage('chat_invite_ask')
   async inviteFriendToGame(@MessageBody() invitation: GameInvitationDto) {
+    console.log(invitation);
+    let i = 0;
+    console.log(`Check API! #${i++}`);
     const targetTuple = this.chat.getUserTuple(invitation.targetUserIdx);
+    if (targetTuple === undefined) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'BadRequest, target userId is not proper Id.',
+        'chat_invite_ask',
+      );
+    }
+    console.log(`Check API! #${i++}`);
+
     const targetSocket = targetTuple[1];
     const userTuple = this.chat.getUserTuple(invitation.myUserIdx);
+    if (userTuple === undefined) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'BadRequest, your userId is not proper Id.',
+        'chat_invite_ask',
+      );
+    }
+    console.log(`Check API! #${i++}`);
+
     const myObject = userTuple[0];
     if (targetSocket === undefined) {
       return new ReturnMsgDto(400, 'Bad Request, target user is not online');
@@ -1192,6 +1215,7 @@ export class ChatGateway
         myObject.userIdx,
         myObject.nickname,
       );
+      console.log(invitaionCard);
       targetSocket.emit('chat_invite_answer', invitaionCard);
     } else {
       return new ReturnMsgDto(400, 'Bad Request, target user is offline');

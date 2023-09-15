@@ -101,8 +101,13 @@ export class GameGateway
     @MessageBody() data: GameBasicAnswerDto,
   ) {
     const userIdx = data.userIdx;
+    console.log(`gmae_queue_success : `, userIdx);
     const ret = this.gameService.checkReady(userIdx);
-    if (ret === null) client.disconnect(true);
+    if (ret === null) {
+      console.log(`error happens!`);
+      client.disconnect(true);
+    }
+    //TODO: error handling
     else if (ret === true) {
       console.log('game ready');
       const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
@@ -154,7 +159,7 @@ export class GameGateway
   @SubscribeMessage('game_move_paddle')
   getKeyPressData(@MessageBody() data: KeyPressDto) {
     const targetRoom = this.gameService.findGameRoomById(data.userIdx);
-    console.log(`key board signal = ${data.userIdx} : ${data.paddle}`);
+    // console.log(`key board signal = ${data.userIdx} : ${data.paddle}`);
     targetRoom.keyPressed(data.userIdx, data.paddle);
     if (this.gameService.checkLatencyOnPlay(targetRoom, data, this.server)) {
       return this.messanger.setResponseMsgWithLogger(
@@ -177,6 +182,10 @@ export class GameGateway
   ) {
     const userIdx = data.userIdx;
     const ret = this.gameService.checkReady(userIdx);
+    if (ret === null) {
+      console.log(`error happens!`);
+    }
+    //TODO: error handling
     const target = this.gameService.findGameRoomById(userIdx);
     if (ret === null) client.disconnect(true);
     else if (

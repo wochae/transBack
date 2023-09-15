@@ -67,33 +67,45 @@ export class GameService {
   }
 
   // PROFILE_INFINITY
-  async getGameRecordsByInfinity(userIdx: number, page: number): Promise<UserProfileGameDto[]>{
+  async getGameRecordsByInfinity(
+    userIdx: number,
+    page: number,
+  ): Promise<UserProfileGameDto[]> {
     const skip = page * 3; // items per page fixed
     const records = await this.gameRecordRepository.find({
       select: [
         // 'idx','gameIdx',
-        'matchUserIdx', 'matchUserNickname', 'score', 'type', 'result'],
+        'matchUserIdx',
+        'matchUserNickname',
+        'score',
+        'type',
+        'result',
+      ],
       where: { userIdx },
       order: { matchDate: 'DESC' },
       skip,
       take: 3,
     });
-    console.log('getGameRecordsByInfinity', records);
+    // console.log('getGameRecordsByInfinity', records);
     return records;
   }
 
   // player 만들기
   async makePlayer(data: GameOptionDto): Promise<GamePlayer | null> {
+    console.log(`userIdx: ${data.userIdx}`);
     const getPerson = await this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
+    console.log(`userIdx: ${data.userIdx}`);
+
     if (getPerson === undefined) return null;
 
     const player = new GamePlayer(getPerson);
     player.setOptions(data);
-    if (getPerson.isOnline === OnlineStatus.ONLINE)
-      getPerson.isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
+    getPerson.isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
     const target = await this.inMemoryUsers.saveUserByUserIdFromIM(
       getPerson.userIdx,
     );
+    console.log(`userIdx: ${data.userIdx}`);
+
     if (target === null) return null;
     player.setUserObject(target);
     return player;
@@ -429,7 +441,7 @@ export class GameService {
     }
     target.intervalId = setInterval(() => {
       this.sendPingToRoom(target, server);
-    }, 1000);
+    }, 15);
   }
 
   // 실제 초반 레이턴시 확정을 위한 핑 보내는 메서드
@@ -449,7 +461,14 @@ export class GameService {
     // this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.roomId}`);
     // this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.gamePhase}`);
 
-    if (targetRoom.getGamePhase() !== GamePhase.MAKE_ROOM) return false;
+    // switch(targetRoom.getGamePhase()) {
+    // 	case GamePhase.Make_
+    // }
+    // if (targetRoom.getGamePhase() !== GamePhase.MAKE_ROOM) return false;
+    // else if (targetRoom.getGamePhase() === GamePhase.SET_NEW_GAME) {
+    //   continue;
+    // }
+
     let latencyIdx;
     if (targetRoom.users[0].getUserObject().userIdx === userIdx) latencyIdx = 0;
     else latencyIdx = 1;
@@ -468,8 +487,9 @@ export class GameService {
       console.log(`Player ${latencyIdx} : ${targetRoom.latency[latencyIdx]}`);
     }
     // TODO: Lateyncy cnt to change
-    if (targetRoom.latencyCnt[latencyIdx] === 3) {
-      if (targetRoom.latencyCnt[0] >= 3 && targetRoom.latencyCnt[1] >= 3) {
+    console.log(`target ${latencyIdx} : ${targetRoom.latencyCnt[latencyIdx]}`);
+    if (targetRoom.latencyCnt[latencyIdx] === 30) {
+      if (targetRoom.latencyCnt[0] >= 30 && targetRoom.latencyCnt[1] >= 30) {
         targetRoom.stopInterval();
         targetRoom.setGamePhase(GamePhase.SET_NEW_GAME);
         if (this.sendSetFrameRate(userIdx, server) === -1) return false;
@@ -570,27 +590,7 @@ export class GameService {
     gameService: GameService,
   ) {
     room.makeNextFrame(room);
-    // console.log(`좌표 X : ${room.getGameData().currentPos[0]}`);
-    // console.log(`좌표 Y : ${room.getGameData().currentPos[1]}`);
-    // console.log(`각도 계산용 X : ${room.getGameData().standardPos[0]}`);
-    // console.log(`각도 계산용 Y : ${room.getGameData().standardPos[1]}`);
-    // console.log(`기준 좌표 X : ${room.getGameData().anglePos[0]}`);
-    // console.log(`기준 좌표 Y : ${room.getGameData().anglePos[1]}`);
-    // console.log(`기준 각도 a : ${room.getGameData().linearEquation[0]}`);
-    // console.log(`기준 각도 b : ${room.getGameData().linearEquation[1]}`);
-    // console.log(`페들 1 : ${room.getGameData().paddle1[0]}`);
-    // console.log(`페들 2 : ${room.getGameData().paddle2[0]}`);
-    // if (room.getGameData().vector === Vector.UPLEFT) {
-    //   console.log(`벡터 : UP-LEFT`);
-    // } else if (room.getGameData().vector === Vector.UPRIGHT) {
-    //   console.log(`벡터 : UP-RIGHT`);
-    // } else if (room.getGameData().vector === Vector.DOWNLEFT) {
-    //   console.log(`벡터 : DOWN-LEFT`);
-    // } else if (room.getGameData().vector === Vector.DOWNRIGHT) {
-    //   console.log(`벡터 : DOWN-RIGHT`);
-    // }
     const status: GamePhase = room.getGamePhase();
-    // console.log(`Status : ${status}`);
     if (
       status === GamePhase.SET_NEW_GAME ||
       status === GamePhase.MATCH_END ||
@@ -604,6 +604,8 @@ export class GameService {
             'game_pause_score',
             new GamePauseScoreDto(room.users, room.gameObj, GameStatus.ONGOING),
           );
+        // handling set New game ;
+        room.setReGame(room);
         return;
       } else if (status === GamePhase.FORCE_QUIT) {
         // TODO: 강제 종료 로직
@@ -670,7 +672,7 @@ export class GameService {
           user1.rankpoint += 100 * correctionValue1;
           user2.rankpoint -= 100 * correctionValue2;
         }
-      } else {
+      } else if (room.channel.score2 === 5) {
         user2.win += 1;
         user1.lose += 1;
         if (room.channel.type === RecordType.RANK) {

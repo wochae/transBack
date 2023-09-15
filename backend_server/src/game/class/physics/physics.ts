@@ -29,33 +29,33 @@ export class Physics {
     if (
       engine.checkHitThePaddle(gameData.currentPos, gameData.vector, engine)
     ) {
-      console.log(
-        `paddle 1 범위 ${gameData.paddle1[1][0]} / ${gameData.paddle1[1][1]}`,
-      );
-      console.log(
-        `paddle 2 범위 ${gameData.paddle2[1][0]} / ${gameData.paddle2[1][1]}`,
-      );
+      //   console.log(
+      //     `paddle 1 범위 ${gameData.paddle1[1][0]} / ${gameData.paddle1[1][1]}`,
+      //   );
+      //   console.log(
+      //     `paddle 2 범위 ${gameData.paddle2[1][0]} / ${gameData.paddle2[1][1]}`,
+      //   );
       if (engine.needToCorrection(gameData)) {
         console.log('페들 입력시 여기로 들어갈까?!');
         gameData.gamePhase = GamePhase.HIT_THE_PADDLE;
         gameData = engine.correctLinearEquation(gameData, engine);
         // wall 부딪힘 여부 판단 재 판단(순간적으로 두번 부딪히는지 여부를 확인하기 위해)
-        if (
-          engine.checkHitTheWall(gameData.currentPos, gameData.vector, engine)
-        ) {
-          gameData.gamePhase = GamePhase.HIT_THE_WALL;
-          gameData = engine.correctLinearEquation(gameData, engine);
-        }
+        // if (
+        //   engine.checkHitTheWall(gameData.currentPos, gameData.vector, engine)
+        // ) {
+        //   gameData.gamePhase = GamePhase.HIT_THE_WALL;
+        //   gameData = engine.correctLinearEquation(gameData, engine);
+        // }
       }
     }
     // Score 획득 여부 판단
-    if (
-      engine.checkHitTheGoalPost(gameData.currentPos, gameData.vector, engine)
-    ) {
-      gameData = engine.checkGameScore(gameData, engine);
-    }
-    if (gameData.gamePhase !== GamePhase.HIT_THE_GOAL_POST)
-      gameData.gamePhase = GamePhase.ON_PLAYING;
+
+    engine.checkHitTheGoalPost(
+      gameData.currentPos,
+      gameData.vector,
+      engine,
+      gameData,
+    );
     return gameData;
   }
 
@@ -210,12 +210,12 @@ export class Physics {
       gameData.vector === Vector.UPLEFT ||
       gameData.vector === Vector.DOWNLEFT
     ) {
-      if (gameData.currentPos[0] <= engine.MIN_WIDTH) {
+      if (gameData.currentPos[0] - 20 === engine.MIN_WIDTH) {
         gameData.score[1]++;
         gameData.gamePhase = GamePhase.HIT_THE_GOAL_POST;
       }
     } else {
-      if (gameData.currentPos[0] >= engine.MAX_WIDTH) {
+      if (gameData.currentPos[0] + 20 === engine.MAX_WIDTH) {
         gameData.score[0]++;
         gameData.gamePhase = GamePhase.HIT_THE_GOAL_POST;
       }
@@ -282,25 +282,30 @@ export class Physics {
     }
     return ret;
   }
-
   private checkHitTheGoalPost(
     ballData: [number, number],
     vector: Vector,
     engine: Physics,
+    gameData: GameData,
   ): boolean {
     let ret: boolean;
     ret = false;
     if (vector === Vector.DOWNLEFT || vector === Vector.UPLEFT) {
-      if (ballData[0] - 20 <= engine.MIN_WIDTH) {
-        ballData[0] = engine.MIN_WIDTH + 20;
+      if (ballData[0] - 20 > engine.MIN_WIDTH) {
+        ret = false;
+      } else if (ballData[0] - 20 <= engine.MIN_WIDTH) {
+        gameData.score[1]++;
         ret = true;
       }
     } else if (vector === Vector.DOWNRIGHT || vector === Vector.UPRIGHT) {
-      if (ballData[0] + 20 >= engine.MAX_WIDTH) {
-        ballData[0] = engine.MAX_WIDTH - 20;
+      if (ballData[0] + 20 < engine.MAX_WIDTH) {
+        ret = false;
+      } else if (ballData[0] + 20 >= engine.MAX_WIDTH) {
+        gameData.score[0]++;
         ret = true;
       }
     }
+    if (ret === true) gameData.gamePhase = GamePhase.HIT_THE_GOAL_POST;
     return ret;
   }
 }

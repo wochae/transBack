@@ -10,7 +10,10 @@ import {
   Param,
 } from '@nestjs/common';
 import { GameService } from './game.service';
-import { UserProfileGameDto, UserProfileGameRecordDto } from './dto/game.record.dto';
+import {
+  UserProfileGameDto,
+  UserProfileGameRecordDto,
+} from './dto/game.record.dto';
 import { GameOptionDto } from './dto/game.option.dto';
 import { UsersService } from 'src/users/users.service';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
@@ -37,7 +40,7 @@ export class GameController {
     @Query('userIdx') userIdx: number,
     @Query('page') page: number,
   ) {
-    console.log('getRecord', userIdx, page);
+    // console.log('getRecord', userIdx, page);
     const user = await this.usersService.findOneUser(userIdx);
     const records = await this.gameService.getGameRecordsByInfinity(
       userIdx,
@@ -50,7 +53,7 @@ export class GameController {
       },
       gameRecord: records,
     };
-    console.log('getRecord', userProfileGameRecordDto);
+    // console.log('getRecord', userProfileGameRecordDto);
     return userProfileGameRecordDto;
   }
 
