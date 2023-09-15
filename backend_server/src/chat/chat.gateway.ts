@@ -212,16 +212,10 @@ export class ChatGateway
     client.emit('main_enter', main_enter);
 
     await this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
-    // API: USER_STATUS
-    this.server.emit('set_chat_user_status_db', {
-      nickname: user.nickname,
-      userIdx: user.userIdx,
-      isOnline: OnlineStatus.ONLINE,
-    });
     // API: MAIN_ENTER_1
     const BR_main_enter = {
-      targetNickname: user.nickname,
-      targetIdx: user.userIdx,
+      nickname: user.nickname,
+      userIdx: user.userIdx,
       isOnline: user.isOnline,
     };
     this.server.emit('BR_main_enter', BR_main_enter);
