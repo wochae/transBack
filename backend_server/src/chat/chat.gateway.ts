@@ -43,7 +43,11 @@ const front = process.env.FRONTEND;
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
-    origin: ['http://paulryu9309.ddns.net:3000', 'http://localhost:3000', front],
+    origin: [
+      'http://paulryu9309.ddns.net:3000',
+      'http://localhost:3000',
+      front,
+    ],
   },
 })
 export class ChatGateway
@@ -118,12 +122,12 @@ export class ChatGateway
       channel.getMember.some((member) => member.userIdx === user.userIdx),
     );
     channelForLeave?.forEach((channel) => {
-      channel.removeMember(user);
+      this.chatService.goToLobby(client, channel, user);
       const roomIsEmpty = this.chatService.checkEmptyChannel(channel);
       if (roomIsEmpty) {
         const channels = this.chatService.removeEmptyChannel(channel);
       }
-      client.leave(`chat_room_${channel.getChannelIdx}`);
+      this.announceExit(channel);
     });
     const dmChannelList: Promise<DMChannel[]> =
       this.chatService.findPrivateChannelByUserIdx(user.userIdx);
@@ -139,6 +143,7 @@ export class ChatGateway
     } else {
       await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
     }
+    console.log(notDmChannelList);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Disconnect Done',
@@ -158,7 +163,7 @@ export class ChatGateway
     const userId: number = parseInt(client.handshake.query.userId as string);
     const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
     const user = checkUser;
-    
+
     if (!user) {
       client.disconnect();
       return this.messanger.logWithWarn(
@@ -168,7 +173,7 @@ export class ChatGateway
         'Not Found',
       );
     }
-    
+
     const userObject = {
       imgUri: user.imgUri,
       nickname: user.nickname,
@@ -409,8 +414,14 @@ export class ChatGateway
           'channel',
           'Protected Channel',
         );
-        const hashedChannel = await this.chatService.findHashedChannelByChannelIdx(channel.getRoomId);
-        const compared = await this.chatService.comparePasswords(password, hashedChannel.hasedPassword);
+        const hashedChannel =
+          await this.chatService.findHashedChannelByChannelIdx(
+            channel.getRoomId,
+          );
+        const compared = await this.chatService.comparePasswords(
+          password,
+          hashedChannel.hasedPassword,
+        );
         if (!compared) {
           return this.messanger.setResponseErrorMsgWithLogger(
             400,
@@ -540,18 +551,6 @@ export class ChatGateway
             msgDate: msgInfo.msgDate,
           };
         });
-      const checkBlock = await this.usersService.checkBlockList(
-        user,
-        this.inMemoryUsers,
-        target,
-      );
-      if (checkBlock) {
-        return this.messanger.setResponseMsgWithLogger(
-          200,
-          'Blocked User',
-          'chat_send_msg',
-        );
-      }
       this.server.to(`chat_room_${channelIdx}`).emit('chat_send_msg', msgInfo);
     } else {
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -753,6 +752,10 @@ export class ChatGateway
   ) {
     const { channelIdx, userIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
+    if (!client) {
+      console.log('여기니?', client);
+      return;
+    }
     if (userId != userIdx) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -767,6 +770,7 @@ export class ChatGateway
       return member.userIdx === userIdx;
     });
     if (!user) {
+      console.log('여기니?', user);
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
@@ -776,7 +780,6 @@ export class ChatGateway
       );
     }
     const channelInfo = this.chatService.goToLobby(client, channel, user);
-    client.emit('chat_goto_lobby', channelInfo);
     this.messanger.logWithMessage(
       'chat_goto_lobby',
       'user',
@@ -795,10 +798,15 @@ export class ChatGateway
         'BR_chat_room_delete',
       );
     }
-
     // API: MAIN_CHAT_8
-    const announce = this.chatService.exitAnnounce(channel);
-    this.server.to(`chat_room_${channelIdx}`).emit('chat_room_exit', announce);
+    this.announceExit(channel);
+  }
+  async announceExit(channel: Channel) {
+    const announce = await this.chatService.exitAnnounce(channel);
+    console.log('announce : ', announce);
+    this.server
+      .to(`chat_room_${channel.getChannelIdx}`)
+      .emit('chat_room_exit', announce);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done exit room',
@@ -1043,8 +1051,6 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() chatGeneralReqDto: ChatGeneralReqDto,
   ) {
-    // FIXME: targetnickname 과 targetIdx 가 서로 맞는지 비교
-    // FIXME: targetIdx 가 본인인지 확인
     const { targetNickname, targetIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
@@ -1155,9 +1161,30 @@ export class ChatGateway
 
   @SubscribeMessage('chat_invite_ask')
   async inviteFriendToGame(@MessageBody() invitation: GameInvitationDto) {
+    console.log(invitation);
+    let i = 0;
+    console.log(`Check API! #${i++}`);
     const targetTuple = this.chat.getUserTuple(invitation.targetUserIdx);
+    if (targetTuple === undefined) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'BadRequest, target userId is not proper Id.',
+        'chat_invite_ask',
+      );
+    }
+    console.log(`Check API! #${i++}`);
+
     const targetSocket = targetTuple[1];
     const userTuple = this.chat.getUserTuple(invitation.myUserIdx);
+    if (userTuple === undefined) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'BadRequest, your userId is not proper Id.',
+        'chat_invite_ask',
+      );
+    }
+    console.log(`Check API! #${i++}`);
+
     const myObject = userTuple[0];
     if (targetSocket === undefined) {
       return new ReturnMsgDto(400, 'Bad Request, target user is not online');
@@ -1176,6 +1203,7 @@ export class ChatGateway
         myObject.userIdx,
         myObject.nickname,
       );
+      console.log(invitaionCard);
       targetSocket.emit('chat_invite_answer', invitaionCard);
     } else {
       return new ReturnMsgDto(400, 'Bad Request, target user is offline');
