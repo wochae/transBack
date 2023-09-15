@@ -75,6 +75,14 @@ export class ChatGateway
     const userId: number = parseInt(client.handshake.query.userId as string);
     if (Number.isNaN(userId)) return;
 
+    if (!this.inMemoryUsers.getUserByIdFromIM(userId)) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Already logged in',
+        'handleConnection',
+        userId,
+      );
+    }
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     this.messanger.logWithMessage('handle Connection', `user`, `${user}`, '');
