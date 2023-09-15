@@ -50,6 +50,7 @@ export class GameController {
       userInfo: {
         win: user.win,
         lose: user.lose,
+        rankpoint: user.rankpoint,
       },
       gameRecord: records,
     };
