@@ -100,6 +100,28 @@ export class GameRoom {
     room.keyPress[1].setRenewKeypress();
   }
 
+  public setReGame(room: GameRoom) {
+    room.gameObj = {
+      currentPos: [0, 0],
+      anglePos: [0, 0],
+      standardPos: [0, 0],
+      frameData: [0, 0],
+      linearEquation: [0, 0],
+      vector: Vector.UPRIGHT,
+      paddle1: [0, [-45, 45]],
+      paddle2: [0, [-45, 45]],
+      score: [room.gameObj.score[0], room.gameObj.score[1]],
+      gamePhase: GamePhase.SET_NEW_GAME,
+      gameType: room.gameObj.gameType,
+      gameSpeed: room.gameObj.gameSpeed,
+      gameMapNumber: room.gameObj.gameMapNumber,
+    };
+    room.setRandomStandardCoordinates();
+    // room.animation.setRenewLinearEquation(room.gameObj);
+    room.keyPress[0].setRenewKeypress();
+    room.keyPress[1].setRenewKeypress();
+  }
+
   public setLatency(latency: number, room: GameRoom): number {
     console.log(`target latency -> ${latency}`);
     let maxFps;

@@ -10,7 +10,7 @@ export class Animations {
   private unitDistance: number;
 
   constructor() {
-    this.totalDistancePerSec = 100;
+    this.totalDistancePerSec = 150;
     this.unitDistance = 0;
   }
 

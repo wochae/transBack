@@ -67,12 +67,20 @@ export class GameService {
   }
 
   // PROFILE_INFINITY
-  async getGameRecordsByInfinity(userIdx: number, page: number): Promise<UserProfileGameDto[]>{
+  async getGameRecordsByInfinity(
+    userIdx: number,
+    page: number,
+  ): Promise<UserProfileGameDto[]> {
     const skip = page * 3; // items per page fixed
     const records = await this.gameRecordRepository.find({
       select: [
         // 'idx','gameIdx',
-        'matchUserIdx', 'matchUserNickname', 'score', 'type', 'result'],
+        'matchUserIdx',
+        'matchUserNickname',
+        'score',
+        'type',
+        'result',
+      ],
       where: { userIdx },
       order: { matchDate: 'DESC' },
       skip,
@@ -84,16 +92,20 @@ export class GameService {
 
   // player 만들기
   async makePlayer(data: GameOptionDto): Promise<GamePlayer | null> {
+    console.log(`userIdx: ${data.userIdx}`);
     const getPerson = await this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
+    console.log(`userIdx: ${data.userIdx}`);
+
     if (getPerson === undefined) return null;
 
     const player = new GamePlayer(getPerson);
     player.setOptions(data);
-    if (getPerson.isOnline === OnlineStatus.ONLINE)
-      getPerson.isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
+    getPerson.isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
     const target = await this.inMemoryUsers.saveUserByUserIdFromIM(
       getPerson.userIdx,
     );
+    console.log(`userIdx: ${data.userIdx}`);
+
     if (target === null) return null;
     player.setUserObject(target);
     return player;
@@ -449,7 +461,14 @@ export class GameService {
     // this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.roomId}`);
     // this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.gamePhase}`);
 
-    if (targetRoom.getGamePhase() !== GamePhase.MAKE_ROOM) return false;
+    // switch(targetRoom.getGamePhase()) {
+    // 	case GamePhase.Make_
+    // }
+    // if (targetRoom.getGamePhase() !== GamePhase.MAKE_ROOM) return false;
+    // else if (targetRoom.getGamePhase() === GamePhase.SET_NEW_GAME) {
+    //   continue;
+    // }
+
     let latencyIdx;
     if (targetRoom.users[0].getUserObject().userIdx === userIdx) latencyIdx = 0;
     else latencyIdx = 1;
@@ -468,6 +487,7 @@ export class GameService {
       console.log(`Player ${latencyIdx} : ${targetRoom.latency[latencyIdx]}`);
     }
     // TODO: Lateyncy cnt to change
+    console.log(`target ${latencyIdx} : ${targetRoom.latencyCnt[latencyIdx]}`);
     if (targetRoom.latencyCnt[latencyIdx] === 3) {
       if (targetRoom.latencyCnt[0] >= 3 && targetRoom.latencyCnt[1] >= 3) {
         targetRoom.stopInterval();
@@ -604,6 +624,8 @@ export class GameService {
             'game_pause_score',
             new GamePauseScoreDto(room.users, room.gameObj, GameStatus.ONGOING),
           );
+        // handling set New game ;
+        room.setReGame(room);
         return;
       } else if (status === GamePhase.FORCE_QUIT) {
         // TODO: 강제 종료 로직
@@ -670,7 +692,7 @@ export class GameService {
           user1.rankpoint += 100 * correctionValue1;
           user2.rankpoint -= 100 * correctionValue2;
         }
-      } else {
+      } else if (room.channel.score2 === 5) {
         user2.win += 1;
         user1.lose += 1;
         if (room.channel.type === RecordType.RANK) {

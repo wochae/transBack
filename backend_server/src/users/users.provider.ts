@@ -31,7 +31,6 @@ export class InMemoryUsers {
   }
 
   async getUserByIdFromIM(userId: number): Promise<UserObject> {
-    console.log('getUserByIdFromIM');
     await this.initInMemoryUsers();
     return this.inMemoryUsers.find((user) => user.userIdx === userId);
   }
