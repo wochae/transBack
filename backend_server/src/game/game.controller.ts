@@ -45,8 +45,8 @@ export class GameController {
     );
     const userProfileGameRecordDto: UserProfileGameRecordDto = {
       userInfo: {
-        win: null,
-        lose: null,
+        win: user.win,
+        lose: user.lose,
       },
       gameRecord: records,
     };
