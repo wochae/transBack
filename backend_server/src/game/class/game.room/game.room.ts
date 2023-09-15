@@ -311,8 +311,8 @@ export class GameRoom {
 
   public setRandomStandardCoordinates() {
     this.gameObj.anglePos = [
-      this.getRandomInt(-2, 2),
-      this.getRandomInt(-2, 2),
+      this.getRandomInt(-10, 10),
+      this.getRandomInt(-10, 10),
     ];
     let down = true;
     let right = true;

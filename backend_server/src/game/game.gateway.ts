@@ -73,8 +73,12 @@ export class GameGateway
     this.gameService.changeStatusForPlayer(userIdx);
     // this.messanger.logWithMessage("handleConnection", "", "","connection handling is after status Player");
     const players = this.gameService.checkQueue(userIdx);
+    if (players !== undefined) {
+      for (const member of players) {
+        console.log(`얜 누구니>>>> ${member.getUserObject().userIdx}`);
+      }
+    }
     // this.messanger.logWithMessage("handleConnection", "", "","connection handling is check Queue");
-
     if (players === undefined) {
       // this.messanger.logWithMessage("handleConnection", "", "","check players");
       return this.messanger.setResponseMsgWithLogger(
@@ -214,7 +218,7 @@ export class GameGateway
 
   @SubscribeMessage('game_force_quit')
   getQuitSignal(@MessageBody() data: GameBasicAnswerDto) {
-    // this.gameService.forceQuitMatch(data.userIdx, this.server);
+    this.gameService.forceQuitMatch(data.userIdx, this.server);
   }
 
   @SubscribeMessage('game_queue_quit')

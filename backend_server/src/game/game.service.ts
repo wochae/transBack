@@ -135,6 +135,7 @@ export class GameService {
       this.checkProccessedOrNot(player.getUserObject().userIdx);
       this.onLinePlayer.push([player, player.getOption().gameType]);
       this.friendQueue.push([player, option]);
+      return;
     }
   }
 
@@ -153,41 +154,55 @@ export class GameService {
 
   // 큐 내부를 파악하고, 게임 상대가 준비되었는지 확인한다.
   checkQueue(userIdx: number): GamePlayer[] {
-    // console.log(`userIdx 확인 전 : ` + userIdx)
+    console.log(`userIdx 확인 전 : ` + userIdx);
     const target: [GamePlayer, GameType] = this.onLinePlayer.find(
       (user) => user[0].getUserObject().userIdx === userIdx,
     );
-    // console.log(`UserIdx 확인 후` + target[0].getUserObject().userIdx)
+    console.log(`UserIdx 확인 후 : ` + target[0].getUserObject().userIdx);
     const type = target[1];
-    let targetQueue: GameQueue | [GamePlayer, GameInviteOptionDto][];
+    console.log(`type : ${type}`);
+    let targetQueue: GameQueue;
     switch (type) {
       case GameType.FRIEND:
-        targetQueue = this.friendQueue;
-        const player1 = targetQueue.find(
+        console.log(`friend Queue : ${this.friendQueue}`);
+        const friendQue = this.friendQueue;
+        const player1 = friendQue.find(
           (player) =>
             player[0].getUserObject().userIdx ===
             target[0].getUserObject().userIdx,
         );
-        const player2 = targetQueue.find(
+        // console.log(`player 1: ${player1}`);
+        // console.log(`player 1 - userIdx : ${player1[1].userIdx}`);
+        // console.log(`player 1 - targetIdx : ${player1[1].targetIdx}`);
+
+        /**
+		 * 
+			A -> A, B , 0, 1, 2
+			B -> B, A, 0 , 1, 2 
+		 */
+        const player2 = friendQue.find(
           (player) =>
             player[0].getUserObject().userIdx === player1[1].targetIdx,
         );
+        console.log(`player 2: ${player2}`);
+
         if (player2 === undefined) return undefined;
         else {
-          const player1Index = targetQueue.findIndex(
+          const player1Index = friendQue.findIndex(
             (player) =>
               player[0].getUserObject().userIdx ===
               target[0].getUserObject().userIdx,
           );
-          targetQueue.splice(player1Index, 1);
-          const player2Index = targetQueue.findIndex(
+          friendQue.splice(player1Index, 1);
+          const player2Index = friendQue.findIndex(
             (player) =>
               player[0].getUserObject().userIdx === player1[1].targetIdx,
           );
-          targetQueue.splice(player2Index);
+          friendQue.splice(player2Index, 1);
           const list: GamePlayer[] = [];
           list.push(player1[0]);
           list.push(player2[0]);
+          console.log(list);
           return list;
         }
       case GameType.NORMAL:
@@ -288,17 +303,17 @@ export class GameService {
     if (room.users[0].getUserObject().userIdx === userIdx) {
       setTimeout(() => {
         room.users[1].getSocket().emit('game_queue_success', data);
-      }, 500);
+      }, 200);
       setTimeout(() => {
         room.users[0].getSocket().emit('game_queue_success', data);
-      }, 1000);
+      }, 300);
     } else {
       setTimeout(() => {
         room.users[0].getSocket().emit('game_queue_success', data);
-      }, 500);
+      }, 200);
       setTimeout(() => {
         room.users[1].getSocket().emit('game_queue_success', data);
-      }, 1000);
+      }, 300);
     }
   }
 
@@ -753,9 +768,19 @@ export class GameService {
     if (targetIndexFromOnlineMember === -1) return;
     let player = this.onLinePlayer.splice(targetIndexFromOnlineMember, 1);
     let targetQueue: GameQueue;
-    if (player[0][1] === GameType.NORMAL) targetQueue = this.normalQueue;
-    else if (player[0][1] === GameType.RANK) targetQueue = this.rankQueue;
-    targetQueue.deletePlayer(userIdx);
+    if (player[0][1] === GameType.NORMAL) {
+      targetQueue = this.normalQueue;
+      targetQueue.deletePlayer(userIdx);
+    } else if (player[0][1] === GameType.RANK) {
+      targetQueue = this.rankQueue;
+      targetQueue.deletePlayer(userIdx);
+    } else {
+      const targetQueue = this.friendQueue;
+      const idx = targetQueue.findIndex(
+        (player) => player[0].getUserObject().userIdx === userIdx,
+      );
+      targetQueue.splice(idx, 1);
+    }
     player[0][0].getSocket().disconnect(true);
     player[0][0].setSocket(undefined);
     player[0][0].getUserObject().isOnline = OnlineStatus.ONLINE;
