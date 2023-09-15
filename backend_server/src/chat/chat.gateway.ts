@@ -140,7 +140,7 @@ export class ChatGateway
     if (user.isOnline === OnlineStatus.ONGAME) {
       setTimeout(async () => {
         await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
-        this.server.emit('set_chat_user_status_db', {
+        this.server.emit('BR_main_enter', {
           nickname: user.nickname,
           userIdx: user.userIdx,
           isOnline: OnlineStatus.ONGAME,
@@ -149,7 +149,7 @@ export class ChatGateway
       });
     } else {
       await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
-      this.server.emit('set_chat_user_status_db', {
+      this.server.emit('BR_main_enter', {
         nickname: user.nickname,
         userIdx: user.userIdx,
         isOnline: OnlineStatus.OFFLINE,
