@@ -8,6 +8,7 @@ export class UserProfileGameRecordDto {
 export class UserRecordInfoDto {
     win: number;
     lose: number;
+    rankpoint: number;
 }
 export class UserProfileGameDto {
     matchUserIdx : number;
