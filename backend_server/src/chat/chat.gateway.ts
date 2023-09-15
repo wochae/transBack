@@ -136,7 +136,7 @@ export class ChatGateway
         client.leave(`chat_room_${channel.channelIdx}`);
       });
     });
-    const friendList = await this.usersService.getFriendList(user.userIdx);
+    // const friendList = await this.usersService.getFriendList(user.userIdx);
     if (user.isOnline === OnlineStatus.ONGAME) {
       setTimeout(async () => {
         await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
