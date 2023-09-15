@@ -29,6 +29,7 @@ import { GameResultDto } from './dto/game.result.dto';
 import { Vector } from './enum/game.vector.enum';
 import { GameForceQuitDto } from './dto/game.force.quit.dto';
 import { GameInviteOptionDto } from './dto/game.invite.option.dto';
+import { UserProfileGameDto } from './dto/game.record.dto';
 
 @Injectable()
 export class GameService {
@@ -66,14 +67,18 @@ export class GameService {
   }
 
   // PROFILE_INFINITY
-  async getGameRecordsByInfinity(userIdx: number, page: number) {
+  async getGameRecordsByInfinity(userIdx: number, page: number): Promise<UserProfileGameDto[]>{
     const skip = page * 3; // items per page fixed
     const records = await this.gameRecordRepository.find({
+      select: [
+        // 'idx','gameIdx',
+        'matchUserIdx', 'matchUserNickname', 'score', 'type', 'result'],
       where: { userIdx },
       order: { matchDate: 'DESC' },
       skip,
       take: 3,
     });
+    console.log('getGameRecordsByInfinity', records);
     return records;
   }
 
