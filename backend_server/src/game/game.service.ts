@@ -303,14 +303,14 @@ export class GameService {
     if (room.users[0].getUserObject().userIdx === userIdx) {
       setTimeout(() => {
         room.users[1].getSocket().emit('game_queue_success', data);
-      }, 200);
+      }, 100);
       setTimeout(() => {
         room.users[0].getSocket().emit('game_queue_success', data);
       }, 300);
     } else {
       setTimeout(() => {
         room.users[0].getSocket().emit('game_queue_success', data);
-      }, 200);
+      }, 100);
       setTimeout(() => {
         room.users[1].getSocket().emit('game_queue_success', data);
       }, 300);
