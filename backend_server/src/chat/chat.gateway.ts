@@ -73,11 +73,16 @@ export class ChatGateway
   async handleConnection(client: Socket) {
     console.log('Client UserId : ', client.handshake.query.userId);
     const userId: number = parseInt(client.handshake.query.userId as string);
-    if (Number.isNaN(userId)) return;
-
+    if (Number.isNaN(userId)) {
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Improper Access',
+        'handleConnection',
+        userId,
+      );
+    }
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
-    this.messanger.logWithMessage('handle Connection', `user`, `${user}`, '');
     if (!user) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -87,7 +92,18 @@ export class ChatGateway
         userId,
       );
     }
-    //
+    const check = this.chat.getSocketObject(userId);
+    console.log(client.id);
+    if (check || check?.socket.id === client.id) {
+      this.messanger.logWithMessage(
+        'HandleConnection',
+        `${user.nickname}`,
+        'already connected',
+      );
+      client.disconnect();
+    }
+    this.chat.setSocketList = this.chat.setSocketObject(client, user);
+    console.log(this.chat.getSocketObject(userId).socket.id);
     // FIXME: 함수로 빼기
     const dmChannelList: Promise<DMChannel[]> =
       this.chatService.findPrivateChannelByUserIdx(user.userIdx);
@@ -97,7 +113,6 @@ export class ChatGateway
       });
     });
     //
-    this.chat.setSocketList = this.chat.setSocketObject(client, user);
     this.messanger.logWithMessage('handleConnection', 'user', user.nickname);
   }
 
@@ -116,6 +131,16 @@ export class ChatGateway
       );
     }
     // FIXME: 함수로 빼기
+    // 중복 로그인 일때 처리
+    if (this.chat.getSocketObject(userId).socket.id !== client.id) {
+      this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
+      client.disconnect();
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'Disconnect Done',
+        'handleDisconnect',
+      );
+    }
     this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
     const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
     const channelForLeave: Channel[] = notDmChannelList?.filter((channel) =>
@@ -136,7 +161,6 @@ export class ChatGateway
         client.leave(`chat_room_${channel.channelIdx}`);
       });
     });
-    // const friendList = await this.usersService.getFriendList(user.userIdx);
     if (user.isOnline === OnlineStatus.ONGAME) {
       setTimeout(async () => {
         await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
@@ -155,7 +179,7 @@ export class ChatGateway
         isOnline: OnlineStatus.OFFLINE,
       });
     }
-    console.log(notDmChannelList);
+    client.disconnect();
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Disconnect Done',
@@ -164,7 +188,27 @@ export class ChatGateway
   }
 
   /***************************** SOCKET API  *****************************/
-  // FIXME: 매개변수 DTO 로 Json.parse 대체하기
+  // API: HEALTH_CHECK
+  @SubscribeMessage('health_check')
+  async healthCheck(@ConnectedSocket() client: Socket) {
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    if (!user) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'health_check',
+        userId,
+      );
+    }
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Health Check',
+      'health_check',
+    );
+  }
+
   // API: MAIN_ENTER_0
   @SubscribeMessage('main_enter')
   async enterMainPage(
