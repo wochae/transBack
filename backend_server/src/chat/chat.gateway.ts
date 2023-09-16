@@ -133,6 +133,7 @@ export class ChatGateway
     // FIXME: 함수로 빼기
     // 중복 로그인 일때 처리
     if (this.chat.getSocketObject(userId).socket.id !== client.id) {
+      this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
       client.disconnect();
       return this.messanger.setResponseMsgWithLogger(
         200,
