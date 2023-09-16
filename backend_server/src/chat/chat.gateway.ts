@@ -1228,6 +1228,7 @@ export class ChatGateway
       this.usersService.setIsOnline(targetUser, OnlineStatus.ONGAME);
       this.usersService.setIsOnline(inviteUser, OnlineStatus.ONGAME);
     }
+    console.log(`anserCard : ${answerCard}`);
     inviteSocket.emit('chat_receive_answer', answerCard);
     targetSocket.emit('chat_receive_answer', answerCard);
     return new ReturnMsgDto(200, 'Ok!');

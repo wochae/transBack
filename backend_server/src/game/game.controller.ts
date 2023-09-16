@@ -10,7 +10,10 @@ import {
   Param,
 } from '@nestjs/common';
 import { GameService } from './game.service';
-import { UserProfileGameRecordDto } from './dto/game.record.dto';
+import {
+  UserProfileGameDto,
+  UserProfileGameRecordDto,
+} from './dto/game.record.dto';
 import { GameOptionDto } from './dto/game.option.dto';
 import { UsersService } from 'src/users/users.service';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
@@ -37,7 +40,7 @@ export class GameController {
     @Query('userIdx') userIdx: number,
     @Query('page') page: number,
   ) {
-    console.log('getRecord', userIdx, page);
+    // console.log('getRecord', userIdx, page);
     const user = await this.usersService.findOneUser(userIdx);
     const records = await this.gameService.getGameRecordsByInfinity(
       userIdx,
@@ -45,16 +48,18 @@ export class GameController {
     );
     const userProfileGameRecordDto: UserProfileGameRecordDto = {
       userInfo: {
-        win: user.win,
-        lose: user.lose,
+        win: null,
+        lose: null,
       },
-      gameList: records,
+      gameRecord: records,
     };
+    // console.log('getRecord', userProfileGameRecordDto);
     return userProfileGameRecordDto;
   }
 
-  @Post()
+  @Post('normal-match')
   async postGameOptions(@Req() req, @Res() res, @Body() option: GameOptionDto) {
+    console.log('나 켜짐!! : 일반 게임');
     const message = '플레이어가 큐에 등록 되었습니다.';
     const errorMessage = '플레이어가 큐에 등록되지 못하였습니다.';
     let status: boolean;
@@ -69,12 +74,14 @@ export class GameController {
     return res.status(HttpStatus.OK).json(message);
   }
 
-  @Post()
+  @Post('friend-match')
   async postInviteGameOptions(
     @Req() req,
     @Res() res,
     @Body() option: GameInviteOptionDto,
   ) {
+    console.log('나 켜짐!! : 친선 게임');
+
     const message = '친선전이 준비 되었습니다.';
     const errorMessage = '친선전이 실패하였습니다.';
     let status: boolean;
@@ -85,8 +92,15 @@ export class GameController {
       option.mapNumber,
     );
     const target = await this.gameService.makePlayer(basicOption);
+    // console.log(`target check?! : ${target}`);
     if (target === null) status = false;
-    else this.gameService.putInQueue(target, option);
+    else {
+      console.log(
+        `Friend Queue inserting! : ${target.getUserObject().nickname}`,
+      );
+      this.gameService.putInQueue(target, option);
+      status = true;
+    }
     if (status === false)
       return res.status(HttpStatus.SERVICE_UNAVAILABLE).json(errorMessage);
     return res.status(HttpStatus.OK).json(message);

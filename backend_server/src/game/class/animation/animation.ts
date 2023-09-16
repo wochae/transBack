@@ -10,7 +10,7 @@ export class Animations {
   private unitDistance: number;
 
   constructor() {
-    this.totalDistancePerSec = 100;
+    this.totalDistancePerSec = 150;
     this.unitDistance = 0;
   }
 
@@ -22,7 +22,6 @@ export class Animations {
 
   // 기존 데이터를 기반으로 다음 프레임 연산을 진행한다.
   public makeFrame(room: GameRoom, key: KeyPress[]): GameData {
-    console.log(`unit distance ? : ${room.animation.unitDistance}`);
     if (
       room.gameObj.vector === Vector.DOWNLEFT ||
       room.gameObj.vector === Vector.UPLEFT
@@ -31,8 +30,8 @@ export class Animations {
       room.gameObj.currentPos[0] = parseFloat(
         (
           room.gameObj.currentPos[0] -
-          room.animation.unitDistance +
-          (room.gameObj.gameSpeed - 1)
+          room.animation.unitDistance -
+          room.gameObj.gameSpeed * 2
         ).toFixed(2),
       );
     } else if (
@@ -44,7 +43,7 @@ export class Animations {
         (
           room.gameObj.currentPos[0] +
           room.animation.unitDistance +
-          (room.gameObj.gameSpeed - 1)
+          room.gameObj.gameSpeed * 2
         ).toFixed(2),
       );
     }
@@ -56,18 +55,20 @@ export class Animations {
       (
         room.gameObj.linearEquation[0] * room.gameObj.currentPos[0] +
         room.gameObj.linearEquation[1] +
-        (room.gameObj.gameSpeed - 1)
+        room.gameObj.gameSpeed * 2
       ).toFixed(2),
     );
 
     // 페들 데이터 바꿈
     //TODO: 키보드 입력 잘못 들어올 수도 있음
-    room.gameObj.paddle1[0] -= key[0].popKeyValue();
-    room.gameObj.paddle1[1][0] -= key[0].popKeyValue();
-    room.gameObj.paddle1[1][1] -= key[0].popKeyValue();
-    room.gameObj.paddle2[0] -= key[1].popKeyValue();
-    room.gameObj.paddle2[1][0] -= key[1].popKeyValue();
-    room.gameObj.paddle2[1][1] -= key[1].popKeyValue();
+    const paddle1 = key[0].popKeyValue();
+    const paddle2 = key[1].popKeyValue();
+    room.gameObj.paddle1[0] -= paddle1;
+    room.gameObj.paddle1[1][0] -= paddle1;
+    room.gameObj.paddle1[1][1] -= paddle1;
+    room.gameObj.paddle2[0] -= paddle2;
+    room.gameObj.paddle2[1][0] -= paddle2;
+    room.gameObj.paddle2[1][1] -= paddle2;
 
     // 프레임 값 갱신
     room.gameObj.frameData[0] += 1;
