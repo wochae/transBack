@@ -204,10 +204,9 @@ export class ChatGateway
         userId,
       );
     }
-    return this.messanger.setResponseMsgWithLogger(
+    return this.messanger.setResponseMsg(
       200,
       'Done Health Check',
-      'health_check',
     );
   }
 

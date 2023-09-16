@@ -85,7 +85,7 @@ export class Chat {
   // TODO: test 필요
   removeSocketObject(socketObject: SocketObject): void {
     const socketIdx = this.socketList.findIndex(
-      (client) => client.user.nickname === socketObject.user.nickname,
+      (client) => client.user.userIdx === socketObject.user.userIdx,
     );
     if (socketIdx !== -1) {
       this.socketList.splice(socketIdx, 1);
