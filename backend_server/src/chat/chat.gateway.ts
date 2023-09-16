@@ -73,19 +73,16 @@ export class ChatGateway
   async handleConnection(client: Socket) {
     console.log('Client UserId : ', client.handshake.query.userId);
     const userId: number = parseInt(client.handshake.query.userId as string);
-    if (Number.isNaN(userId)) return;
-
-    if (!this.inMemoryUsers.getUserByIdFromIM(userId)) {
+    if (Number.isNaN(userId)) {
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
-        'Already logged in',
+        'Improper Access',
         'handleConnection',
         userId,
       );
     }
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
-    this.messanger.logWithMessage('handle Connection', `user`, `${user}`, '');
     if (!user) {
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -95,7 +92,18 @@ export class ChatGateway
         userId,
       );
     }
-    //
+    const check = this.chat.getSocketObject(userId);
+    console.log(client.id);
+    if (check || check?.socket.id === client.id) {
+      this.messanger.logWithMessage(
+        'HandleConnection',
+        `${user.nickname}`,
+        'already connected',
+      );
+      client.disconnect();
+    }
+    this.chat.setSocketList = this.chat.setSocketObject(client, user);
+    console.log(this.chat.getSocketObject(userId).socket.id);
     // FIXME: 함수로 빼기
     const dmChannelList: Promise<DMChannel[]> =
       this.chatService.findPrivateChannelByUserIdx(user.userIdx);
@@ -105,7 +113,6 @@ export class ChatGateway
       });
     });
     //
-    this.chat.setSocketList = this.chat.setSocketObject(client, user);
     this.messanger.logWithMessage('handleConnection', 'user', user.nickname);
   }
 
