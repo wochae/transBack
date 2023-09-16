@@ -131,6 +131,15 @@ export class ChatGateway
       );
     }
     // FIXME: 함수로 빼기
+    // 중복 로그인 일때 처리
+    if (this.chat.getSocketObject(userId).socket.id !== client.id) {
+      client.disconnect();
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'Disconnect Done',
+        'handleDisconnect',
+      );
+    }
     this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
     const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
     const channelForLeave: Channel[] = notDmChannelList?.filter((channel) =>
@@ -151,7 +160,6 @@ export class ChatGateway
         client.leave(`chat_room_${channel.channelIdx}`);
       });
     });
-    // const friendList = await this.usersService.getFriendList(user.userIdx);
     if (user.isOnline === OnlineStatus.ONGAME) {
       setTimeout(async () => {
         await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
@@ -170,7 +178,7 @@ export class ChatGateway
         isOnline: OnlineStatus.OFFLINE,
       });
     }
-    console.log(notDmChannelList);
+    client.disconnect();
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Disconnect Done',
