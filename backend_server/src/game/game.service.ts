@@ -289,9 +289,6 @@ export class GameService {
     this.playRoom.push(room);
     room.setNewGame(room);
     room.setGamePhase(GamePhase.MAKE_ROOM);
-    // setTimeout(() => {
-    // 	server.to(roomName).emit('game_queue_success', new GameQueueSuccessDto(channel.gameIdx, players))
-    // },500);
 
     const data = new GameQueueSuccessDto(
       channel.gameIdx,
@@ -306,14 +303,14 @@ export class GameService {
       }, 400);
       setTimeout(() => {
         room.users[0].getSocket().emit('game_queue_success', data);
-      }, 300);
+      }, 500);
     } else {
       setTimeout(() => {
         room.users[0].getSocket().emit('game_queue_success', data);
       }, 400);
       setTimeout(() => {
         room.users[1].getSocket().emit('game_queue_success', data);
-      }, 300);
+      }, 500);
     }
   }
 

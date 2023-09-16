@@ -103,7 +103,9 @@ export class ChatGateway
 
   async handleDisconnect(client: Socket) {
     const userId: number = parseInt(client.handshake.query.userId as string);
-
+	// const index = this.chat.getSocketList.findIndex((item) => item.socket.id === client.id);
+	// if (index !== -1)
+	// 	this.chat.getSocketList.splice(index, 1);
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
@@ -1189,13 +1191,9 @@ export class ChatGateway
     if (targetSocket === undefined) {
       return new ReturnMsgDto(400, 'Bad Request, target user is not online');
     }
-    // in memory 로 바꿀까?
     const target = await this.inMemoryUsers.getUserByIdFromIM(
       targetTuple[0].userIdx,
     );
-    // const target = await this.usersService.getUserInfoFromDBById(
-    //   targetTuple[0].userIdx,
-    // );
     if (target.isOnline === OnlineStatus.ONGAME) {
       return new ReturnMsgDto(400, 'Bad Request, target user is on Game');
     } else if (target.isOnline === OnlineStatus.ONLINE) {
@@ -1206,7 +1204,8 @@ export class ChatGateway
       console.log(invitaionCard);
 	  console.log(target.userIdx);
 	  console.log(target.nickname);
-      targetSocket.emit('chat_invite_answer', invitaionCard);
+	  console.log(targetSocket.id);
+      setTimeout(() => {targetSocket.emit('chat_invite_answer', invitaionCard)}, 100);
     } else {
       return new ReturnMsgDto(400, 'Bad Request, target user is offline');
     }
@@ -1231,8 +1230,8 @@ export class ChatGateway
       this.usersService.setIsOnline(inviteUser, OnlineStatus.ONGAME);
     }
     console.log(`anserCard : ${answerCard}`);
-    inviteSocket.emit('chat_receive_answer', answerCard);
-    targetSocket.emit('chat_receive_answer', answerCard);
+    setTimeout(() => {inviteSocket.emit('chat_receive_answer', answerCard)}, 100);
+    setTimeout(() => {targetSocket.emit('chat_receive_answer', answerCard)}, 100);
     return new ReturnMsgDto(200, 'Ok!');
   }
 

@@ -6,6 +6,7 @@ import { Vector } from 'src/game/enum/game.vector.enum';
 import { GameRoom } from '../game.room/game.room';
 import { verify } from 'crypto';
 import e from 'express';
+import { LessThan } from 'typeorm';
 
 export class Physics {
   private readonly MAX_WIDTH = 500;
@@ -29,23 +30,10 @@ export class Physics {
     if (
       engine.checkHitThePaddle(gameData.currentPos, gameData.vector, engine)
     ) {
-      //   console.log(
-      //     `paddle 1 범위 ${gameData.paddle1[1][0]} / ${gameData.paddle1[1][1]}`,
-      //   );
-      //   console.log(
-      //     `paddle 2 범위 ${gameData.paddle2[1][0]} / ${gameData.paddle2[1][1]}`,
-      //   );
       if (engine.needToCorrection(gameData)) {
-        console.log('페들 입력시 여기로 들어갈까?!');
+        // console.log('페들 입력시 여기로 들어갈까?!');
         gameData.gamePhase = GamePhase.HIT_THE_PADDLE;
         gameData = engine.correctLinearEquation(gameData, engine);
-        // wall 부딪힘 여부 판단 재 판단(순간적으로 두번 부딪히는지 여부를 확인하기 위해)
-        // if (
-        //   engine.checkHitTheWall(gameData.currentPos, gameData.vector, engine)
-        // ) {
-        //   gameData.gamePhase = GamePhase.HIT_THE_WALL;
-        //   gameData = engine.correctLinearEquation(gameData, engine);
-        // }
       }
     }
     // Score 획득 여부 판단
@@ -166,42 +154,34 @@ export class Physics {
       gameData.standardPos[1] -
       gameData.linearEquation[0] * gameData.currentPos[0];
     return gameData;
+  }  
+
+public getRandomInt(min: number, max: number): number {
+    let randomValue = Math.floor(Math.random() * (max - min + 1)) + min;
+    if (randomValue == 0) randomValue = 1;
+    return randomValue;
   }
 
   private changeAngleForPaddle(gameData: GameData): [number, number] {
+	let a;
+	let b;
     switch (gameData.vector) {
       case Vector.UPRIGHT:
-        if (gameData.anglePos[0] === 1 && gameData.anglePos[1] === -2) {
-          return [-2, -1];
-        } else if (gameData.anglePos[0] === 1 && gameData.anglePos[1] == -1) {
-          return [-1, -2];
-        } else {
-          return [-1, -1];
-        }
+		a = this.getRandomInt(-10, -1);
+		b = this.getRandomInt(-10, -1);
+		return [a, b];
       case Vector.UPLEFT:
-        if (gameData.anglePos[0] === -1 && gameData.anglePos[1] === -2) {
-          return [2, -1];
-        } else if (gameData.anglePos[0] === -1 && gameData.anglePos[1] === -1) {
-          return [1, -2];
-        } else {
-          return [1, -1];
-        }
+		a = this.getRandomInt(1, 10);
+		b = this.getRandomInt(-10, -1);
+		return [a, b];
       case Vector.DOWNRIGHT:
-        if (gameData.anglePos[0] === 2 && gameData.anglePos[1] === 1) {
-          return [-1, 2];
-        } else if (gameData.anglePos[0] === 1 && gameData.anglePos[1] === 1) {
-          return [-2, 1];
-        } else {
-          return [-1, 1];
-        }
+		a = this.getRandomInt(-10, -1);
+		b = this.getRandomInt(1, 10);
+		return [a, b];
       case Vector.DOWNLEFT:
-        if (gameData.anglePos[0] === -2 && gameData.anglePos[1] === 1) {
-          return [1, 2];
-        } else if (gameData.anglePos[0] === -1 && gameData.anglePos[1] === 1) {
-          return [2, 1];
-        } else {
-          return [1, 1];
-        }
+		a = this.getRandomInt(1, 10);
+		b = this.getRandomInt(1, 10);
+		return [a, b];
     }
   }
 
