@@ -188,7 +188,27 @@ export class ChatGateway
   }
 
   /***************************** SOCKET API  *****************************/
-  // FIXME: 매개변수 DTO 로 Json.parse 대체하기
+  // API: HEALTH_CHECK
+  @SubscribeMessage('health_check')
+  async healthCheck(@ConnectedSocket() client: Socket) {
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    if (!user) {
+      client.disconnect();
+      return this.messanger.setResponseErrorMsgWithLogger(
+        400,
+        'Not Found',
+        'health_check',
+        userId,
+      );
+    }
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Health Check',
+      'health_check',
+    );
+  }
+
   // API: MAIN_ENTER_0
   @SubscribeMessage('main_enter')
   async enterMainPage(
