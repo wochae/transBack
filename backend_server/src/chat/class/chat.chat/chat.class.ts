@@ -25,13 +25,13 @@ export interface MessageInfo {
 export class Chat {
   /******************************* 변수 *******************************/
   private protectedChannels: Channel[];
-  private socektList: SocketObject[];
+  private socketList: SocketObject[];
   static idxForSetChannelIdx = 0;
 
   /******************************* 메서드 *******************************/
   constructor() {
     this.protectedChannels = [];
-    this.socektList = [];
+    this.socketList = [];
   }
 
   // getter
@@ -48,10 +48,10 @@ export class Chat {
   }
 
   get getSocketList(): SocketObject[] {
-    return this.socektList;
+    return this.socketList;
   }
   getSocketObject(userIdx: number): SocketObject {
-    for (const socketObject of this.socektList) {
+    for (const socketObject of this.socketList) {
       if (socketObject.user.userIdx === userIdx) {
         return socketObject;
       }
@@ -74,7 +74,7 @@ export class Chat {
   }
   // setSocketList(setSocketObject(socket: Socket, user: UserObject): SocketObject))
   set setSocketList(SocketObject: SocketObject) {
-    this.socektList.push(SocketObject);
+    this.socketList.push(SocketObject);
   }
   // TODO: socketID 저장?
   setSocketObject(socket: Socket, user: UserObject): SocketObject {
@@ -84,11 +84,11 @@ export class Chat {
 
   // TODO: test 필요
   removeSocketObject(socketObject: SocketObject): void {
-    const socketIdx = this.socektList.findIndex(
+    const socketIdx = this.socketList.findIndex(
       (client) => client.user.nickname === socketObject.user.nickname,
     );
     if (socketIdx !== -1) {
-      this.socektList.splice(socketIdx, 1);
+      this.socketList.splice(socketIdx, 1);
     }
   }
 
