@@ -136,7 +136,7 @@ export class GameRoom {
     }
     room.gameObj.frameData[1] = maxFps;
     room.animation.setUnitDistance(maxFps);
-    console.log(`MaxFPS? -> ${maxFps}`);
+    // console.log(`MaxFPS? -> ${maxFps}`);
     if (maxFps == 60) room.intervalPeriod = 15;
     else if (maxFps == 30) room.intervalPeriod = 30;
     else if (maxFps == 24) room.intervalPeriod = 40;
