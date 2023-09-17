@@ -18,13 +18,13 @@ export class Physics {
 
   constructor() {}
 
-  checkPhysics(gameData: GameData, engine: Physics): GameData {
+  checkPhysics(gameData: GameData, engine: Physics, room: GameRoom): GameData {
     gameData.paddle1 = engine.correctPaddleDatas(gameData.paddle1, engine);
     gameData.paddle2 = engine.correctPaddleDatas(gameData.paddle2, engine);
     // wall 부딪힘 여부 판단
     if (engine.checkHitTheWall(gameData.currentPos, gameData.vector, engine)) {
       gameData.gamePhase = GamePhase.HIT_THE_WALL;
-      gameData = engine.correctLinearEquation(gameData, engine);
+      gameData = engine.correctLinearEquation(gameData, engine, room);
     }
     // 페들 부딪힘 여부 판단
     if (
@@ -33,7 +33,7 @@ export class Physics {
       if (engine.needToCorrection(gameData)) {
         // console.log('페들 입력시 여기로 들어갈까?!');
         gameData.gamePhase = GamePhase.HIT_THE_PADDLE;
-        gameData = engine.correctLinearEquation(gameData, engine);
+        gameData = engine.correctLinearEquation(gameData, engine, room);
       }
     }
     // Score 획득 여부 판단
@@ -93,7 +93,11 @@ export class Physics {
     return ret;
   }
 
-  private correctLinearEquation(gameData: GameData, engine: Physics): GameData {
+  private correctLinearEquation(
+    gameData: GameData,
+    engine: Physics,
+    room: GameRoom,
+  ): GameData {
     if (gameData.gamePhase === GamePhase.HIT_THE_WALL) {
       gameData.anglePos[1] *= -1;
       gameData.standardPos[0] = gameData.currentPos[0].valueOf();
@@ -122,7 +126,7 @@ export class Physics {
           gameData.paddle1[0] - 10 > gameData.currentPos[1] ||
           gameData.paddle1[0] + 10 < gameData.currentPos[1]
         )
-          gameData.anglePos = engine.changeAngleForPaddle(gameData);
+          gameData.anglePos = engine.changeAngleForPaddle(gameData, room);
         else {
           gameData.anglePos[0] *= -1;
         }
@@ -136,7 +140,7 @@ export class Physics {
           gameData.paddle2[0] - 10 > gameData.currentPos[1] ||
           gameData.paddle2[0] + 10 < gameData.currentPos[1]
         )
-          gameData.anglePos = engine.changeAngleForPaddle(gameData);
+          gameData.anglePos = engine.changeAngleForPaddle(gameData, room);
         else {
           gameData.anglePos[0] *= -1;
         }
@@ -147,12 +151,9 @@ export class Physics {
       gameData.standardPos[0] += gameData.anglePos[0].valueOf();
       gameData.standardPos[1] += gameData.anglePos[1].valueOf();
     }
-    gameData.linearEquation[0] = parseInt(
-      (
-        (gameData.standardPos[1] - gameData.currentPos[1]) /
-        (gameData.standardPos[0] - gameData.currentPos[0])
-      ).toFixed(2),
-    );
+    gameData.linearEquation[0] =
+      (gameData.standardPos[1] - gameData.currentPos[1]) /
+      (gameData.standardPos[0] - gameData.currentPos[0]);
     gameData.linearEquation[1] =
       gameData.standardPos[1] -
       gameData.linearEquation[0] * gameData.currentPos[0];
@@ -165,25 +166,36 @@ export class Physics {
     return randomValue;
   }
 
-  private changeAngleForPaddle(gameData: GameData): [number, number] {
+  private changeAngleForPaddle(
+    gameData: GameData,
+    room: GameRoom,
+  ): [number, number] {
     let a;
     let b;
     switch (gameData.vector) {
       case Vector.UPRIGHT:
-        a = this.getRandomInt(-10, -1);
-        b = this.getRandomInt(-10, -1);
+        a = this.getRandomInt(-5, -1);
+        b = this.getRandomInt(-5, -1);
+        if (this.getRandomInt(1, 3) === 3)
+          room.animation.bonusSetUnitDistance(10);
         return [a, b];
       case Vector.UPLEFT:
-        a = this.getRandomInt(1, 10);
-        b = this.getRandomInt(-10, -1);
+        a = this.getRandomInt(1, 5);
+        b = this.getRandomInt(-5, -1);
+        if (this.getRandomInt(1, 3) === 3)
+          room.animation.bonusSetUnitDistance(10);
         return [a, b];
       case Vector.DOWNRIGHT:
-        a = this.getRandomInt(-10, -1);
-        b = this.getRandomInt(1, 10);
+        a = this.getRandomInt(-5, -1);
+        b = this.getRandomInt(1, 5);
+        if (this.getRandomInt(1, 3) === 3)
+          room.animation.bonusSetUnitDistance(10);
         return [a, b];
       case Vector.DOWNLEFT:
-        a = this.getRandomInt(1, 10);
-        b = this.getRandomInt(1, 10);
+        a = this.getRandomInt(1, 5);
+        b = this.getRandomInt(1, 5);
+        if (this.getRandomInt(1, 3) === 3)
+          room.animation.bonusSetUnitDistance(10);
         return [a, b];
     }
   }

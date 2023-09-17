@@ -21,6 +21,7 @@ import { GameStartDto } from './dto/game.start.dto';
 import { KeyPressDto } from './dto/key.press.dto';
 import { GamePhase } from './enum/game.phase';
 import { check } from 'prettier';
+import { GamePingDto } from './dto/game.ping.dto';
 
 const front = process.env.FRONTEND;
 @WebSocketGateway({
@@ -136,8 +137,12 @@ export class GameGateway
   async getUserPong(@MessageBody() data: GamePingReceiveDto) {
     const time = Date.now();
     const latency = (time - data.serverTime) / 2;
-
-    if (this.gameService.receivePing(data.userIdx, latency, this.server)) {
+    const ret = this.gameService.receivePing(
+      data.userIdx,
+      latency,
+      this.server,
+    );
+    if (ret === true) {
       const targetRoom = this.gameService.findGameRoomById(data.userIdx);
       this.server
         .to(targetRoom.roomId)
@@ -150,6 +155,12 @@ export class GameGateway
       return this.messanger.setResponseMsgWithLogger(
         this.gameService.sendSetFrameRate(data.userIdx, this.server),
         'Your max fps is checked',
+        'getUserPong',
+      );
+    } else if (ret === -1) {
+      return this.messanger.setResponseMsgWithLogger(
+        400,
+        'latency too high',
         'getUserPong',
       );
     } else

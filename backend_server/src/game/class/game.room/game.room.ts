@@ -221,7 +221,7 @@ export class GameRoom {
     }
     console.log(`============================================`);
 
-    room.gameObj = room.physics.checkPhysics(room.gameObj, room.physics);
+    room.gameObj = room.physics.checkPhysics(room.gameObj, room.physics, room);
 
     if (
       room.gameObj.gamePhase === GamePhase.HIT_THE_PADDLE ||
@@ -311,10 +311,28 @@ export class GameRoom {
 
   public setRandomStandardCoordinates() {
     while (1) {
-      this.gameObj.anglePos = [
-        this.getRandomInt(-9, 9),
-        this.getRandomInt(-9, 9),
-      ];
+      const vector = this.getRandomInt(1, 4);
+      if (vector === Vector.UPLEFT) {
+        this.gameObj.anglePos = [
+          this.getRandomInt(-5, -1),
+          this.getRandomInt(-5, -1),
+        ];
+      } else if (vector === Vector.UPRIGHT) {
+        this.gameObj.anglePos = [
+          this.getRandomInt(1, 5),
+          this.getRandomInt(-5, -1),
+        ];
+      } else if (vector === Vector.DOWNLEFT) {
+        this.gameObj.anglePos = [
+          this.getRandomInt(-5, -1),
+          this.getRandomInt(1, 5),
+        ];
+      } else {
+        this.gameObj.anglePos = [
+          this.getRandomInt(1, 5),
+          this.getRandomInt(1, 5),
+        ];
+      }
       let down = true;
       let right = true;
 
@@ -334,12 +352,9 @@ export class GameRoom {
         this.gameObj.vector = Vector.UPLEFT;
       }
 
-      this.gameObj.linearEquation[0] = parseInt(
-        (
-          (this.gameObj.standardPos[1] - this.gameObj.currentPos[1]) /
-          (this.gameObj.standardPos[0] - this.gameObj.currentPos[0])
-        ).toFixed(2),
-      );
+      this.gameObj.linearEquation[0] =
+        (this.gameObj.standardPos[1] - this.gameObj.currentPos[1]) /
+        (this.gameObj.standardPos[0] - this.gameObj.currentPos[0]);
       this.gameObj.linearEquation[1] =
         this.gameObj.standardPos[1] -
         this.gameObj.linearEquation[0] * this.gameObj.standardPos[0];

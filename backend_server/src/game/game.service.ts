@@ -467,19 +467,9 @@ export class GameService {
     userIdx: number,
     latency: number,
     server: Server,
-  ): boolean {
+  ): boolean | number {
     // this.messanger.logWithMessage("receive ping", "" , "" , "start here");
     const targetRoom = this.findGameRoomById(userIdx);
-    // this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.roomId}`);
-    // this.messanger.logWithMessage("receive ping", "" , "" , `targetRoom : ${targetRoom.gamePhase}`);
-
-    // switch(targetRoom.getGamePhase()) {
-    // 	case GamePhase.Make_
-    // }
-    // if (targetRoom.getGamePhase() !== GamePhase.MAKE_ROOM) return false;
-    // else if (targetRoom.getGamePhase() === GamePhase.SET_NEW_GAME) {
-    //   continue;
-    // }
 
     let latencyIdx;
     if (targetRoom.users[0].getUserObject().userIdx === userIdx) latencyIdx = 0;
@@ -504,7 +494,7 @@ export class GameService {
       if (targetRoom.latencyCnt[0] >= 30 && targetRoom.latencyCnt[1] >= 30) {
         targetRoom.stopInterval();
         targetRoom.setGamePhase(GamePhase.SET_NEW_GAME);
-        if (this.sendSetFrameRate(userIdx, server) === -1) return false;
+        if (this.sendSetFrameRate(userIdx, server) === -1) return -1;
         targetRoom.latencyCnt.splice(0, 2);
         targetRoom.latencyCnt.push(0);
         targetRoom.latencyCnt.push(0);
@@ -555,15 +545,15 @@ export class GameService {
         : targetRoom.latency[1];
     const gap = Math.abs(targetRoom.latency[0] - targetRoom.latency[1]);
     if (gap >= 100) {
-      server
-        .to(targetRoom.roomId)
-        .emit(
-          'game_force_quit',
-          new GameForceQuitDto(
-            `Networking states is bad to continue proper game.`,
-          ),
-        );
-
+      //   server
+      //     .to(targetRoom.roomId)
+      //     .emit(
+      //       'game_force_quit',
+      //       new GameForceQuitDto(
+      //         `Networking states is bad to continue proper game.`,
+      //       ),
+      //     );
+      targetRoom.stopInterval();
       targetRoom.deleteRoom();
       return -1;
     }
