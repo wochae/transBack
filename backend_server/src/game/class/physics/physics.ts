@@ -147,9 +147,12 @@ export class Physics {
       gameData.standardPos[0] += gameData.anglePos[0].valueOf();
       gameData.standardPos[1] += gameData.anglePos[1].valueOf();
     }
-    gameData.linearEquation[0] =
-      (gameData.standardPos[1] - gameData.currentPos[1]) /
-      (gameData.standardPos[0] - gameData.currentPos[0]);
+    gameData.linearEquation[0] = parseInt(
+      (
+        (gameData.standardPos[1] - gameData.currentPos[1]) /
+        (gameData.standardPos[0] - gameData.currentPos[0])
+      ).toFixed(2),
+    );
     gameData.linearEquation[1] =
       gameData.standardPos[1] -
       gameData.linearEquation[0] * gameData.currentPos[0];

@@ -310,35 +310,45 @@ export class GameRoom {
   }
 
   public setRandomStandardCoordinates() {
-    this.gameObj.anglePos = [
-      this.getRandomInt(-9, 9),
-      this.getRandomInt(-9, 9),
-    ];
-    let down = true;
-    let right = true;
+    while (1) {
+      this.gameObj.anglePos = [
+        this.getRandomInt(-9, 9),
+        this.getRandomInt(-9, 9),
+      ];
+      let down = true;
+      let right = true;
 
-    if (this.gameObj.anglePos[0] < 0) right = false;
-    if (this.gameObj.anglePos[1] < 0) down = false;
+      if (this.gameObj.anglePos[0] < 0) right = false;
+      if (this.gameObj.anglePos[1] < 0) down = false;
 
-    this.gameObj.standardPos[0] = this.gameObj.anglePos[0];
-    this.gameObj.standardPos[1] = this.gameObj.anglePos[1];
+      this.gameObj.standardPos[0] = this.gameObj.anglePos[0];
+      this.gameObj.standardPos[1] = this.gameObj.anglePos[1];
 
-    if (right == true && down == true) {
-      this.gameObj.vector = Vector.DOWNRIGHT;
-    } else if (right == true && down == false) {
-      this.gameObj.vector = Vector.UPRIGHT;
-    } else if (right == false && down == true) {
-      this.gameObj.vector = Vector.DOWNLEFT;
-    } else {
-      this.gameObj.vector = Vector.UPLEFT;
+      if (right == true && down == true) {
+        this.gameObj.vector = Vector.DOWNRIGHT;
+      } else if (right == true && down == false) {
+        this.gameObj.vector = Vector.UPRIGHT;
+      } else if (right == false && down == true) {
+        this.gameObj.vector = Vector.DOWNLEFT;
+      } else {
+        this.gameObj.vector = Vector.UPLEFT;
+      }
+
+      this.gameObj.linearEquation[0] = parseInt(
+        (
+          (this.gameObj.standardPos[1] - this.gameObj.currentPos[1]) /
+          (this.gameObj.standardPos[0] - this.gameObj.currentPos[0])
+        ).toFixed(2),
+      );
+      this.gameObj.linearEquation[1] =
+        this.gameObj.standardPos[1] -
+        this.gameObj.linearEquation[0] * this.gameObj.standardPos[0];
+      if (
+        this.gameObj.linearEquation[0] >= 1 ||
+        this.gameObj.linearEquation[0] < -1
+      )
+        break;
     }
-
-    this.gameObj.linearEquation[0] =
-      (this.gameObj.standardPos[1] - this.gameObj.currentPos[1]) /
-      (this.gameObj.standardPos[0] - this.gameObj.currentPos[0]);
-    this.gameObj.linearEquation[1] =
-      this.gameObj.standardPos[1] -
-      this.gameObj.linearEquation[0] * this.gameObj.standardPos[0];
   }
 
   //   public setRenewLinearEquation(room: GameRoom) {
