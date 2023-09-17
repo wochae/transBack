@@ -1,6 +1,11 @@
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { GamePlayer } from '../game.player/game.player';
-import { GameSpeed, GameType, MapNumber } from 'src/game/enum/game.type.enum';
+import {
+  GameSpeed,
+  GameType,
+  MapNumber,
+  RecordResult,
+} from 'src/game/enum/game.type.enum';
 import { Vector } from 'src/game/enum/game.vector.enum';
 import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameData } from 'src/game/enum/game.data.enum';
@@ -136,7 +141,7 @@ export class GameRoom {
     }
     room.gameObj.frameData[1] = maxFps;
     room.animation.setUnitDistance(maxFps);
-    console.log(`MaxFPS? -> ${maxFps}`);
+    // console.log(`MaxFPS? -> ${maxFps}`);
     if (maxFps == 60) room.intervalPeriod = 15;
     else if (maxFps == 30) room.intervalPeriod = 30;
     else if (maxFps == 24) room.intervalPeriod = 40;
@@ -221,7 +226,7 @@ export class GameRoom {
     }
     console.log(`============================================`);
 
-    room.gameObj = room.physics.checkPhysics(room.gameObj, room.physics);
+    room.gameObj = room.physics.checkPhysics(room.gameObj, room.physics, room);
 
     if (
       room.gameObj.gamePhase === GamePhase.HIT_THE_PADDLE ||
@@ -310,35 +315,60 @@ export class GameRoom {
   }
 
   public setRandomStandardCoordinates() {
-    this.gameObj.anglePos = [
-      this.getRandomInt(-2, 2),
-      this.getRandomInt(-2, 2),
-    ];
-    let down = true;
-    let right = true;
+    while (1) {
+      const vector = this.getRandomInt(1, 4);
+      if (vector === Vector.UPLEFT) {
+        this.gameObj.anglePos = [
+          this.getRandomInt(-5, -1),
+          this.getRandomInt(-5, -1),
+        ];
+      } else if (vector === Vector.UPRIGHT) {
+        this.gameObj.anglePos = [
+          this.getRandomInt(1, 5),
+          this.getRandomInt(-5, -1),
+        ];
+      } else if (vector === Vector.DOWNLEFT) {
+        this.gameObj.anglePos = [
+          this.getRandomInt(-5, -1),
+          this.getRandomInt(1, 5),
+        ];
+      } else {
+        this.gameObj.anglePos = [
+          this.getRandomInt(1, 5),
+          this.getRandomInt(1, 5),
+        ];
+      }
+      let down = true;
+      let right = true;
 
-    if (this.gameObj.anglePos[0] < 0) right = false;
-    if (this.gameObj.anglePos[1] < 0) down = false;
+      if (this.gameObj.anglePos[0] < 0) right = false;
+      if (this.gameObj.anglePos[1] < 0) down = false;
 
-    this.gameObj.standardPos[0] = this.gameObj.anglePos[0];
-    this.gameObj.standardPos[1] = this.gameObj.anglePos[1];
+      this.gameObj.standardPos[0] = this.gameObj.anglePos[0];
+      this.gameObj.standardPos[1] = this.gameObj.anglePos[1];
 
-    if (right == true && down == true) {
-      this.gameObj.vector = Vector.DOWNRIGHT;
-    } else if (right == true && down == false) {
-      this.gameObj.vector = Vector.UPRIGHT;
-    } else if (right == false && down == true) {
-      this.gameObj.vector = Vector.DOWNLEFT;
-    } else {
-      this.gameObj.vector = Vector.UPLEFT;
+      if (right == true && down == true) {
+        this.gameObj.vector = Vector.DOWNRIGHT;
+      } else if (right == true && down == false) {
+        this.gameObj.vector = Vector.UPRIGHT;
+      } else if (right == false && down == true) {
+        this.gameObj.vector = Vector.DOWNLEFT;
+      } else {
+        this.gameObj.vector = Vector.UPLEFT;
+      }
+
+      this.gameObj.linearEquation[0] =
+        (this.gameObj.standardPos[1] - this.gameObj.currentPos[1]) /
+        (this.gameObj.standardPos[0] - this.gameObj.currentPos[0]);
+      this.gameObj.linearEquation[1] =
+        this.gameObj.standardPos[1] -
+        this.gameObj.linearEquation[0] * this.gameObj.standardPos[0];
+      if (
+        this.gameObj.linearEquation[0] >= 1 ||
+        this.gameObj.linearEquation[0] < -1
+      )
+        break;
     }
-
-    this.gameObj.linearEquation[0] =
-      (this.gameObj.standardPos[1] - this.gameObj.currentPos[1]) /
-      (this.gameObj.standardPos[0] - this.gameObj.currentPos[0]);
-    this.gameObj.linearEquation[1] =
-      this.gameObj.standardPos[1] -
-      this.gameObj.linearEquation[0] * this.gameObj.standardPos[0];
   }
 
   //   public setRenewLinearEquation(room: GameRoom) {
@@ -382,5 +412,27 @@ export class GameRoom {
     this.history[1] = undefined;
     this.channel = undefined;
     return this.roomId;
+  }
+
+  public syncStatus(room: GameRoom) {
+    const history1 = room.history[0];
+    const history2 = room.history[1];
+    const channel = room.channel;
+    history1.score = `${room.gameObj.score[0]} : ${room.gameObj.score[1]}`;
+    history2.score = `${room.gameObj.score[1]} : ${room.gameObj.score[0]}`;
+    if (room.gameObj.score[0] === 5) {
+      history1.result = RecordResult.WIN;
+      history2.result = RecordResult.LOSE;
+    } else {
+      history1.result = RecordResult.LOSE;
+      history2.result = RecordResult.WIN;
+    }
+    channel.score1 = room.gameObj.score[0];
+    channel.score2 = room.gameObj.score[1];
+    channel.status = RecordResult.DONE;
+    room.history.splice(0, 2);
+    room.history.push(history1);
+    room.history.push(history2);
+    room.channel = channel;
   }
 }

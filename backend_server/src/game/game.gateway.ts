@@ -21,6 +21,7 @@ import { GameStartDto } from './dto/game.start.dto';
 import { KeyPressDto } from './dto/key.press.dto';
 import { GamePhase } from './enum/game.phase';
 import { check } from 'prettier';
+import { GamePingDto } from './dto/game.ping.dto';
 
 const front = process.env.FRONTEND;
 @WebSocketGateway({
@@ -73,8 +74,12 @@ export class GameGateway
     this.gameService.changeStatusForPlayer(userIdx);
     // this.messanger.logWithMessage("handleConnection", "", "","connection handling is after status Player");
     const players = this.gameService.checkQueue(userIdx);
+    if (players !== undefined) {
+      for (const member of players) {
+        console.log(`얜 누구니>>>> ${member.getUserObject().userIdx}`);
+      }
+    }
     // this.messanger.logWithMessage("handleConnection", "", "","connection handling is check Queue");
-
     if (players === undefined) {
       // this.messanger.logWithMessage("handleConnection", "", "","check players");
       return this.messanger.setResponseMsgWithLogger(
@@ -132,8 +137,12 @@ export class GameGateway
   async getUserPong(@MessageBody() data: GamePingReceiveDto) {
     const time = Date.now();
     const latency = (time - data.serverTime) / 2;
-
-    if (this.gameService.receivePing(data.userIdx, latency, this.server)) {
+    const ret = this.gameService.receivePing(
+      data.userIdx,
+      latency,
+      this.server,
+    );
+    if (ret === true) {
       const targetRoom = this.gameService.findGameRoomById(data.userIdx);
       this.server
         .to(targetRoom.roomId)
@@ -146,6 +155,12 @@ export class GameGateway
       return this.messanger.setResponseMsgWithLogger(
         this.gameService.sendSetFrameRate(data.userIdx, this.server),
         'Your max fps is checked',
+        'getUserPong',
+      );
+    } else if (ret === -1) {
+      return this.messanger.setResponseMsgWithLogger(
+        400,
+        'latency too high',
         'getUserPong',
       );
     } else
@@ -190,7 +205,7 @@ export class GameGateway
     if (ret === null) client.disconnect(true);
     else if (
       ret === true &&
-      (target.gameObj.gamePhase = GamePhase.SET_NEW_GAME)
+      target.gameObj.gamePhase === GamePhase.SET_NEW_GAME
     ) {
       const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
       setTimeout(() => {
@@ -199,7 +214,7 @@ export class GameGateway
       this.gameService.uncheckReady(userIdx);
     } else if (
       ret === true &&
-      (target.gameObj.gamePhase = GamePhase.MATCH_END)
+      target.gameObj.gamePhase === GamePhase.MATCH_END
     ) {
       this.gameService.uncheckReady(userIdx);
       const roomId = target.deleteRoom();
@@ -214,8 +229,11 @@ export class GameGateway
 
   @SubscribeMessage('game_force_quit')
   getQuitSignal(@MessageBody() data: GameBasicAnswerDto) {
-    // this.gameService.forceQuitMatch(data.userIdx, this.server);
+    this.gameService.forceQuitMatch(data.userIdx, this.server);
   }
+
+  @SubscribeMessage('game_over_quit')
+  getQuitProperly(@MessageBody() data: GameBasicAnswerDto) {}
 
   @SubscribeMessage('game_queue_quit')
   quitQueue(@MessageBody() data: GameBasicAnswerDto) {
