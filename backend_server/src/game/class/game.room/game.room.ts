@@ -1,6 +1,11 @@
 import { GameRecord } from 'src/entity/gameRecord.entity';
 import { GamePlayer } from '../game.player/game.player';
-import { GameSpeed, GameType, MapNumber } from 'src/game/enum/game.type.enum';
+import {
+  GameSpeed,
+  GameType,
+  MapNumber,
+  RecordResult,
+} from 'src/game/enum/game.type.enum';
 import { Vector } from 'src/game/enum/game.vector.enum';
 import { GameChannel } from 'src/entity/gameChannel.entity';
 import { GameData } from 'src/game/enum/game.data.enum';
@@ -407,5 +412,27 @@ export class GameRoom {
     this.history[1] = undefined;
     this.channel = undefined;
     return this.roomId;
+  }
+
+  public syncStatus(room: GameRoom) {
+    const history1 = room.history[0];
+    const history2 = room.history[1];
+    const channel = room.channel;
+    history1.score = `${room.gameObj.score[0]} : ${room.gameObj.score[1]}`;
+    history2.score = `${room.gameObj.score[1]} : ${room.gameObj.score[0]}`;
+    if (room.gameObj.score[0] === 5) {
+      history1.result = RecordResult.WIN;
+      history2.result = RecordResult.LOSE;
+    } else {
+      history1.result = RecordResult.LOSE;
+      history2.result = RecordResult.WIN;
+    }
+    channel.score1 = room.gameObj.score[0];
+    channel.score2 = room.gameObj.score[1];
+    channel.status = RecordResult.DONE;
+    room.history.splice(0, 2);
+    room.history.push(history1);
+    room.history.push(history2);
+    room.channel = channel;
   }
 }

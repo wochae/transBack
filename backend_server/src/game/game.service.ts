@@ -644,6 +644,7 @@ export class GameService {
         );
         this.deleteplayRoomByRoomId(room.roomId);
       } else if (status === GamePhase.MATCH_END) {
+        room.syncStatus(room);
         server
           .to(room.roomId)
           .emit(
@@ -651,9 +652,6 @@ export class GameService {
             new GamePauseScoreDto(room.users, room.gameObj, GameStatus.END),
           );
       }
-      await this.gameChannelRepository.save(room.getChannel());
-      await this.gameRecordRepository.save(room.getHistories()[0]);
-      await this.gameRecordRepository.save(room.getHistories()[1]);
 
       const user1 = room.users[0].getUserObject();
       const user2 = room.users[1].getUserObject();
@@ -697,6 +695,10 @@ export class GameService {
       this.processedUserIdxList.push(
         room.users[1].getUserObject().userIdx.valueOf(),
       );
+
+      await this.gameChannelRepository.save(room.getChannel());
+      await this.gameRecordRepository.save(room.getHistories()[0]);
+      await this.gameRecordRepository.save(room.getHistories()[1]);
       await this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
       await this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
       this.deleteplayRoomByRoomId(room.roomId);
