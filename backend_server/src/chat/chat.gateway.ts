@@ -118,9 +118,9 @@ export class ChatGateway
 
   async handleDisconnect(client: Socket) {
     const userId: number = parseInt(client.handshake.query.userId as string);
-	// const index = this.chat.getSocketList.findIndex((item) => item.socket.id === client.id);
-	// if (index !== -1)
-	// 	this.chat.getSocketList.splice(index, 1);
+    // const index = this.chat.getSocketList.findIndex((item) => item.socket.id === client.id);
+    // if (index !== -1)
+    // 	this.chat.getSocketList.splice(index, 1);
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
@@ -204,10 +204,7 @@ export class ChatGateway
         userId,
       );
     }
-    return this.messanger.setResponseMsg(
-      200,
-      'Done Health Check',
-    );
+    return this.messanger.setResponseMsg(200, 'Done Health Check');
   }
 
   // API: MAIN_ENTER_0
@@ -1257,10 +1254,12 @@ export class ChatGateway
         myObject.nickname,
       );
       console.log(invitaionCard);
-	  console.log(target.userIdx);
-	  console.log(target.nickname);
-	  console.log(targetSocket.id);
-      setTimeout(() => {targetSocket.emit('chat_invite_answer', invitaionCard)}, 100);
+      console.log(target.userIdx);
+      console.log(target.nickname);
+      console.log(targetSocket.id);
+      setTimeout(() => {
+        targetSocket.emit('chat_invite_answer', invitaionCard);
+      }, 100);
     } else {
       return new ReturnMsgDto(400, 'Bad Request, target user is offline');
     }
@@ -1285,8 +1284,12 @@ export class ChatGateway
       this.usersService.setIsOnline(inviteUser, OnlineStatus.ONGAME);
     }
     console.log(`anserCard : ${answerCard}`);
-    setTimeout(() => {inviteSocket.emit('chat_receive_answer', answerCard)}, 100);
-    setTimeout(() => {targetSocket.emit('chat_receive_answer', answerCard)}, 100);
+    setTimeout(() => {
+      inviteSocket.emit('chat_receive_answer', answerCard);
+    }, 100);
+    setTimeout(() => {
+      targetSocket.emit('chat_receive_answer', answerCard);
+    }, 100);
     return new ReturnMsgDto(200, 'Ok!');
   }
 

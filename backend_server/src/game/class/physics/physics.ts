@@ -154,34 +154,34 @@ export class Physics {
       gameData.standardPos[1] -
       gameData.linearEquation[0] * gameData.currentPos[0];
     return gameData;
-  }  
+  }
 
-public getRandomInt(min: number, max: number): number {
+  public getRandomInt(min: number, max: number): number {
     let randomValue = Math.floor(Math.random() * (max - min + 1)) + min;
     if (randomValue == 0) randomValue = 1;
     return randomValue;
   }
 
   private changeAngleForPaddle(gameData: GameData): [number, number] {
-	let a;
-	let b;
+    let a;
+    let b;
     switch (gameData.vector) {
       case Vector.UPRIGHT:
-		a = this.getRandomInt(-10, -1);
-		b = this.getRandomInt(-10, -1);
-		return [a, b];
+        a = this.getRandomInt(-10, -1);
+        b = this.getRandomInt(-10, -1);
+        return [a, b];
       case Vector.UPLEFT:
-		a = this.getRandomInt(1, 10);
-		b = this.getRandomInt(-10, -1);
-		return [a, b];
+        a = this.getRandomInt(1, 10);
+        b = this.getRandomInt(-10, -1);
+        return [a, b];
       case Vector.DOWNRIGHT:
-		a = this.getRandomInt(-10, -1);
-		b = this.getRandomInt(1, 10);
-		return [a, b];
+        a = this.getRandomInt(-10, -1);
+        b = this.getRandomInt(1, 10);
+        return [a, b];
       case Vector.DOWNLEFT:
-		a = this.getRandomInt(1, 10);
-		b = this.getRandomInt(1, 10);
-		return [a, b];
+        a = this.getRandomInt(1, 10);
+        b = this.getRandomInt(1, 10);
+        return [a, b];
     }
   }
 
@@ -236,7 +236,7 @@ public getRandomInt(min: number, max: number): number {
         ret = true;
       }
     } else if (vector === Vector.UPLEFT || vector === Vector.UPRIGHT) {
-      if (ballData[1] - 20 <= engine.MIN_HEIGTH) {
+      if (ballData[1] <= engine.MIN_HEIGTH) {
         ballData[1] = engine.MIN_HEIGTH + 20;
         ret = true;
       }
