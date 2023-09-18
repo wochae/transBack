@@ -18,6 +18,7 @@ import { GameOptionDto } from './dto/game.option.dto';
 import { UsersService } from 'src/users/users.service';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 import { GameInviteOptionDto } from './dto/game.invite.option.dto';
+import { GameType } from './enum/game.type.enum';
 
 @Controller('game')
 export class GameController {
@@ -70,6 +71,7 @@ export class GameController {
       this.gameService.putInQueue(target, null);
       status = true;
     }
+    console.log(`option 찾자!!!!!`, option);
     if (status === false)
       return res.status(HttpStatus.SERVICE_UNAVAILABLE).json(errorMessage);
     return res.status(HttpStatus.OK).json(message);
@@ -121,16 +123,12 @@ export class GameResultController {
   }
 
   @Get()
-  getHistory(
-    @Req() req,
-    @Res() res,
-    @Param('gameKey') gameKey: string,
-    @Param('userIdx') userIdx: string,
-  ) {
+  async getHistory(@Req() req, @Res() res, @Query('gameKey') gameKey: string) {
+    console.log(`game Key = ${gameKey}`);
+    if (gameKey === undefined) return res.status(HttpStatus.BAD_REQUEST).json();
     const gIdx = parseInt(gameKey);
-    const uIdx = parseInt(userIdx);
-    return res
-      .status(HttpStatus.OK)
-      .json(this.gameService.getHistoryByGameId(gIdx, uIdx));
+    const ret = await this.gameService.getHistoryByGameId(gIdx);
+    if (ret === null) return res.status(HttpStatus.NOT_FOUND).json();
+    return res.status(HttpStatus.OK).json(ret);
   }
 }

@@ -8,6 +8,7 @@ import { TypeOrmExModule } from 'src/typeorm-ex.module';
 import { SharedModule } from 'src/shared/shared.module';
 import { GameController } from './game.controller';
 // import { InMemoryUsers } from 'src/users/users.provider';
+import { GameResultController } from './game.controller';
 
 @Module({
   imports: [
@@ -19,10 +20,12 @@ import { GameController } from './game.controller';
     SharedModule,
   ],
   providers: [GameGateway, GameService],
-  controllers: [GameController],
-  exports: [TypeOrmExModule.forCustomRepository([
+  controllers: [GameController, GameResultController],
+  exports: [
+    TypeOrmExModule.forCustomRepository([
       GameRecordRepository,
       GameChannelRepository,
-    ]),],
+    ]),
+  ],
 })
 export class GameModule {}
