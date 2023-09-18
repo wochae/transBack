@@ -149,6 +149,9 @@ export class UsersService {
     const { userIdx, userNickname, imgData } = userEditImgDto;
 
     const user = await this.findOneUser(userIdx);
+    if (user.available === true || user.nickname !== '') {
+       throw new HttpException('잘못된 접근입니다.', HttpStatus.BAD_REQUEST);
+     }
     if (user.available === false && user.nickname === '') {
       user.nickname = userNickname;
       try {

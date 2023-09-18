@@ -11,7 +11,7 @@ export class CreateChatDto {
   @IsString()
   @MaxLength(100)
   @MinLength(1)
-  @Matches(/^[a-zA-Z0-9]*$/, { message: 'nickname is unique' })
+  @Matches(/^[a-zA-Z]*$/, { message: 'nickname is unique' })
   targetNickname: string;
 
   @MaxLength(2000)

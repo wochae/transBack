@@ -34,13 +34,14 @@ import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.respo
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { UserStatusDto } from 'src/chat/dto/update-chat.dto';
+
+@UseGuards(AuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
   logger: Logger = new Logger('UsersController');
   messanger: LoggerWithRes = new LoggerWithRes('UsersController');
 
-  @UseGuards(AuthGuard)
   @Get('profile')
   async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) {
     // body 를 안 쓰긴 함.
@@ -71,7 +72,11 @@ export class UsersController {
     @UploadedFile() imgData: Express.Multer.File,
   ) {
     try {
+      const { id: myIdx, email } = req.jwtPayload;
       const changedUser = body;
+      if ( myIdx !== changedUser.userIdx ) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: '잘못된 접근입니다.' });
+      }
       console.log('changedUser : ', changedUser);
       const result = await this.usersService.updateUser(changedUser);
       const userStatusDto: UserStatusDto = {
