@@ -820,6 +820,7 @@ export class GameService {
 
   public forceQuitMatch(loser: number, server: Server): boolean {
     let room = this.findGameRoomById(loser);
+    if (room === null) return true;
     // room.stopInterval();
     let histories = room.getHistories();
     const p1 = room.users[0].getUserObject();
