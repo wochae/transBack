@@ -282,7 +282,7 @@ export class GameService {
       option.mapNumber,
       await gameRecord,
       channel,
-      200,
+      100,
     );
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
