@@ -62,10 +62,6 @@ export class LoginController {
       intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
       this.loginService.downloadProfileImg(intraInfo);
     } else {
-      if (user.isOnline !== OnlineStatus.OFFLINE) {
-        console.log('codeCallback user already online : ');
-        return res.status(400).json({ message: '이미 로그인 되어있습니다.' });
-      }
       user.imgUri = `${backenduri}/img/${user.userIdx}.png`
       this.usersService.setUserImg(user.userIdx, user.imgUri);
       
