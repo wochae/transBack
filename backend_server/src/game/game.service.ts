@@ -708,17 +708,20 @@ export class GameService {
     }
   }
 
-  public async getHistoryByGameId(
-    gameIdx: number,
-    userIdx: number,
-  ): Promise<GameResultDto> {
-    const record = await this.gameRecordRepository.findOneBy({
+  public async getHistoryByGameId(gameIdx: number): Promise<GameResultDto> {
+    const channel = await this.gameChannelRepository.findOneBy({
       gameIdx: gameIdx,
-      userIdx: userIdx,
     });
+    if (channel === null) return null;
+    const player1 = await this.inMemoryUsers.getUserByIdFromIM(
+      channel.userIdx1,
+    );
+    const player2 = await this.inMemoryUsers.getUserByIdFromIM(
+      channel.userIdx2,
+    );
 
-    const result = new GameResultDto(record);
-
+    const result = new GameResultDto(channel, player1, player2);
+    console.log(result);
     return result;
   }
 
@@ -754,7 +757,7 @@ export class GameService {
     const targetIndexFromOnlineMember = this.onLinePlayer.findIndex(
       (player) => player[0].getUserObject().userIdx === userIdx,
     );
-    if (targetIndexFromOnlineMember === -1) return;
+    if (targetIndexFromOnlineMember === -1) return false;
     let player = this.onLinePlayer.splice(targetIndexFromOnlineMember, 1);
     let targetQueue: GameQueue;
     if (player[0][1] === GameType.NORMAL) {
@@ -770,7 +773,7 @@ export class GameService {
       );
       targetQueue.splice(idx, 1);
     }
-    player[0][0].getSocket().disconnect(true);
+    // player[0][0].getSocket().disconnect(true);
     player[0][0].setSocket(undefined);
     player[0][0].getUserObject().isOnline = OnlineStatus.ONLINE;
     await this.inMemoryUsers.saveUserByUserIdFromIM(
@@ -779,6 +782,7 @@ export class GameService {
     player[0][0].setUserObject(undefined);
     this.processedUserIdxList.push(userIdx);
     player = undefined;
+    return true;
   }
 
   private changeChannelforWinnerAndLoser(
