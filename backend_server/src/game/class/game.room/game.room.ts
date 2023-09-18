@@ -30,7 +30,6 @@ export class GameRoom {
   keyPress: KeyPress[];
   history: GameRecord[];
   channel: GameChannel;
-  totalDistance: number;
 
   constructor(
     id: string,
@@ -70,7 +69,7 @@ export class GameRoom {
     this.latencyCnt.push(0);
     this.latencyCnt.push(0);
 
-    this.animation = new Animations(totalDistancePerSec);
+    this.animation = new Animations();
     this.physics = new Physics();
 
     this.keyPress = [];
@@ -80,7 +79,6 @@ export class GameRoom {
     this.history = histories;
     this.channel = channel;
 
-    this.totalDistance = totalDistancePerSec;
     this.keyPress.map((item) => item.setMaxUnit(totalDistancePerSec));
   }
 

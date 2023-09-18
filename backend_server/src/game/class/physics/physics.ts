@@ -34,11 +34,6 @@ export class Physics {
         // console.log('페들 입력시 여기로 들어갈까?!');
         gameData.gamePhase = GamePhase.HIT_THE_PADDLE;
         gameData = engine.correctLinearEquation(gameData, engine, room);
-        const val = room.getRandomInt(1, 3);
-        if (val === 2 || 1)
-          room.animation.bonusSetUnitDistance(
-            room.totalDistance / room.gameObj.frameData[1],
-          );
       }
     }
     // Score 획득 여부 판단
