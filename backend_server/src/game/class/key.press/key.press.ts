@@ -39,11 +39,11 @@ export class KeyPress {
     } else {
       this.pressedNumber = 0;
     }
-	this.pressedNumber *= 15;
+    this.pressedNumber *= 15;
   }
 
   public setMaxUnit(value: number) {
-    this.moveUnit = Math.ceil(value / 20);
+    this.moveUnit = Math.ceil(value / 12);
   }
 
   public pushKey(value: number) {
@@ -59,6 +59,6 @@ export class KeyPress {
   }
 
   public getHowManyKey(): number {
-	return this.keyAccumulatedValue;
+    return this.keyAccumulatedValue;
   }
 }
