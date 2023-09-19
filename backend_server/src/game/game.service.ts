@@ -660,33 +660,31 @@ export class GameService {
         user1.win += 1;
         user2.lose += 1;
         if (room.channel.type === RecordType.RANK) {
-          let correctionValue1;
-          let correctionValue2;
-          if (user1.rankpoint > user2.rankpoint) {
-            correctionValue1 = user2.rankpoint / user1.rankpoint;
-            correctionValue2 = user1.rankpoint / user2.rankpoint;
+          if (user1.rankpoint === 0) user1.rankpoint = 3000;
+          if (user2.rankpoint === 0) user2.rankpoint = 3000;
+          if (user1.rankpoint === user2.rankpoint) {
+            user1.rankpoint += 100;
+            user2.rankpoint -= 100;
           } else {
-            correctionValue2 = user2.rankpoint / user1.rankpoint;
-            correctionValue1 = user1.rankpoint / user2.rankpoint;
+            const value = 100 * (user2.rankpoint / user1.rankpoint);
+            user1.rankpoint += value;
+            user2.rankpoint -= value;
           }
-          user1.rankpoint += 100 * correctionValue1;
-          user2.rankpoint -= 100 * correctionValue2;
         }
       } else if (room.channel.score2 === 5) {
         user2.win += 1;
         user1.lose += 1;
         if (room.channel.type === RecordType.RANK) {
-          let correctionValue1;
-          let correctionValue2;
-          if (user1.rankpoint > user2.rankpoint) {
-            correctionValue1 = user2.rankpoint / user1.rankpoint;
-            correctionValue2 = user1.rankpoint / user2.rankpoint;
+          if (user1.rankpoint === 0) user1.rankpoint = 3000;
+          if (user2.rankpoint === 0) user2.rankpoint = 3000;
+          if (user1.rankpoint === user2.rankpoint) {
+            user1.rankpoint -= 100;
+            user2.rankpoint += 100;
           } else {
-            correctionValue2 = user2.rankpoint / user1.rankpoint;
-            correctionValue1 = user1.rankpoint / user2.rankpoint;
+            const value = 100 * (user1.rankpoint / user2.rankpoint);
+            user1.rankpoint -= value;
+            user2.rankpoint += value;
           }
-          user2.rankpoint += 100 * correctionValue1;
-          user1.rankpoint -= 100 * correctionValue2;
         }
       }
       this.processedUserIdxList.push(
@@ -839,6 +837,7 @@ export class GameService {
     }, 50);
     return true;
   }
+
   public findUserIdxProcessedOrNot(userIdx: number): boolean {
     const target = this.processedUserIdxList.find((value) => value === userIdx);
     if (target === undefined) return false;
