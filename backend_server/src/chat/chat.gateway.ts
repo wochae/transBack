@@ -853,19 +853,19 @@ export class ChatGateway
       );
     }
     // API: MAIN_CHAT_8
-    this.announceExit(channel);
-  }
-  async announceExit(channel: Channel) {
-    const announce = await this.chatService.exitAnnounce(channel);
-    console.log('announce : ', announce);
-    this.server
-      .to(`chat_room_${channel.getChannelIdx}`)
-      .emit('chat_room_exit', announce);
+  this.announceExit(channel);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done exit room',
-      'chat_room_exit',
+      'chat_goto_lobby',
     );
+  }
+
+  async announceExit(channel: Channel) {
+    const announce = await this.chatService.exitAnnounce(channel);
+    this.server
+      .to(`chat_room_${channel.getChannelIdx}`)
+      .emit('chat_room_exit', announce);
   }
 
   // API: MAIN_CHAT_12
@@ -1253,10 +1253,6 @@ export class ChatGateway
         myObject.userIdx,
         myObject.nickname,
       );
-      console.log(invitaionCard);
-      console.log(target.userIdx);
-      console.log(target.nickname);
-      console.log(targetSocket.id);
       setTimeout(() => {
         targetSocket.emit('chat_invite_answer', invitaionCard);
       }, 100);
