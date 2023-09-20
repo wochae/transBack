@@ -706,8 +706,8 @@ export class GameService {
 
         this.gameRecordRepository.save(room.getHistories()[0]);
         this.gameRecordRepository.save(room.getHistories()[1]);
-        await this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
-        await this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
+        this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
+        this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
         this.gameChannelRepository.save(room.getChannel());
         server
           .to(room.roomId)
@@ -736,7 +736,7 @@ export class GameService {
     );
 
     const result = new GameResultDto(channel, player1, player2);
-    console.log(result);
+    // console.log(result);
     return result;
   }
 
