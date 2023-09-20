@@ -587,7 +587,7 @@ export class ChatService {
     if (isOwner) {
       channel.removeOwner();
       channel.setOwner = channel.getMember[0];
-      // channel.setAdmin = channel.getMember[0]; 권한이 중복됨.
+      channel.setAdmin = channel.getMember[0]; // 권한이 중복됨.
     }
     const channelsInfo = this.getPublicAndProtectedChannel().map((channel) => {
       return {
