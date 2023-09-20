@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
-
+import { urlencoded, json } from 'body-parser';
 
 async function bootstrap() {
   dotenv.config(); // .env 파일 로드
@@ -15,6 +15,9 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     credentials: true,
   };
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ limit: '50mb', extended: true }));
+
   app.enableCors(corsOptions);
   app.useGlobalPipes(new ValidationPipe());
   

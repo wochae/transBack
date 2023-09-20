@@ -149,9 +149,6 @@ export class UsersService {
     const { userIdx, userNickname, imgData } = userEditImgDto;
 
     const user = await this.findOneUser(userIdx);
-    if (user.available === true || user.nickname !== '') {
-       throw new HttpException('잘못된 접근입니다.', HttpStatus.BAD_REQUEST);
-     }
     if (user.available === false && user.nickname === '') {
       user.nickname = userNickname;
       try {
@@ -164,9 +161,11 @@ export class UsersService {
       } catch (err) {
         throw new HttpException('update user error', HttpStatus.FORBIDDEN);
       }
-    } else {
+    } else if (user.available === true && user.nickname !== '') {
       await this.updateImgFile(`public/img`, `${userIdx}`, imgData); // 이미지 파일 비동기 저장
       return await this.userObjectRepository.findOneBy({ userIdx });
+    } else {
+      throw new HttpException('잘못된 접근입니다.', HttpStatus.BAD_REQUEST);
     }
   }
 
