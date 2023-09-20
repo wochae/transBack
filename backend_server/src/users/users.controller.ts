@@ -35,7 +35,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { UserStatusDto } from 'src/chat/dto/update-chat.dto';
 
-@UseGuards(AuthGuard)
+
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
@@ -63,6 +63,7 @@ export class UsersController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Post('profile')
   @UseInterceptors(FileInterceptor('imgData'))
   async updateUserProfile(
@@ -74,6 +75,7 @@ export class UsersController {
     try {
       const { id: myIdx, email } = req.jwtPayload;
       const changedUser = body;
+      changedUser.userIdx = Number(body.userIdx);
       if ( myIdx !== changedUser.userIdx ) {
         return res.status(HttpStatus.BAD_REQUEST).json({ message: '잘못된 접근입니다.' });
       }
@@ -101,11 +103,13 @@ export class UsersController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Get(':userIdx/second')
   async getTFA(@Param('userIdx') userIdx: number) {
     return this.usersService.getTFA(userIdx);
   }
 
+  @UseGuards(AuthGuard)
   @Post('second')
   async sendEmail(@Req() req, @Res() res, @Body() body: any) {
     try {
@@ -125,6 +129,7 @@ export class UsersController {
       .json({ message: '인증번호가 전송되었습니다.', result: true });
   }
 
+  @UseGuards(AuthGuard)
   @Patch('profile/second')
   async userTFA(@Req() req, @Res() res: Response, @Body() body: any) {
     const { userIdx, check2Auth } = body;
@@ -137,6 +142,7 @@ export class UsersController {
       .json({ message: '유저 정보가 업데이트 되었습니다.', result });
   }
 
+  @UseGuards(AuthGuard)
   @Patch('second')
   async patchTFA(@Req() req, @Res() res: Response, @Body() body: any) {
     const tfaAuthDto: TFAuthDto = { code: body.code };
@@ -152,7 +158,7 @@ export class UsersController {
     }
   }
 
-  // @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
   @Post('follow')
   async followFriend(
     @Req() req,
@@ -167,7 +173,7 @@ export class UsersController {
     return res.status(HttpStatus.OK).json({ result });
   }
 
-  // @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
   @Delete('unfollow')
   async unfollowFriend(
     @Req() req,
