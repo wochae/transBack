@@ -231,18 +231,11 @@ export class GameGateway
 
   @SubscribeMessage('game_queue_quit')
   quitQueue(@MessageBody() data: GameBasicAnswerDto) {
-    if (this.gameService.pullOutQueuePlayerByUserId(data.userIdx)) {
-      return this.messanger.setResponseMsgWithLogger(
-        200,
-        'success to quit queue from list',
-        'game_queue_quit',
-      );
-    } else {
-      return this.messanger.setResponseMsgWithLogger(
-        400,
-        'failed to quit queue from list',
-        'game_queue_quit',
-      );
-    }
+    // const ret = this.gameService.pullOutQueuePlayerByUserId(data.userIdx);
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'success to quit queue from list',
+      'game_queue_quit',
+    );
   }
 }
