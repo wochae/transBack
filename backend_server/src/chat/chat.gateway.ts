@@ -269,7 +269,7 @@ export class ChatGateway
     );
   }
 
-  @SubscribeMessage('BR_main_enter')
+  @SubscribeMessage('BR_set_status_ongame')
   async setStatusOnGame(
     @ConnectedSocket() client: Socket,
     @MessageBody() chatMainEnterReqDto: ChatMainEnterReqDto,
@@ -296,7 +296,7 @@ export class ChatGateway
       userIdx: user.userIdx,
       isOnline: user.isOnline,
     };
-    this.server.emit('BR_main_enter', BR_main_enter);
+    this.server.emit('BR_set_status_ongame', BR_main_enter);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done Set Status ONGAME',
