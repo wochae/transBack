@@ -1249,15 +1249,10 @@ export class ChatGateway
     if (target.isOnline === OnlineStatus.ONGAME) {
       return new ReturnMsgDto(400, 'Bad Request, target user is on Game');
     } else if (target.isOnline === OnlineStatus.ONLINE) {
-      await this.usersService.setIsOnline(target, OnlineStatus.ONGAME);
       const invitaionCard = new GameInvitationAskDto(
         myObject.userIdx,
         myObject.nickname,
       );
-      // console.log(invitaionCard);
-      // console.log(target.userIdx);
-      // console.log(target.nickname);
-      // console.log(targetSocket.id);
       setTimeout(() => {
         targetSocket.emit('chat_invite_answer', invitaionCard);
       }, 100);
