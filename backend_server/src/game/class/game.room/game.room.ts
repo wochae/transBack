@@ -423,7 +423,7 @@ export class GameRoom {
     if (room.gameObj.score[0] === 5) {
       history1.result = RecordResult.WIN;
       history2.result = RecordResult.LOSE;
-    } else {
+    } else if (room.gameObj.score[1] === 5) {
       history1.result = RecordResult.LOSE;
       history2.result = RecordResult.WIN;
     }

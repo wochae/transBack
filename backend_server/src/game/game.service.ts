@@ -355,13 +355,24 @@ export class GameService {
   ): GameRecord[] {
     const player1 = players[0].getUserObject();
     const player2 = players[1].getUserObject();
+    let type1;
+    let type2;
+    if (channel.type === RecordType.NORMAL) {
+      type1 = RecordType.NORMAL;
+      type2 = RecordType.NORMAL;
+    } else {
+      type1 = RecordType.RANK;
+      type2 = RecordType.RANK;
+    }
+    const result1 = RecordResult.DEFAULT;
+    const result2 = RecordResult.DEFAULT;
     const history1 = this.gameRecordRepository.create({
       gameIdx: channel.gameIdx,
       userIdx: player1.userIdx,
       matchUserNickname: player2.nickname,
       matchUserIdx: player2.userIdx,
-      type: channel.type,
-      result: channel.status,
+      type: type1,
+      result: result1,
       score: '',
     });
     const history2 = this.gameRecordRepository.create({
@@ -369,8 +380,8 @@ export class GameService {
       userIdx: player2.userIdx,
       matchUserNickname: player1.nickname,
       matchUserIdx: player1.userIdx,
-      type: channel.type,
-      result: channel.status,
+      type: type2,
+      result: result2,
       score: '',
     });
     const histories: GameRecord[] = [];
@@ -655,18 +666,8 @@ export class GameService {
           user2.lose += 1;
           if (room.gameObj.gameType === GameType.RANK) {
             console.log('winner A 들어감!');
-            if (
-              user1.rankpoint === 0 ||
-              user1.rankpoint === undefined ||
-              user1.rankpoint === null
-            )
-              user1.rankpoint = 3000;
-            if (
-              user2.rankpoint === 0 ||
-              user2.rankpoint === undefined ||
-              user2.rankpoint === null
-            )
-              user2.rankpoint = 3000;
+            if (user1.rankpoint === 0) user1.rankpoint = 3000;
+            if (user2.rankpoint === 0) user2.rankpoint = 3000;
             if (user1.rankpoint === user2.rankpoint) {
               user1.rankpoint += 100;
               user2.rankpoint -= 100;
@@ -696,8 +697,6 @@ export class GameService {
         }
         user1.rankpoint = parseInt(user1.rankpoint.toString());
         user2.rankpoint = parseInt(user2.rankpoint.toString());
-        console.log(` 점수 찍기 1: ${user1.rankpoint}`);
-        console.log(` 점수 찍기 2: ${user2.rankpoint}`);
         this.processedUserIdxList.push(
           room.users[0].getUserObject().userIdx.valueOf(),
         );
