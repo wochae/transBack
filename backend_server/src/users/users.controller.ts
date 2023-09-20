@@ -42,6 +42,7 @@ export class UsersController {
   logger: Logger = new Logger('UsersController');
   messanger: LoggerWithRes = new LoggerWithRes('UsersController');
 
+  @UseGuards(AuthGuard)
   @Get('profile')
   async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) {
     // body 를 안 쓰긴 함.
