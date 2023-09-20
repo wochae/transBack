@@ -151,6 +151,9 @@ export class UsersService {
     const user = await this.findOneUser(userIdx);
     if (user.available === false && user.nickname === '') {
       user.nickname = userNickname;
+      if (userNickname === '') {
+        return user;
+      }
       try {
         await this.updateUserNick({
           userIdx,
@@ -317,7 +320,7 @@ export class UsersService {
       nickname: "",
       imgUri: `${backenduri}/img/${userIdx}.png`,
       rankpoint: 0,
-      isOnline: OnlineStatus.ONLINE,
+      isOnline: OnlineStatus.OFFLINE,
       available: false,
       win: 0,
       lose: 0,
