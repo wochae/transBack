@@ -643,24 +643,30 @@ export class GameService {
         // );
         // this.deleteplayRoomByRoomId(room.roomId);
       } else if (status === GamePhase.MATCH_END) {
+        console.log('game match 들어감!');
         room.syncStatus(room);
-        server
-          .to(room.roomId)
-          .emit(
-            'game_pause_score',
-            new GamePauseScoreDto(room.users, room.gameObj, GameStatus.END),
-          );
+
         room.users[0].playerStatus = PlayerPhase.MATCH_END;
         room.users[1].playerStatus = PlayerPhase.MATCH_END;
         const user1 = room.users[0].getUserObject();
         const user2 = room.users[1].getUserObject();
-
-        if (room.channel.score1 === 5) {
+        if (room.gameObj.score[0] === 5) {
           user1.win += 1;
           user2.lose += 1;
-          if (room.channel.type === RecordType.RANK) {
-            if (user1.rankpoint === 0) user1.rankpoint = 3000;
-            if (user2.rankpoint === 0) user2.rankpoint = 3000;
+          if (room.gameObj.gameType === GameType.RANK) {
+            console.log('winner A 들어감!');
+            if (
+              user1.rankpoint === 0 ||
+              user1.rankpoint === undefined ||
+              user1.rankpoint === null
+            )
+              user1.rankpoint = 3000;
+            if (
+              user2.rankpoint === 0 ||
+              user2.rankpoint === undefined ||
+              user2.rankpoint === null
+            )
+              user2.rankpoint = 3000;
             if (user1.rankpoint === user2.rankpoint) {
               user1.rankpoint += 100;
               user2.rankpoint -= 100;
@@ -670,10 +676,12 @@ export class GameService {
               user2.rankpoint -= value;
             }
           }
-        } else if (room.channel.score2 === 5) {
+        } else if (room.gameObj.score[1] === 5) {
+          console.log('winner B 들어감!');
+
           user2.win += 1;
           user1.lose += 1;
-          if (room.channel.type === RecordType.RANK) {
+          if (room.gameObj.gameType === GameType.RANK) {
             if (user1.rankpoint === 0) user1.rankpoint = 3000;
             if (user2.rankpoint === 0) user2.rankpoint = 3000;
             if (user1.rankpoint === user2.rankpoint) {
@@ -686,6 +694,10 @@ export class GameService {
             }
           }
         }
+        user1.rankpoint = parseInt(user1.rankpoint.toString());
+        user2.rankpoint = parseInt(user2.rankpoint.toString());
+        console.log(` 점수 찍기 1: ${user1.rankpoint}`);
+        console.log(` 점수 찍기 2: ${user2.rankpoint}`);
         this.processedUserIdxList.push(
           room.users[0].getUserObject().userIdx.valueOf(),
         );
@@ -693,11 +705,17 @@ export class GameService {
           room.users[1].getUserObject().userIdx.valueOf(),
         );
 
-        await this.gameChannelRepository.save(room.getChannel());
-        await this.gameRecordRepository.save(room.getHistories()[0]);
-        await this.gameRecordRepository.save(room.getHistories()[1]);
+        this.gameRecordRepository.save(room.getHistories()[0]);
+        this.gameRecordRepository.save(room.getHistories()[1]);
         await this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
         await this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
+        this.gameChannelRepository.save(room.getChannel());
+        server
+          .to(room.roomId)
+          .emit(
+            'game_pause_score',
+            new GamePauseScoreDto(room.users, room.gameObj, GameStatus.END),
+          );
         this.deleteplayRoomByRoomId(room.roomId);
       }
     } else if (status === GamePhase.ON_PLAYING) {
