@@ -51,6 +51,7 @@ export class GameGateway
   }
 
   handleConnection(client: Socket) {
+    console.log(`connection handler!!!`);
     const userIdx: number = parseInt(
       client.handshake.query.userId as string,
       10,

@@ -165,6 +165,7 @@ export class GameService {
       (user) => user[0].getUserObject().userIdx === userIdx,
     );
     // console.log(`UserIdx 확인 후 : ` + target[0].getUserObject().userIdx);
+    if (target === undefined) return;
     const type = target[1];
     // console.log(`type : ${type}`);
     let targetQueue: GameQueue;
@@ -447,6 +448,7 @@ export class GameService {
         break;
       }
     }
+    if (target === undefined || target === null) return;
     target.intervalId = null;
     target.users[0].playerStatus = PlayerPhase.PING_CHECK;
     target.users[1].playerStatus = PlayerPhase.PING_CHECK;
@@ -567,6 +569,7 @@ export class GameService {
         break;
       }
     }
+    if (targetRoom === undefined) return;
     // targetRoom.setNewGame(targetRoom);
     console.log(`game Phase : ${targetRoom.getGamePhase()}`);
     if (targetRoom.getGamePhase() != GamePhase.SET_NEW_GAME) return;
@@ -640,64 +643,81 @@ export class GameService {
         // );
         // this.deleteplayRoomByRoomId(room.roomId);
       } else if (status === GamePhase.MATCH_END) {
+        console.log('game match 들어감!');
         room.syncStatus(room);
+
+        room.users[0].playerStatus = PlayerPhase.MATCH_END;
+        room.users[1].playerStatus = PlayerPhase.MATCH_END;
+        const user1 = room.users[0].getUserObject();
+        const user2 = room.users[1].getUserObject();
+        if (room.gameObj.score[0] === 5) {
+          user1.win += 1;
+          user2.lose += 1;
+          if (room.gameObj.gameType === GameType.RANK) {
+            console.log('winner A 들어감!');
+            if (
+              user1.rankpoint === 0 ||
+              user1.rankpoint === undefined ||
+              user1.rankpoint === null
+            )
+              user1.rankpoint = 3000;
+            if (
+              user2.rankpoint === 0 ||
+              user2.rankpoint === undefined ||
+              user2.rankpoint === null
+            )
+              user2.rankpoint = 3000;
+            if (user1.rankpoint === user2.rankpoint) {
+              user1.rankpoint += 100;
+              user2.rankpoint -= 100;
+            } else {
+              const value = 100 * (user2.rankpoint / user1.rankpoint);
+              user1.rankpoint += value;
+              user2.rankpoint -= value;
+            }
+          }
+        } else if (room.gameObj.score[1] === 5) {
+          console.log('winner B 들어감!');
+
+          user2.win += 1;
+          user1.lose += 1;
+          if (room.gameObj.gameType === GameType.RANK) {
+            if (user1.rankpoint === 0) user1.rankpoint = 3000;
+            if (user2.rankpoint === 0) user2.rankpoint = 3000;
+            if (user1.rankpoint === user2.rankpoint) {
+              user1.rankpoint -= 100;
+              user2.rankpoint += 100;
+            } else {
+              const value = 100 * (user1.rankpoint / user2.rankpoint);
+              user1.rankpoint -= value;
+              user2.rankpoint += value;
+            }
+          }
+        }
+        user1.rankpoint = parseInt(user1.rankpoint.toString());
+        user2.rankpoint = parseInt(user2.rankpoint.toString());
+        console.log(` 점수 찍기 1: ${user1.rankpoint}`);
+        console.log(` 점수 찍기 2: ${user2.rankpoint}`);
+        this.processedUserIdxList.push(
+          room.users[0].getUserObject().userIdx.valueOf(),
+        );
+        this.processedUserIdxList.push(
+          room.users[1].getUserObject().userIdx.valueOf(),
+        );
+
+        this.gameRecordRepository.save(room.getHistories()[0]);
+        this.gameRecordRepository.save(room.getHistories()[1]);
+        await this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
+        await this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
+        this.gameChannelRepository.save(room.getChannel());
         server
           .to(room.roomId)
           .emit(
             'game_pause_score',
             new GamePauseScoreDto(room.users, room.gameObj, GameStatus.END),
           );
-        room.users[0].playerStatus = PlayerPhase.MATCH_END;
-        room.users[1].playerStatus = PlayerPhase.MATCH_END;
+        this.deleteplayRoomByRoomId(room.roomId);
       }
-
-      const user1 = room.users[0].getUserObject();
-      const user2 = room.users[1].getUserObject();
-
-      if (room.channel.score1 === 5) {
-        user1.win += 1;
-        user2.lose += 1;
-        if (room.channel.type === RecordType.RANK) {
-          if (user1.rankpoint === 0) user1.rankpoint = 3000;
-          if (user2.rankpoint === 0) user2.rankpoint = 3000;
-          if (user1.rankpoint === user2.rankpoint) {
-            user1.rankpoint += 100;
-            user2.rankpoint -= 100;
-          } else {
-            const value = 100 * (user2.rankpoint / user1.rankpoint);
-            user1.rankpoint += value;
-            user2.rankpoint -= value;
-          }
-        }
-      } else if (room.channel.score2 === 5) {
-        user2.win += 1;
-        user1.lose += 1;
-        if (room.channel.type === RecordType.RANK) {
-          if (user1.rankpoint === 0) user1.rankpoint = 3000;
-          if (user2.rankpoint === 0) user2.rankpoint = 3000;
-          if (user1.rankpoint === user2.rankpoint) {
-            user1.rankpoint -= 100;
-            user2.rankpoint += 100;
-          } else {
-            const value = 100 * (user1.rankpoint / user2.rankpoint);
-            user1.rankpoint -= value;
-            user2.rankpoint += value;
-          }
-        }
-      }
-      this.processedUserIdxList.push(
-        room.users[0].getUserObject().userIdx.valueOf(),
-      );
-      this.processedUserIdxList.push(
-        room.users[1].getUserObject().userIdx.valueOf(),
-      );
-
-      await this.gameChannelRepository.save(room.getChannel());
-      await this.gameRecordRepository.save(room.getHistories()[0]);
-      await this.gameRecordRepository.save(room.getHistories()[1]);
-      await this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
-      await this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
-      this.deleteplayRoomByRoomId(room.roomId);
     } else if (status === GamePhase.ON_PLAYING) {
       gameService.frameData.setData(room.getGameData(), Date.now());
       server.to(room.roomId).emit('game_frame', gameService.frameData);
