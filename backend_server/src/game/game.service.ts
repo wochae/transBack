@@ -878,6 +878,7 @@ export class GameService {
   public handleDisconnectUsers(userIdx: number, server: Server): void {
     let target = this.getOnlinePlayer(userIdx);
     if (target === undefined) return;
+    console.log(`disconnect person : ${target.playerStatus}`);
     switch (target.playerStatus) {
       case PlayerPhase.SET_OPTION:
         this.deleteTargetOnSetOption(target);
@@ -1140,7 +1141,7 @@ export class GameService {
       }
       p1.result = RecordResult.WIN;
       p2.result = RecordResult.LOSE;
-    } else {
+    } else if (room.gameObj.score[0] < room.gameObj.score[1]) {
       p1Object.getUserObject().lose++;
       p2Object.getUserObject().win++;
       if (room.channel.type === RecordType.RANK) {
@@ -1158,103 +1159,32 @@ export class GameService {
       p1.result = RecordResult.LOSE;
       p2.result = RecordResult.WIN;
     }
+    user1.rankpoint = parseInt(user1.rankpoint.toString());
+    user2.rankpoint = parseInt(user1.rankpoint.toString());
     p1.score = `${room.gameObj.score[0]} : ${room.gameObj.score[1]}`;
     p2.score = `${room.gameObj.score[1]} : ${room.gameObj.score[0]}`;
 
     channel.status = RecordResult.DONE;
     channel.score1 = room.gameObj.score[0];
     channel.score2 = room.gameObj.score[1];
+
+    this.gameChannelRepository.save(room.getChannel());
+    this.gameRecordRepository.save(room.getHistories()[0]);
+    this.gameRecordRepository.save(room.getHistories()[1]);
+    this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
+    this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
     server
       .to(room.roomId)
       .emit(
         'game_puase_score',
         new GamePauseScoreDto(room.users, room.gameObj, GameStatus.JUDGE),
       );
-    this.gameChannelRepository.save(room.getChannel());
-    this.gameRecordRepository.save(room.getHistories()[0]);
-    this.gameRecordRepository.save(room.getHistories()[1]);
-    this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
-    this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
     this.deleteplayRoomByRoomId(room.roomId);
   }
 
   private deleteTargetOnOnReady(target: GamePlayer, server: Server) {
-    this.deleteOnLinePlayerList(target);
-    //TODO: make delete Target
-    // set re Game
-    // TODO: clear interval
-    // TODO: judge match
-    // TODO: SAVE Channel, records
-    // TODO: delete player room
-    // TODO: Proper Quit
-    this.deleteOnLinePlayerList(target);
-    const room = this.findGameRoomById(target.getUserObject().userIdx);
-    if (room === null) {
-      //TODO: what should I do
-      return;
-    }
-    if (room.intervalId !== null) room.stopInterval();
-    room.syncStatus(room);
-    const p1 = room.history[0];
-    const p2 = room.history[1];
-    const p1Object = room.users[0];
-    const p2Object = room.users[1];
-    const channel = room.channel;
-    const user1 = room.users[0].getUserObject();
-    const user2 = room.users[1].getUserObject();
-    if (room.gameObj.score[0] > room.gameObj.score[1]) {
-      p1Object.getUserObject().win++;
-      p2Object.getUserObject().lose++;
-      if (room.channel.type === RecordType.RANK) {
-        if (user1.rankpoint === 0) user1.rankpoint = 3000;
-        if (user2.rankpoint === 0) user2.rankpoint = 3000;
-        if (user1.rankpoint === user2.rankpoint) {
-          user1.rankpoint += 100;
-          user2.rankpoint -= 100;
-        } else {
-          const value = 100 * (user2.rankpoint / user1.rankpoint);
-          user1.rankpoint += value;
-          user2.rankpoint -= value;
-        }
-      }
-      p1.result = RecordResult.WIN;
-      p2.result = RecordResult.LOSE;
-    } else {
-      p1Object.getUserObject().lose++;
-      p2Object.getUserObject().win++;
-      if (room.channel.type === RecordType.RANK) {
-        if (user1.rankpoint === 0) user1.rankpoint = 3000;
-        if (user2.rankpoint === 0) user2.rankpoint = 3000;
-        if (user1.rankpoint === user2.rankpoint) {
-          user1.rankpoint -= 100;
-          user2.rankpoint += 100;
-        } else {
-          const value = 100 * (user1.rankpoint / user2.rankpoint);
-          user1.rankpoint -= value;
-          user2.rankpoint += value;
-        }
-      }
-      p1.result = RecordResult.LOSE;
-      p2.result = RecordResult.WIN;
-    }
-    p1.score = `${room.gameObj.score[0]} : ${room.gameObj.score[1]}`;
-    p2.score = `${room.gameObj.score[1]} : ${room.gameObj.score[0]}`;
-
-    channel.status = RecordResult.DONE;
-    channel.score1 = room.gameObj.score[0];
-    channel.score2 = room.gameObj.score[1];
-    server
-      .to(room.roomId)
-      .emit(
-        'game_puase_score',
-        new GamePauseScoreDto(room.users, room.gameObj, GameStatus.JUDGE),
-      );
-    this.gameChannelRepository.save(room.getChannel());
-    this.gameRecordRepository.save(room.getHistories()[0]);
-    this.gameRecordRepository.save(room.getHistories()[1]);
-    this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
-    this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
-    this.deleteplayRoomByRoomId(room.roomId);
+    this.deleteTargetOnOnPlaying(target, server);
+    return;
   }
 
   private deleteTargetOnMatchEnd(target: GamePlayer, server: Server) {
