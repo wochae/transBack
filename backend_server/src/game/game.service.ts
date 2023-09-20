@@ -127,6 +127,7 @@ export class GameService {
     if (option === null) {
       const type = player.getOption().gameType;
       this.checkProccessedOrNot(player.getUserObject().userIdx);
+      console.log(`Check Put In Queue ${player.getUserObject().userIdx}`);
       this.onLinePlayer.push([player, player.getOption().gameType]);
       switch (type) {
         case GameType.NORMAL:
@@ -176,6 +177,8 @@ export class GameService {
             player[0].getUserObject().userIdx ===
             target[0].getUserObject().userIdx,
         );
+        console.log(`TargetQueue : ${friendQue.length}`);
+
         // console.log(`player 1: ${player1}`);
         // console.log(`player 1 - userIdx : ${player1[1].userIdx}`);
         // console.log(`player 1 - targetIdx : ${player1[1].targetIdx}`);
@@ -183,7 +186,7 @@ export class GameService {
           (player) =>
             player[0].getUserObject().userIdx === player1[1].targetIdx,
         );
-        // console.log(`player 2: ${player2}`);
+        console.log(`player 2: ${player2}`);
 
         if (player2 === undefined) return undefined;
         else {
@@ -204,7 +207,7 @@ export class GameService {
           list.push(player1[0]);
           list.push(player2[0]);
           console.log(list);
-          return this.makePlayerRoom(list, server, userIdx);
+          return this.makePlayerRoom(list, server);
         }
       case GameType.NORMAL:
         targetQueue = this.normalQueue;
@@ -213,6 +216,7 @@ export class GameService {
         targetQueue = this.rankQueue;
         break;
     }
+    console.log(`TargetQueue : ${targetQueue.getLength()}`);
     if (
       (type === GameType.NORMAL || type === GameType.RANK) &&
       targetQueue.getLength() >= 2
@@ -221,7 +225,7 @@ export class GameService {
       const list = targetQueue.popPlayer(target[0].getUserObject().userIdx);
       list[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
       list[1].playerStatus = PlayerPhase.QUEUE_SUCCESS;
-      return this.makePlayerRoom(list, server, userIdx);
+      return this.makePlayerRoom(list, server);
     } else return undefined;
   }
 
@@ -242,7 +246,7 @@ export class GameService {
   }
 
   // play room 을 구성한다.
-  async makePlayerRoom(players: GamePlayer[], server: Server, userIdx: number) {
+  async makePlayerRoom(players: GamePlayer[], server: Server) {
     const roomName = this.makeRoomName();
     // this.messanger.logWithMessage('makePlayerRoom', '', '', `${roomName}`);
 
@@ -300,21 +304,23 @@ export class GameService {
       room.gameObj.gameSpeed,
       room.gameObj.gameMapNumber,
     );
-    if (room.users[0].getUserObject().userIdx === userIdx) {
-      setTimeout(() => {
-        room.users[1].getSocket().emit('game_queue_success', data);
-      }, 400);
-      setTimeout(() => {
-        room.users[0].getSocket().emit('game_queue_success', data);
-      }, 500);
-    } else {
-      setTimeout(() => {
-        room.users[0].getSocket().emit('game_queue_success', data);
-      }, 400);
-      setTimeout(() => {
-        room.users[1].getSocket().emit('game_queue_success', data);
-      }, 500);
-    }
+    console.log('here you Are1!');
+    server.to(room.roomId).emit('game_queue_success', data);
+    // if (room.users[0].getUserObject().userIdx === userIdx) {
+    //   setTimeout(() => {
+    //     room.users[1].getSocket().emit('game_queue_success', data);
+    //   }, 400);
+    //   setTimeout(() => {
+    //     room.users[0].getSocket().emit('game_queue_success', data);
+    //   }, 500);
+    // } else {
+    //   setTimeout(() => {
+    //     room.users[0].getSocket().emit('game_queue_success', data);
+    //   }, 400);
+    //   setTimeout(() => {
+    //     room.users[1].getSocket().emit('game_queue_success', data);
+    //   }, 500);
+    // }
   }
 
   // play room 의 이름을 설정한다.
@@ -864,7 +870,7 @@ export class GameService {
 
   public handleDisconnectUsers(userIdx: number, server: Server): void {
     let target = this.getOnlinePlayer(userIdx);
-
+    if (target === undefined) return;
     switch (target.playerStatus) {
       case PlayerPhase.SET_OPTION:
         this.deleteTargetOnSetOption(target);
@@ -936,7 +942,7 @@ export class GameService {
           return;
         }
         this.friendQueue.splice(index2, 1);
-        break;
+        return;
       case GameType.NORMAL:
         targetQueue = this.normalQueue;
         break;

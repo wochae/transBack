@@ -57,6 +57,7 @@ export class GameGateway
     );
     if (Number.isNaN(userIdx)) return;
     const target = this.gameService.getOnlinePlayer(userIdx);
+    console.log(`target ${target}`);
     if (target === undefined) return;
     target.playerStatus = PlayerPhase.CONNECT_SOCKET;
     this.gameService.popOutProcessedUserIdx(userIdx); // 처리된 사용자지만, 새로이 들어왔다면 다시 빼고 관리 이루어짐
@@ -231,7 +232,7 @@ export class GameGateway
 
   @SubscribeMessage('game_queue_quit')
   quitQueue(@MessageBody() data: GameBasicAnswerDto) {
-    // const ret = this.gameService.pullOutQueuePlayerByUserId(data.userIdx);
+    const ret = this.gameService.pullOutQueuePlayerByUserId(data.userIdx);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'success to quit queue from list',
