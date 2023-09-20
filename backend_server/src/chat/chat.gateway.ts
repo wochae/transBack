@@ -269,6 +269,40 @@ export class ChatGateway
     );
   }
 
+  @SubscribeMessage('BR_set_status_ongame')
+  async setStatusOnGame(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() chatMainEnterReqDto: ChatMainEnterReqDto,
+  ) {
+    const { userNickname } = chatMainEnterReqDto;
+    const userId: number = parseInt(client.handshake.query.userId as string);
+    const checkUser = await this.inMemoryUsers.getUserByIdFromIM(userId);
+    const user = checkUser;
+
+    if (!user) {
+      client.disconnect();
+      return this.messanger.logWithWarn(
+        'setStatusOnGame',
+        'nickname',
+        userNickname,
+        'Not Found',
+      );
+    }
+    
+    const BR_set_status_ongame = {
+      nickname: user.nickname,
+      userIdx: user.userIdx,
+      isOnline: OnlineStatus.ONGAME,
+    };
+    this.server.emit('BR_set_status_ongame', BR_set_status_ongame);
+    this.usersService.setIsOnline(user, OnlineStatus.ONGAME);
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'Done Set Status ONGAME',
+      'setStatusOnGame',
+    );
+  }
+
   // API: MAIN_PROFILE
   @SubscribeMessage('user_profile')
   async handleGetProfile(
