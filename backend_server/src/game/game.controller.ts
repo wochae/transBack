@@ -1,24 +1,12 @@
 import { Controller } from '@nestjs/common';
-import {
-  Get,
-  Post,
-  Query,
-  Body,
-  HttpStatus,
-  Req,
-  Res,
-  Param,
-} from '@nestjs/common';
+import { Get, Post, Query, Body, HttpStatus, Req, Res } from '@nestjs/common';
 import { GameService } from './game.service';
-import {
-  UserProfileGameDto,
-  UserProfileGameRecordDto,
-} from './dto/game.record.dto';
+import { UserProfileGameRecordDto } from './dto/game.record.dto';
 import { GameOptionDto } from './dto/game.option.dto';
 import { UsersService } from 'src/users/users.service';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 import { GameInviteOptionDto } from './dto/game.invite.option.dto';
-import { GameType } from './enum/game.type.enum';
+import { PlayerPhase } from './class/game.player/game.player';
 
 @Controller('game')
 export class GameController {
@@ -61,11 +49,12 @@ export class GameController {
 
   @Post('normal-match')
   async postGameOptions(@Req() req, @Res() res, @Body() option: GameOptionDto) {
-    console.log('나 켜짐!! : 일반 게임');
+    // console.log('나 켜짐!! : 일반 게임');
     const message = '플레이어가 큐에 등록 되었습니다.';
     const errorMessage = '플레이어가 큐에 등록되지 못하였습니다.';
     let status: boolean;
     const target = await this.gameService.makePlayer(option);
+    target.playerStatus = PlayerPhase.SET_OPTION;
     if (target === null) status = false;
     else {
       this.gameService.putInQueue(target, null);
@@ -83,7 +72,7 @@ export class GameController {
     @Res() res,
     @Body() option: GameInviteOptionDto,
   ) {
-    console.log('나 켜짐!! : 친선 게임');
+    // console.log('나 켜짐!! : 친선 게임');
 
     const message = '친선전이 준비 되었습니다.';
     const errorMessage = '친선전이 실패하였습니다.';
@@ -95,6 +84,7 @@ export class GameController {
       option.mapNumber,
     );
     const target = await this.gameService.makePlayer(basicOption);
+    target.playerStatus = PlayerPhase.SET_OPTION;
     // console.log(`target check?! : ${target}`);
     if (target === null) status = false;
     else {

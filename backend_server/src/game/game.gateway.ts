@@ -11,7 +11,7 @@ import {
 import { Socket, Server } from 'socket.io';
 import { GameService } from './game.service';
 // import { ReturnMsgDto } from './dto/error.message.dto';
-import { Logger, UseFilters, UseGuards } from '@nestjs/common';
+import { UseFilters, UseGuards } from '@nestjs/common';
 import { WsExceptionFilter } from 'src/ws.exception.filter';
 import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.response.msg';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -20,8 +20,7 @@ import { GamePingReceiveDto } from './dto/game.ping.dto';
 import { GameStartDto } from './dto/game.start.dto';
 import { KeyPressDto } from './dto/key.press.dto';
 import { GamePhase } from './enum/game.phase';
-import { check } from 'prettier';
-import { GamePingDto } from './dto/game.ping.dto';
+import { PlayerPhase } from './class/game.player/game.player';
 
 const front = process.env.FRONTEND;
 @WebSocketGateway({
@@ -47,9 +46,7 @@ export class GameGateway
   handleDisconnect(client: Socket) {
     const userIdx: number = parseInt(client.handshake.query.userId as string);
     if (Number.isNaN(userIdx)) return;
-    if (!this.gameService.findUserIdxProcessedOrNot(userIdx)) {
-      this.gameService.forceQuitForForceDisconnect(userIdx, this.server);
-    }
+    this.gameService.handleDisconnectUsers(userIdx, this.server);
     return;
   }
 
@@ -59,7 +56,12 @@ export class GameGateway
       10,
     );
     if (Number.isNaN(userIdx)) return;
+    const target = this.gameService.getOnlinePlayer(userIdx);
+    console.log(`target ${target}`);
+    if (target === undefined) return;
+    target.playerStatus = PlayerPhase.CONNECT_SOCKET;
     this.gameService.popOutProcessedUserIdx(userIdx); // 처리된 사용자지만, 새로이 들어왔다면 다시 빼고 관리 이루어짐
+
     if (!this.gameService.setSocketToPlayer(client, userIdx)) {
       this.messanger.logWithWarn(
         'handleConnection',
@@ -70,25 +72,13 @@ export class GameGateway
       client.disconnect();
       return;
     }
-    // this.messanger.logWithMessage("handleConnection", "", "","connection handling is status Player");
+
     this.gameService.changeStatusForPlayer(userIdx);
-    // this.messanger.logWithMessage("handleConnection", "", "","connection handling is after status Player");
-    const players = this.gameService.checkQueue(userIdx);
-    if (players !== undefined) {
-      for (const member of players) {
-        console.log(`얜 누구니>>>> ${member.getUserObject().userIdx}`);
-      }
-    }
-    // this.messanger.logWithMessage("handleConnection", "", "","connection handling is check Queue");
-    if (players === undefined) {
-      // this.messanger.logWithMessage("handleConnection", "", "","check players");
-      return this.messanger.setResponseMsgWithLogger(
-        200,
-        'you are ready',
-        'handleConnection',
-      );
-    } else this.gameService.makePlayerRoom(players, this.server, userIdx);
-    // this.messanger.logWithMessage("handleConnection", "", "","connection handling is successed");
+
+    setTimeout(() => {
+      this.gameService.checkQueue(userIdx, this.server);
+    }, 100);
+
     return this.messanger.setResponseMsgWithLogger(
       200,
       'room is setted',
@@ -109,12 +99,12 @@ export class GameGateway
     console.log(`gmae_queue_success : `, userIdx);
     const ret = this.gameService.checkReady(userIdx);
     if (ret === null) {
-      console.log(`error happens!`);
+      //   console.log(`error happens!`);
       client.disconnect(true);
     }
     //TODO: error handling
     else if (ret === true) {
-      console.log('game ready');
+      //   console.log('game ready');
       const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
       setTimeout(() => {
         this.gameService.readyToSendPing(roomId, this.server);
@@ -144,6 +134,9 @@ export class GameGateway
     );
     if (ret === true) {
       const targetRoom = this.gameService.findGameRoomById(data.userIdx);
+      targetRoom.users[0].playerStatus = PlayerPhase.ON_PLAYING;
+      targetRoom.users[1].playerStatus = PlayerPhase.ON_PLAYING;
+      targetRoom.intervalId = null;
       this.server
         .to(targetRoom.roomId)
         .emit('game_start', new GameStartDto(targetRoom));
@@ -233,22 +226,17 @@ export class GameGateway
   }
 
   @SubscribeMessage('game_over_quit')
-  getQuitProperly(@MessageBody() data: GameBasicAnswerDto) {}
+  getQuitProperly(@MessageBody() data: GameBasicAnswerDto) {
+    //TODO: 만들기
+  }
 
   @SubscribeMessage('game_queue_quit')
   quitQueue(@MessageBody() data: GameBasicAnswerDto) {
-    if (this.gameService.pullOutQueuePlayerByUserId(data.userIdx)) {
-      return this.messanger.setResponseMsgWithLogger(
-        200,
-        'success to quit queue from list',
-        'game_queue_quit',
-      );
-    } else {
-      return this.messanger.setResponseMsgWithLogger(
-        400,
-        'failed to quit queue from list',
-        'game_queue_quit',
-      );
-    }
+    const ret = this.gameService.pullOutQueuePlayerByUserId(data.userIdx);
+    return this.messanger.setResponseMsgWithLogger(
+      200,
+      'success to quit queue from list',
+      'game_queue_quit',
+    );
   }
 }
