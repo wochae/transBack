@@ -289,14 +289,13 @@ export class ChatGateway
       );
     }
     
-    await this.usersService.setIsOnline(user, OnlineStatus.ONGAME);
-    // API: MAIN_ENTER_1
-    const BR_main_enter = {
+    const BR_set_status_ongame = {
       nickname: user.nickname,
       userIdx: user.userIdx,
-      isOnline: user.isOnline,
+      isOnline: OnlineStatus.ONGAME,
     };
-    this.server.emit('BR_set_status_ongame', BR_main_enter);
+    this.server.emit('BR_set_status_ongame', BR_set_status_ongame);
+    this.usersService.setIsOnline(user, OnlineStatus.ONGAME);
     return this.messanger.setResponseMsgWithLogger(
       200,
       'Done Set Status ONGAME',
