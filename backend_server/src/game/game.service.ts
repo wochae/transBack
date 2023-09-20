@@ -305,7 +305,9 @@ export class GameService {
       room.gameObj.gameMapNumber,
     );
     console.log('here you Are1!');
-    server.to(room.roomId).emit('game_queue_success', data);
+    setTimeout(() => {
+      server.to(room.roomId).emit('game_queue_success', data);
+    }, 400)
     // if (room.users[0].getUserObject().userIdx === userIdx) {
     //   setTimeout(() => {
     //     room.users[1].getSocket().emit('game_queue_success', data);
