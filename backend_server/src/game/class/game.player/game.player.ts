@@ -2,11 +2,23 @@ import { UserObject } from 'src/entity/users.entity';
 import { Socket } from 'socket.io';
 import { GameOptionDto } from '../../dto/game.option.dto';
 
+export enum PlayerPhase {
+  SET_OPTION = 0,
+  CONNECT_SOCKET,
+  QUEUE_SUCCESS,
+  PING_CHECK,
+  PING_DONE,
+  ON_PLAYING,
+  ON_READY,
+  MATCH_END,
+}
+
 export class GamePlayer {
   private userObject: UserObject;
   private socket: Socket | null;
   private options: GameOptionDto | null;
   private ready: boolean;
+  public playerStatus: PlayerPhase;
 
   constructor(user: UserObject) {
     this.userObject = user;

@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { GameRecordRepository } from './game.record.repository';
 import { GameChannelRepository } from './game.channel.repository';
-import { UserObjectRepository } from 'src/users/users.repository';
 import { InMemoryUsers } from 'src/users/users.provider';
 import { UsersService } from 'src/users/users.service';
-import { GamePlayer } from './class/game.player/game.player';
+import { GamePlayer, PlayerPhase } from './class/game.player/game.player';
 import { GameOptionDto } from './dto/game.option.dto';
 import { OnlineStatus, UserObject } from 'src/entity/users.entity';
 import {
@@ -26,8 +25,6 @@ import { LoggerWithRes } from 'src/shared/class/shared.response.msg/shared.respo
 import { GameFrameDataDto } from './dto/game.frame.data.dto';
 import { KeyPressDto } from './dto/key.press.dto';
 import { GameResultDto } from './dto/game.result.dto';
-import { Vector } from './enum/game.vector.enum';
-import { GameForceQuitDto } from './dto/game.force.quit.dto';
 import { GameInviteOptionDto } from './dto/game.invite.option.dto';
 import { UserProfileGameDto } from './dto/game.record.dto';
 
@@ -88,6 +85,14 @@ export class GameService {
     });
     // console.log('getGameRecordsByInfinity', records);
     return records;
+  }
+
+  public getOnlinePlayer(userIdx: number): GamePlayer {
+    const ret = this.onLinePlayer.find(
+      (user) => user[0].getUserObject().userIdx === userIdx,
+    );
+    if (ret === undefined) return undefined;
+    return ret[0];
   }
 
   // player 만들기
@@ -153,18 +158,18 @@ export class GameService {
   }
 
   // 큐 내부를 파악하고, 게임 상대가 준비되었는지 확인한다.
-  checkQueue(userIdx: number): GamePlayer[] {
-    console.log(`userIdx 확인 전 : ` + userIdx);
+  async checkQueue(userIdx: number, server: Server): Promise<void> {
+    // console.log(`userIdx 확인 전 : ` + userIdx);
     const target: [GamePlayer, GameType] = this.onLinePlayer.find(
       (user) => user[0].getUserObject().userIdx === userIdx,
     );
-    console.log(`UserIdx 확인 후 : ` + target[0].getUserObject().userIdx);
+    // console.log(`UserIdx 확인 후 : ` + target[0].getUserObject().userIdx);
     const type = target[1];
-    console.log(`type : ${type}`);
+    // console.log(`type : ${type}`);
     let targetQueue: GameQueue;
     switch (type) {
       case GameType.FRIEND:
-        console.log(`friend Queue : ${this.friendQueue}`);
+        // console.log(`friend Queue : ${this.friendQueue}`);
         const friendQue = this.friendQueue;
         const player1 = friendQue.find(
           (player) =>
@@ -174,17 +179,11 @@ export class GameService {
         // console.log(`player 1: ${player1}`);
         // console.log(`player 1 - userIdx : ${player1[1].userIdx}`);
         // console.log(`player 1 - targetIdx : ${player1[1].targetIdx}`);
-
-        /**
-		 * 
-			A -> A, B , 0, 1, 2
-			B -> B, A, 0 , 1, 2 
-		 */
         const player2 = friendQue.find(
           (player) =>
             player[0].getUserObject().userIdx === player1[1].targetIdx,
         );
-        console.log(`player 2: ${player2}`);
+        // console.log(`player 2: ${player2}`);
 
         if (player2 === undefined) return undefined;
         else {
@@ -200,10 +199,12 @@ export class GameService {
           );
           friendQue.splice(player2Index, 1);
           const list: GamePlayer[] = [];
+          player1[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+          player2[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
           list.push(player1[0]);
           list.push(player2[0]);
           console.log(list);
-          return list;
+          return this.makePlayerRoom(list, server, userIdx);
         }
       case GameType.NORMAL:
         targetQueue = this.normalQueue;
@@ -216,9 +217,11 @@ export class GameService {
       (type === GameType.NORMAL || type === GameType.RANK) &&
       targetQueue.getLength() >= 2
     ) {
-      //   console.log('here it is!!!');
+      //   console.log(`큐의 길이는 : `, targetQueue.getLength());
       const list = targetQueue.popPlayer(target[0].getUserObject().userIdx);
-      return list;
+      list[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+      list[1].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+      return this.makePlayerRoom(list, server, userIdx);
     } else return undefined;
   }
 
@@ -241,31 +244,31 @@ export class GameService {
   // play room 을 구성한다.
   async makePlayerRoom(players: GamePlayer[], server: Server, userIdx: number) {
     const roomName = this.makeRoomName();
-    this.messanger.logWithMessage('makePlayerRoom', '', '', `${roomName}`);
+    // this.messanger.logWithMessage('makePlayerRoom', '', '', `${roomName}`);
 
     const option = this.setOptions(players);
-    this.messanger.logWithMessage(
-      'makePlayerRoom',
-      '',
-      '',
-      `${option.userIdx}`,
-    );
+    // this.messanger.logWithMessage(
+    //   'makePlayerRoom',
+    //   '',
+    //   '',
+    //   `${option.userIdx}`,
+    // );
 
     const channel = this.makeGameChannel(players);
-    this.messanger.logWithMessage(
-      'makePlayerRoom',
-      '',
-      '',
-      `${players.length}`,
-    );
+    // this.messanger.logWithMessage(
+    //   'makePlayerRoom',
+    //   '',
+    //   '',
+    //   `${players.length}`,
+    // );
 
     const newChannel = await this.gameChannelRepository.save(channel);
-    this.messanger.logWithMessage(
-      'makePlayerRoom',
-      '',
-      '',
-      `${channel.userIdx1} ${channel.userIdx2} / ${channel.matchDate}`,
-    );
+    // this.messanger.logWithMessage(
+    //   'makePlayerRoom',
+    //   '',
+    //   '',
+    //   `${channel.userIdx1} ${channel.userIdx2} / ${channel.matchDate}`,
+    // );
 
     const gameRecord = this.makeGameHistory(players, newChannel);
     // TODO: FIX here
@@ -385,7 +388,7 @@ export class GameService {
   // game_queue_success 를 진행하면서, 들어오는 반환값들이 정상 처리가 되느지를 확인한다. true 가 나오면 플레이어 1, 2가 모두 준비된 상태를 의미하다.
   checkReady(userIdx: number): boolean | null {
     const room = this.findGameRoomById(userIdx);
-    console.log('room', room);
+    // console.log('room', room);
     if (room === null) return null;
     if (room.users[0].getUserObject().userIdx === userIdx)
       room.users[0].setReady(userIdx);
@@ -444,13 +447,16 @@ export class GameService {
   }
 
   public readyToSendPing(roomId: string, server: Server) {
-    let target;
+    let target: GameRoom;
     for (let i = 0; i < this.playRoom.length; i++) {
       if (this.playRoom[i].roomId.valueOf === roomId.valueOf) {
         target = this.playRoom[i];
         break;
       }
     }
+    target.intervalId = null;
+    target.users[0].playerStatus = PlayerPhase.PING_CHECK;
+    target.users[1].playerStatus = PlayerPhase.PING_CHECK;
     target.intervalId = setInterval(() => {
       this.sendPingToRoom(target, server);
     }, 15);
@@ -493,6 +499,8 @@ export class GameService {
     if (targetRoom.latencyCnt[latencyIdx] === 30) {
       if (targetRoom.latencyCnt[0] >= 30 && targetRoom.latencyCnt[1] >= 30) {
         targetRoom.stopInterval();
+        targetRoom.users[0].playerStatus = PlayerPhase.PING_DONE;
+        targetRoom.users[1].playerStatus = PlayerPhase.PING_DONE;
         targetRoom.setGamePhase(GamePhase.SET_NEW_GAME);
         if (this.sendSetFrameRate(userIdx, server) === -1) return -1;
         targetRoom.latencyCnt.splice(0, 2);
@@ -545,16 +553,9 @@ export class GameService {
         : targetRoom.latency[1];
     const gap = Math.abs(targetRoom.latency[0] - targetRoom.latency[1]);
     if (gap >= 100) {
-      //   server
-      //     .to(targetRoom.roomId)
-      //     .emit(
-      //       'game_force_quit',
-      //       new GameForceQuitDto(
-      //         `Networking states is bad to continue proper game.`,
-      //       ),
-      //     );
       targetRoom.stopInterval();
       targetRoom.deleteRoom();
+      //TODO: add ForceQuit
       return -1;
     }
     // targetRoom.intervalPeriod
@@ -606,43 +607,45 @@ export class GameService {
             'game_pause_score',
             new GamePauseScoreDto(room.users, room.gameObj, GameStatus.ONGOING),
           );
+        room.users[0].playerStatus = PlayerPhase.ON_READY;
+        room.users[1].playerStatus = PlayerPhase.ON_READY;
         // handling set New game ;
         room.setReGame(room);
         return;
       } else if (status === GamePhase.FORCE_QUIT) {
-        // TODO: 강제 종료 로직
-        server
-          .to(room.roomId)
-          .emit(
-            'game_pause_score',
-            new GamePauseScoreDto(room.users, room.gameObj, GameStatus.JUDGE),
-          );
-        await this.gameChannelRepository.save(room.channel);
-        await this.gameRecordRepository.save(room.history[0]);
-        await this.gameRecordRepository.save(room.history[1]);
-        await this.inMemoryUsers.saveUserByUserIdFromIM(
-          room.users[0].getUserObject().userIdx,
-        );
-        await this.inMemoryUsers.saveUserByUserIdFromIM(
-          room.users[1].getUserObject().userIdx,
-        );
-        const name =
-          room.history[0].result === RecordResult.LOSE
-            ? room.history[0].matchUserNickname
-            : room.history[1].matchUserNickname;
-        server
-          .to(room.roomId)
-          .emit(
-            'game_force_quit',
-            new GameForceQuitDto(`Game is forcely quit, Because of ${name}`),
-          );
-        this.processedUserIdxList.push(
-          room.users[0].getUserObject().userIdx.valueOf(),
-        );
-        this.processedUserIdxList.push(
-          room.users[1].getUserObject().userIdx.valueOf(),
-        );
-        this.deleteplayRoomByRoomId(room.roomId);
+        // // TODO: 강제 종료 로직
+        // server
+        //   .to(room.roomId)
+        //   .emit(
+        //     'game_pause_score',
+        //     new GamePauseScoreDto(room.users, room.gameObj, GameStatus.JUDGE),
+        //   );
+        // await this.gameChannelRepository.save(room.channel);
+        // await this.gameRecordRepository.save(room.history[0]);
+        // await this.gameRecordRepository.save(room.history[1]);
+        // await this.inMemoryUsers.saveUserByUserIdFromIM(
+        //   room.users[0].getUserObject().userIdx,
+        // );
+        // await this.inMemoryUsers.saveUserByUserIdFromIM(
+        //   room.users[1].getUserObject().userIdx,
+        // );
+        // const name =
+        //   room.history[0].result === RecordResult.LOSE
+        //     ? room.history[0].matchUserNickname
+        //     : room.history[1].matchUserNickname;
+        // server
+        //   .to(room.roomId)
+        //   .emit(
+        //     'game_force_quit',
+        //     new GameForceQuitDto(`Game is forcely quit, Because of ${name}`),
+        //   );
+        // this.processedUserIdxList.push(
+        //   room.users[0].getUserObject().userIdx.valueOf(),
+        // );
+        // this.processedUserIdxList.push(
+        //   room.users[1].getUserObject().userIdx.valueOf(),
+        // );
+        // this.deleteplayRoomByRoomId(room.roomId);
       } else if (status === GamePhase.MATCH_END) {
         room.syncStatus(room);
         server
@@ -651,6 +654,8 @@ export class GameService {
             'game_pause_score',
             new GamePauseScoreDto(room.users, room.gameObj, GameStatus.END),
           );
+        room.users[0].playerStatus = PlayerPhase.MATCH_END;
+        room.users[1].playerStatus = PlayerPhase.MATCH_END;
       }
 
       const user1 = room.users[0].getUserObject();
@@ -857,21 +862,320 @@ export class GameService {
     return this.forceQuitMatch(userIdx, server);
   }
 
-  //   public checkInviteGameIsReady(option: GameInviteOptionDto): boolean {
-  //     const userIdx = option.userIdx;
-  //     const target = this.playRoom.find(
-  //       (room) =>
-  //         room.users[0].getUserObject().userIdx === userIdx ||
-  //         room.users[1].getUserObject().userIdx === userIdx,
-  //     );
-  //     if (target === undefined) return false;
-  //     return true;
-  //   }
+  public handleDisconnectUsers(userIdx: number, server: Server): void {
+    let target = this.getOnlinePlayer(userIdx);
 
-  public makePlayerRoomForInviteGame(option: GameInviteOptionDto): boolean {
-    const user = this.inMemoryUsers.getUserByIdFromIM(option.userIdx);
-    const targetUser = this.inMemoryUsers.getUserByIdFromIM(option.targetIdx);
+    switch (target.playerStatus) {
+      case PlayerPhase.SET_OPTION:
+        this.deleteTargetOnSetOption(target);
+        break;
+      case PlayerPhase.CONNECT_SOCKET:
+        this.deleteTargetOnConnectSocket(target);
+        break;
+      case PlayerPhase.QUEUE_SUCCESS:
+        this.deleteTargetOnQueueSuccess(target, server);
+        break;
+      case PlayerPhase.PING_CHECK:
+        this.deleteTargetOnPingCheck(target, server);
+        break;
+      case PlayerPhase.PING_DONE:
+        this.deleteTargetOnPingDone(target, server);
+        break;
+      case PlayerPhase.ON_PLAYING:
+        this.deleteTargetOnOnPlaying(target, server);
+        break;
+      case PlayerPhase.ON_READY:
+        this.deleteTargetOnOnReady(target, server);
+        break;
+      case PlayerPhase.MATCH_END:
+        this.deleteTargetOnMatchEnd(target, server);
+        break;
+    }
+    target = undefined;
+    return;
+  }
+  private deleteOnLinePlayerList(target: GamePlayer): boolean {
+    const onIndex = this.onLinePlayer.findIndex(
+      (player) =>
+        player[0].getUserObject().userIdx === target.getUserObject().userIdx,
+    );
+    if (onIndex != -1) this.onLinePlayer.splice(onIndex, 1);
+    else return false;
+  }
 
-    return true;
+  private deleteTargetOnSetOption(target: GamePlayer) {
+    //TODO: make delete Target
+    // make player
+    // put in Queue
+    // TODO: find queue -> delete
+    let targetQueue: GameQueue;
+    this.deleteOnLinePlayerList(target);
+    switch (target.getOption().gameType) {
+      case GameType.FRIEND:
+        //TODO:
+        const index = this.friendQueue.findIndex(
+          (player) =>
+            player[0].getUserObject().userIdx ===
+            target.getUserObject().userIdx,
+        );
+        if (index === -1) return;
+        const p1 = this.friendQueue[index];
+        this.friendQueue.splice(index, 1);
+        const index2 = this.friendQueue.findIndex(
+          (player) => player[0].getUserObject().userIdx === p1[1].targetIdx,
+        );
+        if (index2 === -1) {
+          // TODO: need to check
+          setTimeout(() => {
+            const index2 = this.friendQueue.findIndex(
+              (player) => player[0].getUserObject().userIdx === p1[1].targetIdx,
+            );
+            if (index2 === -1) return;
+            this.friendQueue.splice(index2, 1);
+          }, 1000);
+          return;
+        }
+        this.friendQueue.splice(index2, 1);
+        break;
+      case GameType.NORMAL:
+        targetQueue = this.normalQueue;
+        break;
+      case GameType.RANK:
+        targetQueue = this.rankQueue;
+        break;
+    }
+    const index = targetQueue.playerList.findIndex(
+      (player) =>
+        player.getUserObject().userIdx === target.getUserObject().userIdx,
+    );
+    if (index === -1) return;
+    targetQueue.playerList.splice(index, 1);
+    target = undefined;
+    return;
+  }
+
+  private deleteTargetOnConnectSocket(target: GamePlayer) {
+    //TODO: make delete Target
+    // set socket
+    // set status OnGame
+    // check Queue
+    // Friend
+    // Rank
+    // Normal
+    this.deleteOnLinePlayerList(target);
+    let targetQueue: GameQueue;
+    switch (target.getOption().gameType) {
+      case GameType.FRIEND:
+        //TODO:
+        const index = this.friendQueue.findIndex(
+          (player) =>
+            player[0].getUserObject().userIdx ===
+            target.getUserObject().userIdx,
+        );
+        if (index === -1) return;
+        const p1 = this.friendQueue[index];
+        p1[0].getSocket().emit('game_force_quit');
+        this.friendQueue.splice(index, 1);
+        const index2 = this.friendQueue.findIndex(
+          (player) => player[0].getUserObject().userIdx === p1[1].targetIdx,
+        );
+        if (index2 === -1) {
+          // TODO: need to check
+          setTimeout(() => {
+            const index2 = this.friendQueue.findIndex(
+              (player) => player[0].getUserObject().userIdx === p1[1].targetIdx,
+            );
+            if (index2 === -1) return;
+            const p2 = this.friendQueue.splice(index2, 1);
+            p2[0][0].getSocket().emit('game_force_quit');
+          }, 1000);
+          return;
+        }
+        const p2 = this.friendQueue.splice(index2, 1);
+        p2[0][0].getSocket().emit('game_force_quit');
+        break;
+      case GameType.NORMAL:
+        targetQueue = this.normalQueue;
+        break;
+      case GameType.RANK:
+        targetQueue = this.rankQueue;
+        break;
+    }
+    const index = targetQueue.playerList.findIndex(
+      (player) =>
+        player.getUserObject().userIdx === target.getUserObject().userIdx,
+    );
+    if (index === -1) return;
+    targetQueue.playerList.splice(index, 1);
+    target.getSocket().emit('game_force_quit');
+    target = undefined;
+    return;
+    // TODO: force quit
+  }
+
+  private deleteTargetOnQueueSuccess(target: GamePlayer, server: Server) {
+    //TODO: make delete Target
+    // make playRoom
+    // set room
+    this.deleteOnLinePlayerList(target);
+    const room = this.findGameRoomById(target.getUserObject().userIdx);
+    if (room === null) {
+      //TODO: what should I do
+      return;
+    }
+    const record1 = room.history[0];
+    const record2 = room.history[1];
+    const channel = room.channel;
+    if (channel !== undefined) this.gameChannelRepository.remove(channel);
+    if (record1 !== undefined) this.gameRecordRepository.remove(record1);
+    if (record2 !== undefined) this.gameRecordRepository.remove(record2);
+    server.to(room.roomId).emit('game_force_quit');
+    this.deleteplayRoomByRoomId(room.roomId);
+
+    // TODO: delete GameRecord
+    // TODO: delete GameChannel
+    // TODO: delete player room
+    // TODO: force quit
+  }
+
+  private deleteTargetOnPingCheck(target: GamePlayer, server: Server) {
+    this.deleteOnLinePlayerList(target);
+    //TODO: make delete Target
+    // set Interval Ping
+    // TODO: check interval Id / clear interval
+    // TODO: delete GameRecord
+    // TODO: delete GameChannel
+    // TODO: delete player room
+    // TODO: force quit
+    const room = this.findGameRoomById(target.getUserObject().userIdx);
+    if (room === null) {
+      //TODO: what should I do
+      return;
+    }
+    if (room.intervalId !== null) room.stopInterval();
+    const record1 = room.history[0];
+    const record2 = room.history[1];
+    const channel = room.channel;
+    if (channel !== undefined) this.gameChannelRepository.remove(channel);
+    if (record1 !== undefined) this.gameRecordRepository.remove(record1);
+    if (record2 !== undefined) this.gameRecordRepository.remove(record2);
+    server.to(room.roomId).emit('game_force_quit');
+    this.deleteplayRoomByRoomId(room.roomId);
+  }
+  private deleteTargetOnPingDone(target: GamePlayer, server: Server) {
+    this.deleteOnLinePlayerList(target);
+    //TODO: make delete Target
+    // set Latency
+    // TODO: delete GameRecord
+    // TODO: delete GameChannel
+    // TODO: delete player room
+    // TODO: force quit
+    const room = this.findGameRoomById(target.getUserObject().userIdx);
+    if (room === null) {
+      //TODO: what should I do
+      return;
+    }
+    if (room.intervalId !== null) room.stopInterval();
+    const record1 = room.history[0];
+    const record2 = room.history[1];
+    const channel = room.channel;
+    if (channel !== undefined) this.gameChannelRepository.remove(channel);
+    if (record1 !== undefined) this.gameRecordRepository.remove(record1);
+    if (record2 !== undefined) this.gameRecordRepository.remove(record2);
+    server.to(room.roomId).emit('game_force_quit');
+    this.deleteplayRoomByRoomId(room.roomId);
+  }
+
+  private deleteTargetOnOnPlaying(target: GamePlayer, server: Server) {
+    this.deleteOnLinePlayerList(target);
+    //TODO: make delete Target
+    // set Interval StartGame
+    // make frame
+    // TODO: check interval Id / clear interval
+    // TODO: judge match
+    // TODO: SAVE Channel, records
+    // TODO: delete player room
+    // TODO: Proper Quit
+    this.deleteOnLinePlayerList(target);
+    const room = this.findGameRoomById(target.getUserObject().userIdx);
+    if (room === null) {
+      //TODO: what should I do
+      return;
+    }
+    if (room.intervalId !== null) room.stopInterval();
+    room.syncStatus(room);
+    const p1 = room.history[0];
+    const p2 = room.history[1];
+    const p1Object = room.users[0];
+    const p2Object = room.users[1];
+    const channel = room.channel;
+    const user1 = room.users[0].getUserObject();
+    const user2 = room.users[1].getUserObject();
+    if (room.gameObj.score[0] > room.gameObj.score[1]) {
+      p1Object.getUserObject().win++;
+      p2Object.getUserObject().lose++;
+      if (room.channel.type === RecordType.RANK) {
+        if (user1.rankpoint === 0) user1.rankpoint = 3000;
+        if (user2.rankpoint === 0) user2.rankpoint = 3000;
+        if (user1.rankpoint === user2.rankpoint) {
+          user1.rankpoint += 100;
+          user2.rankpoint -= 100;
+        } else {
+          const value = 100 * (user2.rankpoint / user1.rankpoint);
+          user1.rankpoint += value;
+          user2.rankpoint -= value;
+        }
+      }
+      p1.result = RecordResult.WIN;
+      p2.result = RecordResult.LOSE;
+    } else {
+      p1Object.getUserObject().lose++;
+      p2Object.getUserObject().win++;
+      if (room.channel.type === RecordType.RANK) {
+        if (user1.rankpoint === 0) user1.rankpoint = 3000;
+        if (user2.rankpoint === 0) user2.rankpoint = 3000;
+        if (user1.rankpoint === user2.rankpoint) {
+          user1.rankpoint -= 100;
+          user2.rankpoint += 100;
+        } else {
+          const value = 100 * (user1.rankpoint / user2.rankpoint);
+          user1.rankpoint -= value;
+          user2.rankpoint += value;
+        }
+      }
+      p1.result = RecordResult.LOSE;
+      p2.result = RecordResult.WIN;
+    }
+    p1.score = `${room.gameObj.score[0]} : ${room.gameObj.score[1]}`;
+    p2.score = `${room.gameObj.score[1]} : ${room.gameObj.score[0]}`;
+
+    channel.status = RecordResult.DONE;
+    channel.score1 = room.gameObj.score[0];
+    channel.score2 = room.gameObj.score[1];
+    server.to(room.roomId).emit('game_over_quit');
+    this.gameChannelRepository.save(room.getChannel());
+    this.gameRecordRepository.save(room.getHistories()[0]);
+    this.gameRecordRepository.save(room.getHistories()[1]);
+    this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
+    this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
+    this.deleteplayRoomByRoomId(room.roomId);
+  }
+
+  private deleteTargetOnOnReady(target: GamePlayer, server: Server) {
+    this.deleteOnLinePlayerList(target);
+    //TODO: make delete Target
+    // set re Game
+    // TODO: clear interval
+    // TODO: judge match
+    // TODO: SAVE Channel, records
+    // TODO: delete player room
+    // TODO: Proper Quit
+  }
+
+  private deleteTargetOnMatchEnd(target: GamePlayer, server: Server) {
+    this.deleteOnLinePlayerList(target);
+    //TODO: make delete Target
+    // End Game
+    // TODO: return
   }
 }
