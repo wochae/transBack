@@ -304,25 +304,10 @@ export class GameService {
       room.gameObj.gameSpeed,
       room.gameObj.gameMapNumber,
     );
-    console.log('here you Are1!');
+    // console.log('here you Are1!');
     setTimeout(() => {
       server.to(room.roomId).emit('game_queue_success', data);
-    }, 400)
-    // if (room.users[0].getUserObject().userIdx === userIdx) {
-    //   setTimeout(() => {
-    //     room.users[1].getSocket().emit('game_queue_success', data);
-    //   }, 400);
-    //   setTimeout(() => {
-    //     room.users[0].getSocket().emit('game_queue_success', data);
-    //   }, 500);
-    // } else {
-    //   setTimeout(() => {
-    //     room.users[0].getSocket().emit('game_queue_success', data);
-    //   }, 400);
-    //   setTimeout(() => {
-    //     room.users[1].getSocket().emit('game_queue_success', data);
-    //   }, 500);
-    // }
+    }, 400);
   }
 
   // play room 의 이름을 설정한다.
