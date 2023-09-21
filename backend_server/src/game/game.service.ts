@@ -756,6 +756,10 @@ export class GameService {
             }
           }
         }
+        room.users[0].setUserObject(user1);
+        room.users[1].setUserObject(user2);
+        this.inMemoryUsers.setUserByIdFromIM(user1);
+        this.inMemoryUsers.setUserByIdFromIM(user2);
         user1.rankpoint = parseInt(user1.rankpoint.toString());
         user2.rankpoint = parseInt(user2.rankpoint.toString());
         this.processedUserIdxList.push(
