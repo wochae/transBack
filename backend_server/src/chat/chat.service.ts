@@ -571,7 +571,7 @@ export class ChatService {
     return channels;
   }
 
-  /******************* Funcions about Exit Room *******************/
+  /******************* Functions about Exit Room *******************/
 
   goToLobby(client: Socket, channel: Channel, user: UserObject) {
     console.log('chat Service : goToLobby');
@@ -587,7 +587,7 @@ export class ChatService {
     if (isOwner) {
       channel.removeOwner();
       channel.setOwner = channel.getMember[0];
-      channel.setAdmin = channel.getMember[0]; // 권한이 중복됨.
+      channel.setAdmin = channel.getMember[0];
     }
     const channelsInfo = this.getPublicAndProtectedChannel().map((channel) => {
       return {

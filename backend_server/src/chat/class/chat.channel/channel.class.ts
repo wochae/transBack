@@ -89,11 +89,16 @@ export class Channel {
   set setOwner(owner: UserObject) {
     this.owner = owner;
   }
-  set setAdmin(admin: UserObject | null) {
-    if (admin !== null) {
-      this.admin.push(admin);
-    }
+
+  set setAdmin(user: UserObject | null) {
+    if (user === null) return;
+    const check = this.admin.some((admin) => {
+      return admin.userIdx === user.userIdx;
+    });
+    if (!check)
+      this.admin.push(user);
   }
+
   set setBan(ban: UserObject | null) {
     if (ban !== null) {
       this.ban.push(ban);

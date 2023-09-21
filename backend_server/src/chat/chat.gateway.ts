@@ -892,7 +892,6 @@ export class ChatGateway
       return member.userIdx === userIdx;
     });
     if (!user) {
-      console.log('여기니?', user);
       client.disconnect();
       return this.messanger.setResponseErrorMsgWithLogger(
         400,
