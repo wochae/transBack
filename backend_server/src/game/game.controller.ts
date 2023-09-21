@@ -49,7 +49,7 @@ export class GameController {
 
   @Post('normal-match')
   async postGameOptions(@Req() req, @Res() res, @Body() option: GameOptionDto) {
-    // console.log('나 켜짐!! : 일반 게임');
+    console.log('나 켜짐!! : 일반 게임');
     const message = '플레이어가 큐에 등록 되었습니다.';
     const errorMessage = '플레이어가 큐에 등록되지 못하였습니다.';
     let status: boolean;
@@ -72,8 +72,7 @@ export class GameController {
     @Res() res,
     @Body() option: GameInviteOptionDto,
   ) {
-    // console.log('나 켜짐!! : 친선 게임');
-
+    console.log('나 켜짐!! : 친선 게임');
     const message = '친선전이 준비 되었습니다.';
     const errorMessage = '친선전이 실패하였습니다.';
     let status: boolean;

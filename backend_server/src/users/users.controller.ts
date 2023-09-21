@@ -42,6 +42,7 @@ export class UsersController {
   logger: Logger = new Logger('UsersController');
   messanger: LoggerWithRes = new LoggerWithRes('UsersController');
 
+  @UseGuards(AuthGuard)
   @Get('profile')
   async getUserProfile(@Req() req, @Res() res: Response, @Body() body: any) {
     // body 를 안 쓰긴 함.
@@ -53,7 +54,7 @@ export class UsersController {
         imgUrl: user.imgUri,
         win: user.win,
         lose: user.lose,
-        rank: user.rankpoint,
+        rankpoint: user.rankpoint,
         email: email,
       };
       this.messanger.setResponseMsgWithLogger(200, 'ok', 'getUserProfile');

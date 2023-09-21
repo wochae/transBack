@@ -75,7 +75,7 @@ export class ProfileResDto {
   imgUrl: string;
   win: number;
   lose: number;
-  rank: number;
+  rankpoint: number;
   email: string;
 }
 export class GameRecordDto {
