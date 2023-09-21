@@ -571,7 +571,7 @@ export class ChatService {
     return channels;
   }
 
-  /******************* Funcions about Exit Room *******************/
+  /******************* Functions about Exit Room *******************/
 
   goToLobby(client: Socket, channel: Channel, user: UserObject) {
     console.log('chat Service : goToLobby');

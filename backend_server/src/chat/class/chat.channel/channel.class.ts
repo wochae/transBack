@@ -89,17 +89,16 @@ export class Channel {
   set setOwner(owner: UserObject) {
     this.owner = owner;
   }
+
   set setAdmin(user: UserObject | null) {
-    // 채널에 admin 배열에 user 가 있는지 확인, 없으면 추가
-    this.admin.forEach((admin) => {
-      if (admin.userIdx === user.userIdx) {
-        return;
-      }
+    if (user === null) return;
+    const check = this.admin.some((admin) => {
+      return admin.userIdx === user.userIdx;
     });
-    if (user !== null) {
+    if (!check)
       this.admin.push(user);
-    }
   }
+
   set setBan(ban: UserObject | null) {
     if (ban !== null) {
       this.ban.push(ban);
