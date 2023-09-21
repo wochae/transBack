@@ -69,17 +69,17 @@ export class GameRoom {
     this.latencyCnt.push(0);
     this.latencyCnt.push(0);
 
-    this.animation = new Animations();
+    this.animation = new Animations(totalDistancePerSec);
     this.physics = new Physics();
 
     this.keyPress = [];
     this.keyPress[0] = new KeyPress();
     this.keyPress[1] = new KeyPress();
+    this.keyPress[0].setMaxUnit(totalDistancePerSec);
+    this.keyPress[1].setMaxUnit(totalDistancePerSec);
 
     this.history = histories;
     this.channel = channel;
-
-    this.keyPress.map((item) => item.setMaxUnit(totalDistancePerSec));
   }
 
   // 게임을 초기화한다.

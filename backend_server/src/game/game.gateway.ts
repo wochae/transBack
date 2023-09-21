@@ -141,7 +141,6 @@ export class GameGateway
       this.server
         .to(targetRoom.roomId)
         .emit('game_start', new GameStartDto(targetRoom));
-      // this.messanger.logWithMessage("game_ping", "", "","game is start now");
       targetRoom.setGamePhase(GamePhase.SET_NEW_GAME);
       setTimeout(() => {
         this.gameService.startGame(data.userIdx, this.server, this.gameService);

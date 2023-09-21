@@ -196,17 +196,33 @@ export class GameService {
               player[0].getUserObject().userIdx ===
               target[0].getUserObject().userIdx,
           );
-          friendQue.splice(player1Index, 1);
+          const p1 = friendQue.splice(player1Index, 1);
           const player2Index = friendQue.findIndex(
             (player) =>
               player[0].getUserObject().userIdx === player1[1].targetIdx,
           );
-          friendQue.splice(player2Index, 1);
+          const p2 = friendQue.splice(player2Index, 1);
           const list: GamePlayer[] = [];
           player1[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
           player2[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
           list.push(player1[0]);
           list.push(player2[0]);
+          const cond = this.checkListSamePeron(list);
+          if (cond === null) {
+            return undefined;
+          } else if (cond === true) {
+            const picked = this.pickOnePersonFromList(list);
+            const options =
+              picked.getUserObject().userIdx ===
+              p1[0][0].getUserObject().userIdx
+                ? p1[0][1]
+                : p2[0][1];
+            this.putInQueue(picked, options);
+            setTimeout(() => {
+              this.checkQueue(picked.getUserObject().userIdx, server);
+            }, 500);
+            return undefined;
+          }
           console.log(list);
           return this.makePlayerRoom(list, server);
         }
@@ -224,10 +240,55 @@ export class GameService {
     ) {
       //   console.log(`큐의 길이는 : `, targetQueue.getLength());
       const list = targetQueue.popPlayer(target[0].getUserObject().userIdx);
+      const cond = this.checkListSamePeron(list);
+      if (cond === null) {
+        return undefined;
+      } else if (cond === true) {
+        const picked = this.pickOnePersonFromList(list);
+        this.putInQueue(picked, null);
+        setTimeout(() => {
+          this.checkQueue(picked.getUserObject().userIdx, server);
+        }, 500);
+        return undefined;
+      }
       list[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
       list[1].playerStatus = PlayerPhase.QUEUE_SUCCESS;
       return this.makePlayerRoom(list, server);
     } else return undefined;
+  }
+
+  private checkListSamePeron(playerList: GamePlayer[]): boolean | null {
+    const p1 = playerList[0];
+    const p2 = playerList[1];
+    if (p1.getUserObject().userIdx === p2.getUserObject().userIdx) {
+      if (p1.getSocket().id === p2.getSocket().id) return true;
+      else {
+        if (p1.getSocket().connected && !p2.getSocket().connected) return true;
+        else if (!p1.getSocket().connected && p2.getSocket().connected)
+          return true;
+        else {
+          const msg = 'connection error happened. plz, try to reconnection';
+          p1.getSocket().emit('game_queue_quit', msg);
+          p1.getSocket().disconnect(true);
+          p2.getSocket().disconnect(true);
+          return null;
+        }
+      }
+    }
+    return false;
+  }
+
+  private pickOnePersonFromList(playerList: GamePlayer[]): GamePlayer {
+    const p1 = playerList[0];
+    const p2 = playerList[1];
+    if (p1.getUserObject().userIdx === p2.getUserObject().userIdx) {
+      if (p1.getSocket().id === p2.getSocket().id) return p1;
+      else {
+        if (p1.getSocket().connected && !p2.getSocket().connected) return p1;
+        else if (!p1.getSocket().connected && p2.getSocket().connected)
+          return p2;
+      }
+    }
   }
 
   // 플레이어의 온라인 상태를 게임 중으로 바꾼다.
@@ -249,7 +310,7 @@ export class GameService {
   // play room 을 구성한다.
   async makePlayerRoom(players: GamePlayer[], server: Server) {
     const roomName = this.makeRoomName();
-    // this.messanger.logWithMessage('makePlayerRoom', '', '', `${roomName}`);
+    this.messanger.logWithMessage('makePlayerRoom', '', '', `${roomName}`);
 
     const option = this.setOptions(players);
     // this.messanger.logWithMessage(
@@ -290,7 +351,7 @@ export class GameService {
       option.mapNumber,
       await gameRecord,
       channel,
-      100,
+      1000,
     );
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
@@ -1065,6 +1126,10 @@ export class GameService {
       //TODO: what should I do
       return;
     }
+    if (room.gameObj.score[0] != 0 || room.gameObj.score[1] != 0) {
+      this.deleteTargetOnOnPlaying(target, server);
+      return;
+    }
     if (room.intervalId !== null) room.stopInterval();
     const record1 = room.history[0];
     const record2 = room.history[1];
@@ -1075,6 +1140,7 @@ export class GameService {
     server.to(room.roomId).emit('game_force_quit');
     this.deleteplayRoomByRoomId(room.roomId);
   }
+
   private deleteTargetOnPingDone(target: GamePlayer, server: Server) {
     this.deleteOnLinePlayerList(target);
     //TODO: make delete Target
@@ -1175,7 +1241,7 @@ export class GameService {
     server
       .to(room.roomId)
       .emit(
-        'game_puase_score',
+        'game_pause_score',
         new GamePauseScoreDto(room.users, room.gameObj, GameStatus.JUDGE),
       );
     this.deleteplayRoomByRoomId(room.roomId);
