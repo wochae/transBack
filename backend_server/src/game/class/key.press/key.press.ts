@@ -7,6 +7,7 @@ export class KeyPress {
   private keyAccumulatedValue: number;
   private maxFrame: number;
   private pressedNumber: Fps;
+  private moveTotalUnit: number;
   private moveUnit: number;
 
   /**
@@ -39,11 +40,12 @@ export class KeyPress {
     } else {
       this.pressedNumber = 0;
     }
-	this.pressedNumber *= 15;
+    this.pressedNumber *= 15;
   }
 
   public setMaxUnit(value: number) {
-    this.moveUnit = Math.ceil(value / 20);
+    this.moveTotalUnit = value;
+    this.moveUnit = Math.ceil(this.moveTotalUnit / 20);
   }
 
   public pushKey(value: number) {
@@ -59,6 +61,6 @@ export class KeyPress {
   }
 
   public getHowManyKey(): number {
-	return this.keyAccumulatedValue;
+    return this.keyAccumulatedValue;
   }
 }

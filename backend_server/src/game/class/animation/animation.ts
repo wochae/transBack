@@ -9,8 +9,8 @@ export class Animations {
   private totalDistancePerSec: number;
   private unitDistance: number;
 
-  constructor() {
-    this.totalDistancePerSec = 150;
+  constructor(totalDistance: number) {
+    this.totalDistancePerSec = totalDistance;
     this.unitDistance = 0;
   }
 
