@@ -118,9 +118,6 @@ export class ChatGateway
 
   async handleDisconnect(client: Socket) {
     const userId: number = parseInt(client.handshake.query.userId as string);
-    // const index = this.chat.getSocketList.findIndex((item) => item.socket.id === client.id);
-    // if (index !== -1)
-    // 	this.chat.getSocketList.splice(index, 1);
     // FIXME: 함수로 빼기
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     if (!user) {
@@ -163,24 +160,12 @@ export class ChatGateway
         client.leave(`chat_room_${channel.channelIdx}`);
       });
     });
-    if (user.isOnline === OnlineStatus.ONGAME) {
-      setTimeout(async () => {
-        await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
-        this.server.emit('BR_main_enter', {
-          nickname: user.nickname,
-          userIdx: user.userIdx,
-          isOnline: OnlineStatus.ONGAME,
-        }),
-          100;
-      });
-    } else {
-      await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
-      this.server.emit('BR_main_enter', {
-        nickname: user.nickname,
-        userIdx: user.userIdx,
-        isOnline: OnlineStatus.OFFLINE,
-      });
-    }
+    await this.usersService.setIsOnline(user, OnlineStatus.OFFLINE);
+    this.server.emit('BR_main_enter', {
+      nickname: user.nickname,
+      userIdx: user.userIdx,
+      isOnline: OnlineStatus.OFFLINE,
+    });
     client.disconnect();
     return this.messanger.setResponseMsgWithLogger(
       200,
