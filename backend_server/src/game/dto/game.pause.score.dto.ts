@@ -9,13 +9,20 @@ export class GamePauseScoreDto {
   userScore2: number;
   issueDate: number;
   gameStatus: GameStatus;
+  winnerIdx: number | null;
 
-  constructor(users: GamePlayer[], data: GameData, status: GameStatus) {
+  constructor(
+    users: GamePlayer[],
+    data: GameData,
+    status: GameStatus,
+    winner: number | null,
+  ) {
     this.userIdx1 = users[0].getUserObject().userIdx;
     this.userScore1 = data.score[0];
     this.userIdx2 = users[1].getUserObject().userIdx;
     this.userScore2 = data.score[1];
     this.issueDate = Date.now();
     this.gameStatus = status;
+    this.winnerIdx = winner;
   }
 }
