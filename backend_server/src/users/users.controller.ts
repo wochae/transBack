@@ -55,6 +55,7 @@ export class UsersController {
         lose: user.lose,
         rankpoint: user.rankpoint,
         email: email,
+        check2Auth: user.check2Auth,
       };
       this.messanger.setResponseMsg(200, 'ok');
       return res.status(HttpStatus.OK).json(userProfile);
