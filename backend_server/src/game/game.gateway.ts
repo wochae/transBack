@@ -32,6 +32,7 @@ const front = process.env.FRONTEND;
       front,
     ],
   },
+  transforts: ["websocket"],
 })
 @UseFilters(new WsExceptionFilter())
 export class GameGateway
