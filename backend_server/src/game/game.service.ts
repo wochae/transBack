@@ -749,7 +749,7 @@ export class GameService {
           user2.lose += 1;
           winner = user1.userIdx;
           if (room.gameObj.gameType === GameType.RANK) {
-            console.log('winner A 들어감!');
+            // console.log('winner A 들어감!');
             // if (user1.rankpoint === 0) user1.rankpoint = 3000;
             // if (user2.rankpoint === 0) user2.rankpoint = 3000;
             if (user1.rankpoint === user2.rankpoint) {
