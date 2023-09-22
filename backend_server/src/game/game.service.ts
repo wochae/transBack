@@ -371,6 +371,9 @@ export class GameService {
       channel,
       200,
     );
+    // if (players[0].getSocket() === null) {
+
+    // }
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
     this.playRoom.push(room);
