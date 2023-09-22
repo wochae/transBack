@@ -391,7 +391,7 @@ export class GameService {
 
   // play room 의 이름을 설정한다.
   private makeRoomName(): string {
-    const ret = `room_${this.today}_${this.nameCnt}`;
+    const ret = `room_${this.nameCnt}`;
     this.nameCnt += 1;
     return ret;
   }
