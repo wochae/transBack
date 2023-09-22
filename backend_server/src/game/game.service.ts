@@ -371,6 +371,9 @@ export class GameService {
       channel,
       200,
     );
+    // if (players[0].getSocket() === null) {
+
+    // }
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
     this.playRoom.push(room);
@@ -391,7 +394,7 @@ export class GameService {
 
   // play room 의 이름을 설정한다.
   private makeRoomName(): string {
-    const ret = `room_${this.today}_${this.nameCnt}`;
+    const ret = `room_${this.nameCnt}`;
     this.nameCnt += 1;
     return ret;
   }
