@@ -534,6 +534,9 @@ export class ChatService {
 
   kickMember(channel: Channel, user: UserObject) {
     channel.removeMember(user);
+    if (channel.getAdmin.some((member) => member.userIdx === user.userIdx)) {
+      channel.removeAdmin(user);
+    }
     const userSocket = this.chat.getSocketObject(user.userIdx);
     // FIXME: return 으로 해도 될듯
     userSocket.socket.emit('chat_room_exit', '퇴장 당했습니다.');
