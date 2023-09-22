@@ -61,6 +61,7 @@ export class GameGateway
       client.handshake.query.userId as string,
       10,
     );
+    // console.log(`connection : ${userIdx}`);
     if (userIdx === undefined) {
       client.disconnect(true);
       return;
@@ -68,6 +69,8 @@ export class GameGateway
     if (Number.isNaN(userIdx)) return;
     const target = this.gameService.getOnlinePlayer(userIdx);
     // console.log(`target ${target}`);
+    // console.log(`connection undefined : ${userIdx}`);
+
     if (target === undefined) return;
     target.playerStatus = PlayerPhase.CONNECT_SOCKET;
     this.gameService.popOutProcessedUserIdx(userIdx); // 처리된 사용자지만, 새로이 들어왔다면 다시 빼고 관리 이루어짐
@@ -79,11 +82,15 @@ export class GameGateway
         `${userIdx}`,
         'not proper access',
       );
-      client.disconnect();
+      client.disconnect(true);
+      console.log(`connection failer : ${userIdx}`);
+
       return;
     }
+    // console.log(`connection1 : ${userIdx}`);
 
     this.gameService.changeStatusForPlayer(userIdx);
+    // console.log(`connection2 : ${userIdx}`);
 
     if (this.gameService.getOnlineList().length >= 2) {
       const intervalId = setInterval(() => {

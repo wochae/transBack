@@ -128,13 +128,14 @@ export class GameService {
   }
 
   public getOnlinePlayer(userIdx: number): GamePlayer {
-    if (this.onLinePlayer.length === 0) {
-      return undefined;
-    }
-    const ret = this.onLinePlayer?.find(
+    // if (this.onLinePlayer.length === 0) {
+    //   return undefined;
+    // }
+    const ret = this.onLinePlayer.find(
       (user) => user[0].getUserObject().userIdx === userIdx,
     );
     if (ret === undefined) return undefined;
+    return ret[0];
   }
 
   // player 만들기
@@ -189,7 +190,8 @@ export class GameService {
       }
     } else {
       this.checkProccessedOrNot(player.getUserObject().userIdx);
-      this.onLinePlayer.push([player, player.getOption().gameType]);
+      const ret = this.onLinePlayer.push([player, player.getOption().gameType]);
+      console.log(`insert ${ret}`);
       this.friendQueue.push([player, option]);
       return;
     }
@@ -591,6 +593,7 @@ export class GameService {
         targetRoom.latency[latencyIdx] / 2,
       );
     }
+    // console.log(`targetRoom : ${targetRoom.latency[latencyIdx]}`);
     if (targetRoom.latencyCnt[latencyIdx] === 10) {
       if (targetRoom.latencyCnt[0] >= 10 && targetRoom.latencyCnt[1] >= 10) {
         targetRoom.stopInterval();

@@ -84,10 +84,10 @@ export class GameController {
     );
     const target = await this.gameService.makePlayer(basicOption);
     target.playerStatus = PlayerPhase.SET_OPTION;
-    // // console.log(`target check?! : ${target}`);
+    // console.log(`target check?! : ${target}`);
     if (target === null) status = false;
     else {
-      // console.log(
+      //   console.log(
       //     `Friend Queue inserting! : ${target.getUserObject().nickname}`,
       //   );
       this.gameService.putInQueue(target, option);
