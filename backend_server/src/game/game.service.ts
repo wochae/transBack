@@ -77,7 +77,7 @@ export class GameService {
         `room ${i++}(${room.roomId}) : [ ${room.users[0]}, ${room.users[1]} ]`,
       );
     }
-
+    i = 0;
     for (const room of rooms) {
       console.log(
         `room ${i++}(${room.roomId}) : [ ${room.users[0]}, ${room.users[1]} ]`,
