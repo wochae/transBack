@@ -71,7 +71,7 @@ export class ChatGateway
   }
 
   async handleConnection(client: Socket) {
-    console.log('Client UserId : ', client.handshake.query.userId);
+    // console.log('Client UserId : ', client.handshake.query.userId);
     const userId: number = parseInt(client.handshake.query.userId as string);
     if (Number.isNaN(userId)) {
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -93,7 +93,7 @@ export class ChatGateway
       );
     }
     const check = this.chat.getSocketObject(userId);
-    console.log(client.id);
+    // console.log(client.id);
     if (check || check?.socket.id === client.id) {
       this.messanger.logWithMessage(
         'HandleConnection',
@@ -103,7 +103,7 @@ export class ChatGateway
       client.disconnect();
     }
     this.chat.setSocketList = this.chat.setSocketObject(client, user);
-    console.log(this.chat.getSocketObject(userId).socket.id);
+    // console.log(this.chat.getSocketObject(userId).socket.id);
     // FIXME: 함수로 빼기
     const dmChannelList: Promise<DMChannel[]> =
       this.chatService.findPrivateChannelByUserIdx(user.userIdx);
@@ -134,11 +134,7 @@ export class ChatGateway
     if (this.chat.getSocketObject(userId).socket.id !== client.id) {
       this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
       client.disconnect();
-      return this.messanger.setResponseMsgWithLogger(
-        200,
-        'Disconnect Done',
-        'handleDisconnect',
-      );
+      return this.messanger.setResponseMsg(200, 'Disconnect Done');
     }
     this.chat.removeSocketObject(this.chat.setSocketObject(client, user));
     const notDmChannelList: Channel[] = this.chat.getProtectedChannels;
@@ -167,11 +163,7 @@ export class ChatGateway
       isOnline: OnlineStatus.OFFLINE,
     });
     client.disconnect();
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Disconnect Done',
-      'handleDisconnect',
-    );
+    return this.messanger.setResponseMsg(200, 'Disconnect Done');
   }
 
   /***************************** SOCKET API  *****************************/
@@ -191,8 +183,6 @@ export class ChatGateway
     }
     return this.messanger.setResponseMsg(200, 'Done Health Check');
   }
-
-  // API: MAIN_ENTER_0
   @SubscribeMessage('main_enter')
   async enterMainPage(
     @ConnectedSocket() client: Socket,
@@ -247,10 +237,9 @@ export class ChatGateway
       isOnline: user.isOnline,
     };
     this.server.emit('BR_main_enter', BR_main_enter);
-    return this.messanger.setResponseMsgWithLogger(
+    return this.messanger.setResponseMsg(
       200,
       'Done Enter Main Page and Notice to Others',
-      'BR_main_enter',
     );
   }
 
@@ -273,7 +262,7 @@ export class ChatGateway
         'Not Found',
       );
     }
-    
+
     const BR_set_status_ongame = {
       nickname: user.nickname,
       userIdx: user.userIdx,
@@ -281,11 +270,7 @@ export class ChatGateway
     };
     this.server.emit('BR_set_status_ongame', BR_set_status_ongame);
     this.usersService.setIsOnline(user, OnlineStatus.ONGAME);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done Set Status ONGAME',
-      'setStatusOnGame',
-    );
+    return this.messanger.setResponseMsg(200, 'Done Set Status ONGAME');
   }
 
   @SubscribeMessage('BR_set_status_online')
@@ -307,7 +292,7 @@ export class ChatGateway
         'Not Found',
       );
     }
-    
+
     const BR_set_status_online = {
       nickname: user.nickname,
       userIdx: user.userIdx,
@@ -315,11 +300,7 @@ export class ChatGateway
     };
     this.server.emit('BR_set_status_online', BR_set_status_online);
     this.usersService.setIsOnline(user, OnlineStatus.ONLINE);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done Set Status ONGAME',
-      'setStatusOnLine',
-    );
+    return this.messanger.setResponseMsg(200, 'Done Set Status ONGAME');
   }
 
   // API: MAIN_PROFILE
@@ -371,11 +352,7 @@ export class ChatGateway
       target.isOnline,
     );
     client.emit('user_profile', target_profile);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done Get Profile',
-      'user_profile',
-    );
+    return this.messanger.setResponseMsg(200, 'Done Get Profile');
   }
 
   // API: MAIN_CHAT_1.
@@ -447,11 +424,7 @@ export class ChatGateway
       );
     }
     client.emit('create_dm', newChannel);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done Create DM',
-      'create_dm',
-    );
+    return this.messanger.setResponseMsg(200, 'Done Create DM');
   }
 
   // API: MAIN_CHAT_2
@@ -500,11 +473,7 @@ export class ChatGateway
     // channel 의 Ban List 에 있는지 확인
     const checkBan = this.chatService.checkBanList(channel, user);
     if (checkBan) {
-      return this.messanger.setResponseMsgWithLogger(
-        201,
-        'Banned User',
-        'chat_enter',
-      );
+      return this.messanger.setResponseMsg(201, 'Banned User');
     }
     // FIXME: service 로직으로 빼기
     if (channel instanceof Channel) {
@@ -542,11 +511,7 @@ export class ChatGateway
     //
     client.join(`chat_room_${channel.channelIdx}`);
     client.emit('chat_enter', channel);
-    this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done Chat Enter',
-      'chat_enter',
-    );
+    this.messanger.setResponseMsg(200, 'Done Chat Enter');
     //
 
     // API: MAIN_CHAT_3
@@ -592,11 +557,7 @@ export class ChatGateway
       );
     }
     //
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done Enter Noti',
-      'chat_enter_noti',
-    );
+    return this.messanger.setResponseMsg(200, 'Done Enter Noti');
   }
 
   // API: MAIN_CHAT_4
@@ -629,11 +590,7 @@ export class ChatGateway
       );
       const checkMute = this.chatService.checkMuteList(channel, user);
       if (checkMute) {
-        return this.messanger.setResponseMsgWithLogger(
-          200,
-          'Muted User',
-          'chat_send_msg',
-        );
+        return this.messanger.setResponseMsg(200, 'Muted User');
       }
       await this.server
         .to(`chat_room_${channelIdx}`)
@@ -667,11 +624,7 @@ export class ChatGateway
       );
     }
     //
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done Send Message',
-      'chat_send_msg',
-    );
+    return this.messanger.setResponseMsg(200, 'Done Send Message');
   }
 
   // API: MAIN_CHAT_5
@@ -699,10 +652,9 @@ export class ChatGateway
     );
     client.join(`chat_room_${channelInfo.channelIdx}`);
     this.server.emit('BR_chat_create_room', channelInfo);
-    return this.messanger.setResponseMsgWithLogger(
+    return this.messanger.setResponseMsg(
       200,
       'Done Create Public & Private Room',
-      'BR_chat_create_room',
     );
   }
 
@@ -779,11 +731,7 @@ export class ChatGateway
     this.server
       .to(`chat_room_${channelIdx}`)
       .emit('chat_room_admin', adminInfo);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done Set Admin',
-      'chat_room_admin',
-    );
+    return this.messanger.setResponseMsg(200, 'Done Set Admin');
   }
 
   // API: MAIN_CHAT_7
@@ -844,11 +792,7 @@ export class ChatGateway
     );
 
     this.server.emit('BR_chat_room_password', channelInfo);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done Change Password',
-      'BR_chat_room_password',
-    );
+    return this.messanger.setResponseMsg(200, 'Done Change Password');
   }
 
   // API: MAIN_CHAT_9
@@ -860,7 +804,7 @@ export class ChatGateway
     const { channelIdx, userIdx } = chatGeneralReqDto;
     const userId: number = parseInt(client.handshake.query.userId as string);
     if (!client) {
-      console.log('여기니?', client);
+      // console.log('여기니?', client);
       return;
     }
     if (userId != userIdx) {
@@ -898,19 +842,11 @@ export class ChatGateway
     if (isEmpty) {
       const channels = this.chatService.removeEmptyChannel(channel);
       this.server.emit('BR_chat_room_delete', channels);
-      return this.messanger.setResponseMsgWithLogger(
-        200,
-        'Done delete channel',
-        'BR_chat_room_delete',
-      );
+      return this.messanger.setResponseMsg(200, 'Done delete channel');
     }
     // API: MAIN_CHAT_8
-  this.announceExit(channel);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done exit room',
-      'chat_goto_lobby',
-    );
+    this.announceExit(channel);
+    return this.messanger.setResponseMsg(200, 'Done exit room');
   }
 
   async announceExit(channel: Channel) {
@@ -994,11 +930,7 @@ export class ChatGateway
     }, 10000);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_mute', muteInfo);
     // return '뮤트 처리 되었습니다.';
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done mute',
-      'chat_mute',
-    );
+    return this.messanger.setResponseMsg(200, 'Done mute');
   }
 
   // API: MAIN_CHAT_13
@@ -1071,11 +1003,7 @@ export class ChatGateway
     // 대상이 나간걸 감지 후 emit
     const channelInfo = this.chatService.kickMember(channel, target);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_kick', channelInfo);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done kick',
-      'chat_kick',
-    );
+    return this.messanger.setResponseMsg(200, 'Done kick');
   }
 
   // API: MAIN_CHAT_14
@@ -1146,12 +1074,10 @@ export class ChatGateway
     }
 
     const banInfo = this.chatService.setBan(channel, target);
-    console.log('after ban : ', channel);
+    // console.log('after ban : ', channel);
     this.server.to(`chat_room_${channelIdx}`).emit('chat_ban', banInfo);
-    return this.messanger.setResponseMsgWithLogger(200, 'Done ban', 'chat_ban');
+    return this.messanger.setResponseMsg(200, 'Done ban');
   }
-
-  // API: MAIN_CHAT_15
   @SubscribeMessage('chat_block')
   async blockMember(
     @ConnectedSocket() client: Socket,
@@ -1185,11 +1111,7 @@ export class ChatGateway
     );
     const friendList = await this.usersService.getFriendList(user.userIdx);
     client.emit('chat_block', { blockInfo, friendList });
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done block',
-      'chat_block',
-    );
+    return this.messanger.setResponseMsg(200, 'Done block');
   }
 
   // API: MAIN_CHAT_16
@@ -1197,11 +1119,7 @@ export class ChatGateway
   getPublicAndProtectedChannel(@ConnectedSocket() client: Socket) {
     const channels = this.chatService.getPublicAndProtectedChannel();
     client.emit('chat_get_roomList', channels);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done get RoomList',
-      'chat_get_roomList',
-    );
+    return this.messanger.setResponseMsg(200, 'Done get RoomList');
   }
 
   // API: MAIN_CHAT_17
@@ -1211,11 +1129,7 @@ export class ChatGateway
     const user = await this.inMemoryUsers.getUserByIdFromIM(userId);
     const channels = await this.chatService.getPrivateChannels(user);
     client.emit('chat_get_DMList', channels);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done get DMList',
-      'chat_get_DMList',
-    );
+    return this.messanger.setResponseMsg(200, 'Done get DMList');
   }
 
   // API: MAIN_CHAT_18
@@ -1228,13 +1142,9 @@ export class ChatGateway
     const dm: MessageInfo = await this.chatService.getPrivateChannel(
       channelIdx,
     );
-    console.log(dm);
+    // console.log(dm);
     client.emit('chat_get_DM', dm);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done get DM',
-      'chat_get_DM',
-    );
+    return this.messanger.setResponseMsg(200, 'Done get DM');
   }
 
   // API: MAIN_CHAT_20
@@ -1258,18 +1168,14 @@ export class ChatGateway
     const channel = this.chat.getProtectedChannel(channelIdx);
     const grant = this.chatService.getGrant(channel, user);
     client.emit('chat_get_grant', grant);
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'Done get Grant',
-      'chat_get_grant',
-    );
+    return this.messanger.setResponseMsg(200, 'Done get Grant');
   }
 
   @SubscribeMessage('chat_invite_ask')
   async inviteFriendToGame(@MessageBody() invitation: GameInvitationDto) {
-    console.log(invitation);
-    let i = 0;
-    console.log(`Check API! #${i++}`);
+    // console.log(invitation);
+    const i = 0;
+    // console.log(`Check API! #${i++}`);
     const targetTuple = this.chat.getUserTuple(invitation.targetUserIdx);
     if (targetTuple === undefined) {
       return this.messanger.setResponseErrorMsgWithLogger(
@@ -1278,7 +1184,7 @@ export class ChatGateway
         'chat_invite_ask',
       );
     }
-    console.log(`Check API! #${i++}`);
+    // console.log(`Check API! #${i++}`);
 
     const targetSocket = targetTuple[1];
     const userTuple = this.chat.getUserTuple(invitation.myUserIdx);
@@ -1289,7 +1195,7 @@ export class ChatGateway
         'chat_invite_ask',
       );
     }
-    console.log(`Check API! #${i++}`);
+    // console.log(`Check API! #${i++}`);
 
     const myObject = userTuple[0];
     if (targetSocket === undefined) {
@@ -1331,7 +1237,7 @@ export class ChatGateway
       this.usersService.setIsOnline(targetUser, OnlineStatus.ONGAME);
       this.usersService.setIsOnline(inviteUser, OnlineStatus.ONGAME);
     }
-    console.log(`anserCard : ${answerCard}`);
+    // console.log(`anserCard : ${answerCard}`);
     setTimeout(() => {
       inviteSocket.emit('chat_receive_answer', answerCard);
     }, 100);
@@ -1346,7 +1252,7 @@ export class ChatGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() userStatus: UserStatusDto,
   ) {
-    console.log('userStatus : ', userStatus);
+    // console.log('userStatus : ', userStatus);
     const userId: number = parseInt(client.handshake.query.userId as string);
 
     if (Number.isNaN(userId)) return;
@@ -1354,6 +1260,6 @@ export class ChatGateway
 
     this.inMemoryUsers.setUserByIdFromIM(savedUser);
 
-    console.log('inMem : ', this.inMemoryUsers.inMemoryUsers);
+    // console.log('inMem : ', this.inMemoryUsers.inMemoryUsers);
   }
 }

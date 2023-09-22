@@ -20,10 +20,10 @@ async function bootstrap() {
 
   app.enableCors(corsOptions);
   app.useGlobalPipes(new ValidationPipe());
-  
+
   await app.listen(process.env.BACKEND_PORT || 4000);
-  console.log(`listening on port, ${process.env.BACKEND_PORT}`);
-  
+  // console.log(`listening on port, ${process.env.BACKEND_PORT}`);
+
   //   if (module.hot) {
   //     module.hot.accept();
   //     module.hot.dispose(() => app.close());

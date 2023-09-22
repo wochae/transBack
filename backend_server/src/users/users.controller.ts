@@ -35,7 +35,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Express } from 'express';
 import { UserStatusDto } from 'src/chat/dto/update-chat.dto';
 
-
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
@@ -57,7 +56,7 @@ export class UsersController {
         rankpoint: user.rankpoint,
         email: email,
       };
-      this.messanger.setResponseMsgWithLogger(200, 'ok', 'getUserProfile');
+      this.messanger.setResponseMsg(200, 'ok');
       return res.status(HttpStatus.OK).json(userProfile);
     } catch (err) {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: err.message });
@@ -77,10 +76,12 @@ export class UsersController {
       const { id: myIdx, email } = req.jwtPayload;
       const changedUser = body;
       changedUser.userIdx = Number(body.userIdx);
-      if ( myIdx !== changedUser.userIdx ) {
-        return res.status(HttpStatus.BAD_REQUEST).json({ message: '잘못된 접근입니다.' });
+      if (myIdx !== changedUser.userIdx) {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json({ message: '잘못된 접근입니다.' });
       }
-      console.log('changedUser : ', changedUser);
+      // console.log('changedUser : ', changedUser);
       const result = await this.usersService.updateUser(changedUser);
       const userStatusDto: UserStatusDto = {
         isOnline: result.isOnline,
@@ -89,8 +90,8 @@ export class UsersController {
       };
 
       if (result) {
-        console.log('success result :', result);
-        console.log('userStatusDto :', userStatusDto);
+        // console.log('success result :', result);
+        // console.log('userStatusDto :', userStatusDto);
         return res
           .status(HttpStatus.OK)
           .json({ message: '유저 정보가 업데이트 되었습니다.', result });
@@ -114,8 +115,8 @@ export class UsersController {
   @Post('second')
   async sendEmail(@Req() req, @Res() res, @Body() body: any) {
     try {
-      console.log('sendEmail');
-      console.log(body);
+      // console.log('sendEmail');
+      // console.log(body);
       const sendEmailDto: SendEmailDto = {
         userIdx: body.userIdx,
         email: body.email,
@@ -135,9 +136,9 @@ export class UsersController {
   async userTFA(@Req() req, @Res() res: Response, @Body() body: any) {
     const { userIdx, check2Auth } = body;
 
-    console.log('userTFA', userIdx, check2Auth);
+    // console.log('userTFA', userIdx, check2Auth);
     const result = await this.usersService.patchUserTFA(userIdx, check2Auth);
-    console.log('result', result);
+    // console.log('result', result);
     return res
       .status(HttpStatus.OK)
       .json({ message: '유저 정보가 업데이트 되었습니다.', result });
@@ -154,8 +155,8 @@ export class UsersController {
         .json({ message: '유저 정보가 업데이트 되었습니다.', result });
     } else {
       return res
-      .status(HttpStatus.OK)
-      .json({ message: '인증번호가 일치하지 않습니다.', result });
+        .status(HttpStatus.OK)
+        .json({ message: '인증번호가 일치하지 않습니다.', result });
     }
   }
 
@@ -170,7 +171,7 @@ export class UsersController {
     const userIdx = body.myIdx;
     const myUser = await this.usersService.findOneUser(userIdx);
     const result = await this.usersService.addFriend(body, myUser);
-    console.log('res', result);
+    // console.log('res', result);
     return res.status(HttpStatus.OK).json({ result });
   }
 

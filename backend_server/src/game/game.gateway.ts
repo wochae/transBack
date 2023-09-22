@@ -46,7 +46,7 @@ export class GameGateway
   handleDisconnect(client: Socket) {
     const userIdx: number = parseInt(client.handshake.query.userId as string);
     if (Number.isNaN(userIdx)) return;
-    console.log(`userIdx(disconnection) : ${userIdx}`);
+    // console.log(`userIdx(disconnection) : ${userIdx}`);
     this.gameService.handleDisconnectUsers(userIdx, this.server);
     if (this.gameService.getOnlineList().length === 0) {
       clearInterval(this.gameService.getIntervalId());
@@ -55,14 +55,14 @@ export class GameGateway
   }
 
   handleConnection(client: Socket) {
-    console.log(`connection handler!!!`);
+    // console.log(`connection handler!!!`);
     const userIdx: number = parseInt(
       client.handshake.query.userId as string,
       10,
     );
     if (Number.isNaN(userIdx)) return;
     const target = this.gameService.getOnlinePlayer(userIdx);
-    console.log(`target ${target}`);
+    // console.log(`target ${target}`);
     if (target === undefined) return;
     target.playerStatus = PlayerPhase.CONNECT_SOCKET;
     this.gameService.popOutProcessedUserIdx(userIdx); // 처리된 사용자지만, 새로이 들어왔다면 다시 빼고 관리 이루어짐
@@ -93,11 +93,7 @@ export class GameGateway
       this.gameService.setIntervalId(intervalId);
     }
 
-    return this.messanger.setResponseMsgWithLogger(
-      200,
-      'room is setted',
-      'handleConnection',
-    );
+    return this.messanger.setResponseMsg(200, 'room is setted');
   }
 
   afterInit() {
@@ -110,31 +106,23 @@ export class GameGateway
     @MessageBody() data: GameBasicAnswerDto,
   ) {
     const userIdx = data.userIdx;
-    console.log(`gmae_queue_success : `, userIdx);
+    // console.log(`gmae_queue_success : `, userIdx);
     const ret = this.gameService.checkReady(userIdx);
     if (ret === null) {
-      //   console.log(`error happens!`);
+      //   // console.log(`error happens!`);
       client.disconnect(true);
     }
     //TODO: error handling
     else if (ret === true) {
-      //   console.log('game ready');
+      //   // console.log('game ready');
       const roomId = this.gameService.findGameRoomIdByUserId(userIdx);
       setTimeout(() => {
         this.gameService.readyToSendPing(roomId, this.server);
       }, 1200);
       this.gameService.uncheckReady(userIdx);
-      return this.messanger.setResponseMsgWithLogger(
-        200,
-        'game is start soon!',
-        'game_queue_susccess',
-      );
+      return this.messanger.setResponseMsg(200, 'game is start soon!');
     }
-    return this.messanger.setResponseMsgWithLogger(
-      201,
-      'game is ready',
-      'game_queue_susccess',
-    );
+    return this.messanger.setResponseMsg(201, 'game is ready');
   }
 
   @SubscribeMessage('game_ping_receive')
@@ -158,42 +146,27 @@ export class GameGateway
       setTimeout(() => {
         this.gameService.startGame(data.userIdx, this.server, this.gameService);
       }, 5000);
-      return this.messanger.setResponseMsgWithLogger(
+      return this.messanger.setResponseMsg(
         this.gameService.sendSetFrameRate(data.userIdx, this.server),
         'Your max fps is checked',
-        'getUserPong',
       );
     } else if (ret === -1) {
-      return this.messanger.setResponseMsgWithLogger(
-        400,
-        'latency too high',
-        'getUserPong',
-      );
+      return this.messanger.setResponseMsg(400, 'latency too high');
     } else
-      return this.messanger.setResponseMsgWithLogger(
+      return this.messanger.setResponseMsg(
         200,
         'pong is received successfully',
-        'getUserPong',
       );
   }
 
   @SubscribeMessage('game_move_paddle')
   getKeyPressData(@MessageBody() data: KeyPressDto) {
     const targetRoom = this.gameService.findGameRoomById(data.userIdx);
-    // console.log(`key board signal = ${data.userIdx} : ${data.paddle}`);
+    // // console.log(`key board signal = ${data.userIdx} : ${data.paddle}`);
     targetRoom.keyPressed(data.userIdx, data.paddle);
     if (this.gameService.checkLatencyOnPlay(targetRoom, data, this.server)) {
-      return this.messanger.setResponseMsgWithLogger(
-        202,
-        'Frame is changed',
-        'game_move_paddle',
-      );
-    } else
-      return this.messanger.setResponseMsgWithLogger(
-        202,
-        'Frame is changed',
-        'game_move_paddle',
-      );
+      return this.messanger.setResponseMsg(202, 'Frame is changed');
+    } else return this.messanger.setResponseMsg(202, 'Frame is changed');
   }
 
   @SubscribeMessage('game_pause_score')
@@ -204,10 +177,9 @@ export class GameGateway
     const userIdx = data.userIdx;
     const ret = this.gameService.checkReady(userIdx);
     if (ret === null) {
-      return this.messanger.setResponseMsgWithLogger(
+      return this.messanger.setResponseMsg(
         200,
         'please Wait. Both Player is ready',
-        'game_pause_score',
       );
     }
     //TODO: error handling
@@ -230,10 +202,9 @@ export class GameGateway
       const roomId = target.deleteRoom();
       this.gameService.deleteplayRoomByRoomId(roomId);
     }
-    return this.messanger.setResponseMsgWithLogger(
+    return this.messanger.setResponseMsg(
       200,
       'please Wait. Both Player is ready',
-      'game_pause_score',
     );
   }
 
@@ -250,10 +221,9 @@ export class GameGateway
   @SubscribeMessage('game_queue_quit')
   quitQueue(@MessageBody() data: GameBasicAnswerDto) {
     const ret = this.gameService.pullOutQueuePlayerByUserId(data.userIdx);
-    return this.messanger.setResponseMsgWithLogger(
+    return this.messanger.setResponseMsg(
       200,
       'success to quit queue from list',
-      'game_queue_quit',
     );
   }
 }

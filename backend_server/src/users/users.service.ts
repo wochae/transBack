@@ -100,19 +100,19 @@ export class UsersService {
   private async createDirectoryIfNotExists(dirPath) {
     try {
       await fs.mkdir(dirPath, { recursive: true });
-      console.log('Directory created successfully:', dirPath);
+      // console.log('Directory created successfully:', dirPath);
     } catch (error) {
-      console.error('Error creating directory:', error);
+      // console.error('Error creating directory:', error);
     }
   }
 
   async checkFileExists(filePath) {
     try {
       await fs.access(filePath);
-      console.log('File exists:', filePath);
+      // console.log('File exists:', filePath);
       return true;
     } catch (error) {
-      console.log('File does not exist:', filePath);
+      // console.log('File does not exist:', filePath);
       return false;
     }
   }
@@ -137,7 +137,7 @@ export class UsersService {
     try {
       await fs.writeFile(completeFilePath, buffer); // 비동기적으로 파일 저장
     } catch (error) {
-      console.error('Error saving image:', error);
+      // console.error('Error saving image:', error);
       throw new Error('Failed to save image');
     }
   }
@@ -198,7 +198,7 @@ export class UsersService {
         } // 같다면 그대로
       }
     } catch (e) {
-      console.log('토큰 디비에 문제가 있다.');
+      // console.log('토큰 디비에 문제가 있다.');
       throw new InternalServerErrorException(e);
     }
   }
@@ -399,7 +399,7 @@ export class UsersService {
     // 난수를 생성한다. 6자리 숫자
     const authCode = Math.floor(Math.random() * 900000 + 100000);
     this.mailCodeList.set(userIdx, authCode);
-    console.log('authCode :', authCode);
+    // console.log('authCode :', authCode);
     // 3분 후 만료된다.
     setTimeout(() => {
       this.mailCodeList.delete(userIdx);
@@ -413,11 +413,11 @@ export class UsersService {
         html: `<b>인증 코드: ${authCode}</b>`,
       })
       .then((success) => {
-        console.log('Mail sent: ' + success.response);
+        // console.log('Mail sent: ' + success.response);
         return success;
       })
       .catch((err) => {
-        console.log('Error occured: ' + err);
+        // console.log('Error occured: ' + err);
         throw new BadRequestException();
       });
   }
@@ -443,7 +443,7 @@ export class UsersService {
   ): Promise<TFAUserDto> {
     const auth = await this.userObjectRepository.findOneBy({ userIdx });
     const { code } = patchAuthDto;
-    console.log(this.mailCodeList, code);
+    // console.log(this.mailCodeList, code);
 
     if (code !== undefined || auth.check2Auth === false) {
       if (this.mailCodeList.get(userIdx) !== code || code === undefined)

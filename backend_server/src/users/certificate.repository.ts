@@ -15,10 +15,10 @@ export class CertificateRepository extends Repository<CertificateObject> {
         email: email,
         check2Auth: check2Auth,
       });
-      console.log('cert Repo certificate : ', certificate)
+      // console.log('cert Repo certificate : ', certificate)
 
       const auth = await this.save(certificate);
-      console.log('cert Repo auth : ', auth)
+      // console.log('cert Repo auth : ', auth)
       return auth;
     }
   }

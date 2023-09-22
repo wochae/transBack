@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
       const client = context.switchToWs().getClient();
       return this.authService.validateSocket(client);
     } else {
-      console.log(`auth.guard: invalid type ${context.getType()}`);
+      // console.log(`auth.guard: invalid type ${context.getType()}`);
       return false;
     }
   }

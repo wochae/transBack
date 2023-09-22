@@ -39,10 +39,10 @@ export class UsersGateway
     this.logger.log('[ Users ] Initialized');
   }
   handleConnection(client: Socket) {
-    console.log(`[ Users ] Client connected: ${client.id}`);
+    // console.log(`[ Users ] Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: any) {
-    console.log(`[ Users ] Client disconnected: ${client.id}`);
+    // console.log(`[ Users ] Client disconnected: ${client.id}`);
   }
 }

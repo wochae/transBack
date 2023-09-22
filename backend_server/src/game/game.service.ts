@@ -97,7 +97,7 @@ export class GameService {
       skip,
       take: 3,
     });
-    // console.log('getGameRecordsByInfinity', records);
+    // // console.log('getGameRecordsByInfinity', records);
     return records;
   }
 
@@ -111,9 +111,9 @@ export class GameService {
 
   // player 만들기
   async makePlayer(data: GameOptionDto): Promise<GamePlayer | null> {
-    console.log(`userIdx: ${data.userIdx}`);
+    // console.log(`userIdx: ${data.userIdx}`);
     const getPerson = await this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
-    console.log(`userIdx: ${data.userIdx}`);
+    // console.log(`userIdx: ${data.userIdx}`);
 
     if (getPerson === undefined) return null;
 
@@ -123,7 +123,7 @@ export class GameService {
     const target = await this.inMemoryUsers.saveUserByUserIdFromIM(
       getPerson.userIdx,
     );
-    console.log(`userIdx: ${data.userIdx}`);
+    // console.log(`userIdx: ${data.userIdx}`);
 
     if (target === null) return null;
     player.setUserObject(target);
@@ -141,7 +141,7 @@ export class GameService {
     if (option === null) {
       const type = player.getOption().gameType;
       this.checkProccessedOrNot(player.getUserObject().userIdx);
-      console.log(`Check Put In Queue ${player.getUserObject().userIdx}`);
+      // console.log(`Check Put In Queue ${player.getUserObject().userIdx}`);
       this.onLinePlayer.push([player, player.getOption().gameType]);
       switch (type) {
         case GameType.NORMAL:
@@ -161,11 +161,11 @@ export class GameService {
 
   // 플레이어가 커넥션이 연결됨에 따라, 소켓을 설정해준다.
   setSocketToPlayer(clientSocket: Socket, userIdx: number): boolean {
-    console.log('setSocketToPlayer here start');
+    // console.log('setSocketToPlayer here start');
     for (const member of this.onLinePlayer) {
       if (member[0].getUserObject().userIdx === userIdx) {
         member[0].setSocket(clientSocket);
-        console.log('setSocketToPlayer here end');
+        // console.log('setSocketToPlayer here end');
         return true;
       }
     }
@@ -176,18 +176,18 @@ export class GameService {
   async checkQueue(userIdx: number, server: Server): Promise<void> {
     if (this.friendQueue.length >= 2) {
       const target = this.friendQueue[0];
-      // console.log(`friend Queue : ${this.friendQueue}`);
+      // // console.log(`friend Queue : ${this.friendQueue}`);
       const friendQue = this.friendQueue;
       const player1 = friendQue.find(
         (player) =>
           player[0].getUserObject().userIdx ===
           target[0].getUserObject().userIdx,
       );
-      console.log(`TargetQueue : ${friendQue.length}`);
+      // console.log(`TargetQueue : ${friendQue.length}`);
       const player2 = friendQue.find(
         (player) => player[0].getUserObject().userIdx === player1[1].targetIdx,
       );
-      console.log(`player 2: ${player2}`);
+      // console.log(`player 2: ${player2}`);
 
       if (player2 === undefined) return undefined;
       else {
@@ -219,7 +219,7 @@ export class GameService {
           this.putInQueue(picked, options);
           return undefined;
         }
-        console.log(list);
+        // console.log(list);
         return this.makePlayerRoom(list, server);
       }
     }
@@ -229,7 +229,7 @@ export class GameService {
     if (this.normalQueue.getLength() >= 2) {
       targetQueue = this.normalQueue;
       const target = targetQueue.playerList[0];
-      //   console.log(`큐의 길이는 : `, targetQueue.getLength());
+      //   // console.log(`큐의 길이는 : `, targetQueue.getLength());
       const list = targetQueue.popPlayer(target.getUserObject().userIdx);
       const cond = this.checkListSamePeron(list);
       if (cond === null) {
@@ -245,7 +245,7 @@ export class GameService {
     } else if (this.rankQueue.getLength() >= 2) {
       targetQueue = this.rankQueue;
       const target = targetQueue.playerList[0];
-      //   console.log(`큐의 길이는 : `, targetQueue.getLength());
+      //   // console.log(`큐의 길이는 : `, targetQueue.getLength());
       const list = targetQueue.popPlayer(target.getUserObject().userIdx);
       const cond = this.checkListSamePeron(list);
       if (cond === null) {
@@ -370,7 +370,7 @@ export class GameService {
       room.gameObj.gameSpeed,
       room.gameObj.gameMapNumber,
     );
-    // console.log('here you Are1!');
+    // // console.log('here you Are1!');
     setTimeout(() => {
       server.to(room.roomId).emit('game_queue_success', data);
     }, 400);
@@ -458,7 +458,7 @@ export class GameService {
   // game_queue_success 를 진행하면서, 들어오는 반환값들이 정상 처리가 되느지를 확인한다. true 가 나오면 플레이어 1, 2가 모두 준비된 상태를 의미하다.
   checkReady(userIdx: number): boolean | null {
     const room = this.findGameRoomById(userIdx);
-    // console.log('room', room);
+    // // console.log('room', room);
     if (room === null) return null;
     if (room.users[0].getUserObject().userIdx === userIdx)
       room.users[0].setReady(userIdx);
@@ -561,12 +561,12 @@ export class GameService {
       targetRoom.latency[latencyIdx] = Math.round(
         targetRoom.latency[latencyIdx] / 2,
       );
-      console.log(`data latency : ${latency}`);
-      //   console.log(`data clientTime : ${data.clientTime}`);
-      console.log(`Player ${latencyIdx} : ${targetRoom.latency[latencyIdx]}`);
+      // console.log(`data latency : ${latency}`);
+      //   // console.log(`data clientTime : ${data.clientTime}`);
+      // console.log(`Player ${latencyIdx} : ${targetRoom.latency[latencyIdx]}`);
     }
     // TODO: Lateyncy cnt to change
-    console.log(`target ${latencyIdx} : ${targetRoom.latencyCnt[latencyIdx]}`);
+    // console.log(`target ${latencyIdx} : ${targetRoom.latencyCnt[latencyIdx]}`);
     if (targetRoom.latencyCnt[latencyIdx] === 30) {
       if (targetRoom.latencyCnt[0] >= 30 && targetRoom.latencyCnt[1] >= 30) {
         targetRoom.stopInterval();
@@ -647,10 +647,10 @@ export class GameService {
     }
     if (targetRoom === undefined) return;
     // targetRoom.setNewGame(targetRoom);
-    console.log(`game Phase : ${targetRoom.getGamePhase()}`);
+    // console.log(`game Phase : ${targetRoom.getGamePhase()}`);
     if (targetRoom.getGamePhase() != GamePhase.SET_NEW_GAME) return;
     targetRoom.setGamePhase(GamePhase.ON_PLAYING);
-    console.log(`target Interval Ms : ${targetRoom.getIntervalMs()}`);
+    // console.log(`target Interval Ms : ${targetRoom.getIntervalMs()}`);
     targetRoom.setIntervalId(
       setInterval(() => {
         gameService.startRendering(targetRoom, server, gameService);
@@ -724,7 +724,7 @@ export class GameService {
         // );
         // this.deleteplayRoomByRoomId(room.roomId);
       } else if (status === GamePhase.MATCH_END) {
-        console.log('game match 들어감!');
+        // console.log('game match 들어감!');
         room.syncStatus(room);
 
         room.users[0].playerStatus = PlayerPhase.MATCH_END;
@@ -737,7 +737,7 @@ export class GameService {
           user2.lose += 1;
           winner = user1.userIdx;
           if (room.gameObj.gameType === GameType.RANK) {
-            console.log('winner A 들어감!');
+            // console.log('winner A 들어감!');
             if (user1.rankpoint === 0) user1.rankpoint = 3000;
             if (user2.rankpoint === 0) user2.rankpoint = 3000;
             if (user1.rankpoint === user2.rankpoint) {
@@ -750,7 +750,7 @@ export class GameService {
             }
           }
         } else if (room.gameObj.score[1] === 5) {
-          console.log('winner B 들어감!');
+          // console.log('winner B 들어감!');
           winner = user2.userIdx;
           user2.win += 1;
           user1.lose += 1;
@@ -827,7 +827,7 @@ export class GameService {
     }
 
     const result = new GameResultDto(channel, player1, player2, winner);
-    // console.log(result);
+    // // console.log(result);
     return result;
   }
 
@@ -968,7 +968,7 @@ export class GameService {
   public handleDisconnectUsers(userIdx: number, server: Server): void {
     let target = this.getOnlinePlayer(userIdx);
     if (target === undefined) return;
-    console.log(`disconnect person : ${target.playerStatus}`);
+    // console.log(`disconnect person : ${target.playerStatus}`);
     switch (target.playerStatus) {
       case PlayerPhase.SET_OPTION:
         this.deleteTargetOnSetOption(target);

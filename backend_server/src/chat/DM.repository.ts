@@ -72,7 +72,7 @@ export class DirectMessageRepository extends Repository<DirectMessage> {
   ): Promise<DirectMessage> {
     const { msg } = sendDm;
     const now = new Date().toISOString().toString();
-    console.log(now);
+    // console.log(now);
 
     const dmMessage = await this.create({
       channelIdx: channelIdx,
