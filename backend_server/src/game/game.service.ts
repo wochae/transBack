@@ -493,12 +493,18 @@ export class GameService {
 
   // play room 을 userIdx 를 활용해서 탐색해낸다.
   public findGameRoomById(userIdx: number): GameRoom | null {
+    let i = 0;
     for (const room of this.playRoom) {
+      if (room.users[0].getUserObject() === undefined) {
+        this.playRoom.splice(i, 1);
+        break;
+      }
       if (room.users[0].getUserObject().userIdx === userIdx) {
         return room;
       } else if (room.users[1].getUserObject().userIdx === userIdx) {
         return room;
       }
+      i++;
     }
     return null;
   }
