@@ -40,6 +40,7 @@ export class GameService {
   private today: string;
   private frameData: GameFrameDataDto;
   messanger: LoggerWithRes = new LoggerWithRes('GameService');
+  private intervalId: any | null;
 
   constructor(
     private gameRecordRepository: GameRecordRepository,
@@ -61,6 +62,19 @@ export class GameService {
     const formattedDate = `${year}-${month}-${day}`;
     this.today = formattedDate;
     this.frameData = new GameFrameDataDto(null, null);
+    this.intervalId = null;
+  }
+
+  public getIntervalId(): any | null {
+    return this.intervalId;
+  }
+
+  public setIntervalId(id: any) {
+    this.intervalId = id;
+  }
+
+  public getOnlineList(): [GamePlayer, GameType][] {
+    return this.onLinePlayer;
   }
 
   // PROFILE_INFINITY
@@ -160,95 +174,85 @@ export class GameService {
 
   // 큐 내부를 파악하고, 게임 상대가 준비되었는지 확인한다.
   async checkQueue(userIdx: number, server: Server): Promise<void> {
-    // console.log(`userIdx 확인 전 : ` + userIdx);
-    const target: [GamePlayer, GameType] = this.onLinePlayer.find(
-      (user) => user[0].getUserObject().userIdx === userIdx,
-    );
-    // console.log(`UserIdx 확인 후 : ` + target[0].getUserObject().userIdx);
-    if (target === undefined) return;
-    const type = target[1];
-    // console.log(`type : ${type}`);
-    let targetQueue: GameQueue;
-    switch (type) {
-      case GameType.FRIEND:
-        // console.log(`friend Queue : ${this.friendQueue}`);
-        const friendQue = this.friendQueue;
-        const player1 = friendQue.find(
+    if (this.friendQueue.length >= 2) {
+      const target = this.friendQueue[0];
+      // console.log(`friend Queue : ${this.friendQueue}`);
+      const friendQue = this.friendQueue;
+      const player1 = friendQue.find(
+        (player) =>
+          player[0].getUserObject().userIdx ===
+          target[0].getUserObject().userIdx,
+      );
+      console.log(`TargetQueue : ${friendQue.length}`);
+      const player2 = friendQue.find(
+        (player) => player[0].getUserObject().userIdx === player1[1].targetIdx,
+      );
+      console.log(`player 2: ${player2}`);
+
+      if (player2 === undefined) return undefined;
+      else {
+        const player1Index = friendQue.findIndex(
           (player) =>
             player[0].getUserObject().userIdx ===
             target[0].getUserObject().userIdx,
         );
-        console.log(`TargetQueue : ${friendQue.length}`);
-
-        // console.log(`player 1: ${player1}`);
-        // console.log(`player 1 - userIdx : ${player1[1].userIdx}`);
-        // console.log(`player 1 - targetIdx : ${player1[1].targetIdx}`);
-        const player2 = friendQue.find(
+        const p1 = friendQue.splice(player1Index, 1);
+        const player2Index = friendQue.findIndex(
           (player) =>
             player[0].getUserObject().userIdx === player1[1].targetIdx,
         );
-        console.log(`player 2: ${player2}`);
-
-        if (player2 === undefined) return undefined;
-        else {
-          const player1Index = friendQue.findIndex(
-            (player) =>
-              player[0].getUserObject().userIdx ===
-              target[0].getUserObject().userIdx,
-          );
-          const p1 = friendQue.splice(player1Index, 1);
-          const player2Index = friendQue.findIndex(
-            (player) =>
-              player[0].getUserObject().userIdx === player1[1].targetIdx,
-          );
-          const p2 = friendQue.splice(player2Index, 1);
-          const list: GamePlayer[] = [];
-          player1[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
-          player2[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
-          list.push(player1[0]);
-          list.push(player2[0]);
-          const cond = this.checkListSamePeron(list);
-          if (cond === null) {
-            return undefined;
-          } else if (cond === true) {
-            const picked = this.pickOnePersonFromList(list);
-            const options =
-              picked.getUserObject().userIdx ===
-              p1[0][0].getUserObject().userIdx
-                ? p1[0][1]
-                : p2[0][1];
-            this.putInQueue(picked, options);
-            setTimeout(() => {
-              this.checkQueue(picked.getUserObject().userIdx, server);
-            }, 500);
-            return undefined;
-          }
-          console.log(list);
-          return this.makePlayerRoom(list, server);
+        const p2 = friendQue.splice(player2Index, 1);
+        const list: GamePlayer[] = [];
+        player1[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+        player2[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+        list.push(player1[0]);
+        list.push(player2[0]);
+        const cond = this.checkListSamePeron(list);
+        if (cond === null) {
+          return undefined;
+        } else if (cond === true) {
+          const picked = this.pickOnePersonFromList(list);
+          const options =
+            picked.getUserObject().userIdx === p1[0][0].getUserObject().userIdx
+              ? p1[0][1]
+              : p2[0][1];
+          this.putInQueue(picked, options);
+          return undefined;
         }
-      case GameType.NORMAL:
-        targetQueue = this.normalQueue;
-        break;
-      case GameType.RANK:
-        targetQueue = this.rankQueue;
-        break;
+        console.log(list);
+        return this.makePlayerRoom(list, server);
+      }
     }
-    console.log(`TargetQueue : ${targetQueue.getLength()}`);
-    if (
-      (type === GameType.NORMAL || type === GameType.RANK) &&
-      targetQueue.getLength() >= 2
-    ) {
+
+    let targetQueue: GameQueue;
+
+    if (this.normalQueue.getLength() >= 2) {
+      targetQueue = this.normalQueue;
+      const target = targetQueue.playerList[0];
       //   console.log(`큐의 길이는 : `, targetQueue.getLength());
-      const list = targetQueue.popPlayer(target[0].getUserObject().userIdx);
+      const list = targetQueue.popPlayer(target.getUserObject().userIdx);
       const cond = this.checkListSamePeron(list);
       if (cond === null) {
         return undefined;
       } else if (cond === true) {
         const picked = this.pickOnePersonFromList(list);
         this.putInQueue(picked, null);
-        setTimeout(() => {
-          this.checkQueue(picked.getUserObject().userIdx, server);
-        }, 500);
+        return undefined;
+      }
+      list[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+      list[1].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+      return this.makePlayerRoom(list, server);
+    } else if (this.rankQueue.getLength() >= 2) {
+      targetQueue = this.rankQueue;
+      const target = targetQueue.playerList[0];
+      //   console.log(`큐의 길이는 : `, targetQueue.getLength());
+      const list = targetQueue.popPlayer(target.getUserObject().userIdx);
+      const cond = this.checkListSamePeron(list);
+      if (cond === null) {
+        return undefined;
+      } else if (cond === true) {
+        const picked = this.pickOnePersonFromList(list);
+        this.putInQueue(picked, null);
         return undefined;
       }
       list[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
@@ -351,7 +355,7 @@ export class GameService {
       option.mapNumber,
       await gameRecord,
       channel,
-      1000,
+      200,
     );
     players[0].getSocket().join(roomName);
     players[1].getSocket().join(roomName);
@@ -673,7 +677,12 @@ export class GameService {
           .to(room.roomId)
           .emit(
             'game_pause_score',
-            new GamePauseScoreDto(room.users, room.gameObj, GameStatus.ONGOING),
+            new GamePauseScoreDto(
+              room.users,
+              room.gameObj,
+              GameStatus.ONGOING,
+              null,
+            ),
           );
         room.users[0].playerStatus = PlayerPhase.ON_READY;
         room.users[1].playerStatus = PlayerPhase.ON_READY;
@@ -722,9 +731,11 @@ export class GameService {
         room.users[1].playerStatus = PlayerPhase.MATCH_END;
         const user1 = room.users[0].getUserObject();
         const user2 = room.users[1].getUserObject();
+        let winner: number;
         if (room.gameObj.score[0] === 5) {
           user1.win += 1;
           user2.lose += 1;
+          winner = user1.userIdx;
           if (room.gameObj.gameType === GameType.RANK) {
             console.log('winner A 들어감!');
             if (user1.rankpoint === 0) user1.rankpoint = 3000;
@@ -740,7 +751,7 @@ export class GameService {
           }
         } else if (room.gameObj.score[1] === 5) {
           console.log('winner B 들어감!');
-
+          winner = user2.userIdx;
           user2.win += 1;
           user1.lose += 1;
           if (room.gameObj.gameType === GameType.RANK) {
@@ -778,7 +789,12 @@ export class GameService {
           .to(room.roomId)
           .emit(
             'game_pause_score',
-            new GamePauseScoreDto(room.users, room.gameObj, GameStatus.END),
+            new GamePauseScoreDto(
+              room.users,
+              room.gameObj,
+              GameStatus.END,
+              winner,
+            ),
           );
         this.deleteplayRoomByRoomId(room.roomId);
       }
@@ -799,8 +815,18 @@ export class GameService {
     const player2 = await this.inMemoryUsers.getUserByIdFromIM(
       channel.userIdx2,
     );
+    let winner: number;
+    const histories = await this.gameRecordRepository.findBy({
+      gameIdx: gameIdx,
+    });
+    if (histories === undefined || histories === null) return null;
+    if (histories[0].result === RecordResult.WIN) {
+      winner = histories[0].userIdx;
+    } else {
+      winner = histories[1].userIdx;
+    }
 
-    const result = new GameResultDto(channel, player1, player2);
+    const result = new GameResultDto(channel, player1, player2, winner);
     // console.log(result);
     return result;
   }
@@ -1162,9 +1188,9 @@ export class GameService {
     const record1 = room.history[0];
     const record2 = room.history[1];
     const channel = room.channel;
-    if (channel !== undefined) this.gameChannelRepository.remove(channel);
     if (record1 !== undefined) this.gameRecordRepository.remove(record1);
     if (record2 !== undefined) this.gameRecordRepository.remove(record2);
+    if (channel !== undefined) this.gameChannelRepository.remove(channel);
     server.to(room.roomId).emit('game_force_quit');
     this.deleteplayRoomByRoomId(room.roomId);
   }
@@ -1193,9 +1219,11 @@ export class GameService {
     const channel = room.channel;
     const user1 = room.users[0].getUserObject();
     const user2 = room.users[1].getUserObject();
-    if (room.gameObj.score[0] > room.gameObj.score[1]) {
+    let winner: number;
+    if (target.getUserObject().userIdx === p2Object.getUserObject().userIdx) {
       p1Object.getUserObject().win++;
       p2Object.getUserObject().lose++;
+      winner = p1Object.getUserObject().userIdx;
       if (room.channel.type === RecordType.RANK) {
         if (user1.rankpoint === 0) user1.rankpoint = 3000;
         if (user2.rankpoint === 0) user2.rankpoint = 3000;
@@ -1210,9 +1238,12 @@ export class GameService {
       }
       p1.result = RecordResult.WIN;
       p2.result = RecordResult.LOSE;
-    } else if (room.gameObj.score[0] < room.gameObj.score[1]) {
+    } else if (
+      target.getUserObject().userIdx === p1Object.getUserObject().userIdx
+    ) {
       p1Object.getUserObject().lose++;
       p2Object.getUserObject().win++;
+      winner = p2Object.getUserObject().userIdx;
       if (room.channel.type === RecordType.RANK) {
         if (user1.rankpoint === 0) user1.rankpoint = 3000;
         if (user2.rankpoint === 0) user2.rankpoint = 3000;
@@ -1240,13 +1271,18 @@ export class GameService {
     this.gameChannelRepository.save(room.getChannel());
     this.gameRecordRepository.save(room.getHistories()[0]);
     this.gameRecordRepository.save(room.getHistories()[1]);
-    this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
-    this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
+    this.inMemoryUsers.setUserByIdFromIM(user1);
+    this.inMemoryUsers.setUserByIdFromIM(user2);
     server
       .to(room.roomId)
       .emit(
         'game_pause_score',
-        new GamePauseScoreDto(room.users, room.gameObj, GameStatus.JUDGE),
+        new GamePauseScoreDto(
+          room.users,
+          room.gameObj,
+          GameStatus.JUDGE,
+          winner,
+        ),
       );
     this.deleteplayRoomByRoomId(room.roomId);
   }

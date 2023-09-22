@@ -46,7 +46,11 @@ export class GameGateway
   handleDisconnect(client: Socket) {
     const userIdx: number = parseInt(client.handshake.query.userId as string);
     if (Number.isNaN(userIdx)) return;
+    console.log(`userIdx(disconnection) : ${userIdx}`);
     this.gameService.handleDisconnectUsers(userIdx, this.server);
+    if (this.gameService.getOnlineList().length === 0) {
+      clearInterval(this.gameService.getIntervalId());
+    }
     return;
   }
 
@@ -76,9 +80,18 @@ export class GameGateway
 
     this.gameService.changeStatusForPlayer(userIdx);
 
-    setTimeout(() => {
-      this.gameService.checkQueue(userIdx, this.server);
-    }, 100);
+    if (
+      this.gameService.getIntervalId() === null &&
+      this.gameService.getOnlineList().length >= 2
+    ) {
+      const intervalId = setInterval(() => {
+        this.gameService.checkQueue(
+          this.gameService.getOnlineList()[0][0].getOption().userIdx,
+          this.server,
+        );
+      }, 1000);
+      this.gameService.setIntervalId(intervalId);
+    }
 
     return this.messanger.setResponseMsgWithLogger(
       200,
@@ -191,7 +204,11 @@ export class GameGateway
     const userIdx = data.userIdx;
     const ret = this.gameService.checkReady(userIdx);
     if (ret === null) {
-      console.log(`error happens!`);
+      return this.messanger.setResponseMsgWithLogger(
+        200,
+        'please Wait. Both Player is ready',
+        'game_pause_score',
+      );
     }
     //TODO: error handling
     const target = this.gameService.findGameRoomById(userIdx);

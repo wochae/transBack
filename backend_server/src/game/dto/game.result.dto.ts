@@ -14,8 +14,14 @@ export class GameResultDto {
   user2lose: number;
   user2rankpoint: number;
   score: string; // "score : score" 구조로 전 달함
+  winnerIdx: number;
 
-  constructor(result: GameChannel, user1: UserObject, user2: UserObject) {
+  constructor(
+    result: GameChannel,
+    user1: UserObject,
+    user2: UserObject,
+    winner: number,
+  ) {
     this.user1Idx = user1.userIdx;
     this.user1Nickname = user1.nickname;
     this.user1win = user1.win;
@@ -27,5 +33,6 @@ export class GameResultDto {
     this.user2lose = user2.lose;
     this.user2rankpoint = user2.rankpoint;
     this.score = `${result.score1} : ${result.score2}`; // "score : score" 구조로 전 달함
+    this.winnerIdx = winner;
   }
 }
