@@ -49,7 +49,6 @@ const front = process.env.FRONTEND;
       front,
     ],
   },
-  transports: ["websocket"],
 })
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
