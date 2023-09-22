@@ -27,6 +27,7 @@ import { KeyPressDto } from './dto/key.press.dto';
 import { GameResultDto } from './dto/game.result.dto';
 import { GameInviteOptionDto } from './dto/game.invite.option.dto';
 import { UserProfileGameDto } from './dto/game.record.dto';
+import { UserObjectRepository } from 'src/users/users.repository';
 
 @Injectable()
 export class GameService {
@@ -45,8 +46,8 @@ export class GameService {
   constructor(
     private gameRecordRepository: GameRecordRepository,
     private gameChannelRepository: GameChannelRepository,
-    private readonly userService: UsersService,
     private readonly inMemoryUsers: InMemoryUsers,
+    private readonly userObjectRepository: UserObjectRepository,
   ) {
     this.playRoom = [];
     this.normalQueue = new GameQueue();
@@ -137,7 +138,12 @@ export class GameService {
   // player 만들기
   async makePlayer(data: GameOptionDto): Promise<GamePlayer | null> {
     // console.log(`userIdx: ${data.userIdx}`);
-    const getPerson = await this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
+    // const getPerson = await this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
+    const getPerson = await this.userObjectRepository.findOne({
+      where: { userIdx: data.userIdx },
+    });
+    this.inMemoryUsers.setUserByIdFromIM(getPerson);
+    this.inMemoryUsers.saveUserByUserIdFromIM(getPerson.userIdx);
     // console.log(`userIdx: ${data.userIdx}`);
 
     if (getPerson === undefined) return null;
