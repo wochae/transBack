@@ -138,6 +138,7 @@ export class GameService {
   async makePlayer(data: GameOptionDto): Promise<GamePlayer | null> {
     // console.log(`userIdx: ${data.userIdx}`);
     const getPerson = await this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
+    console.log('getPerson', getPerson.userIdx);
     // console.log(`userIdx: ${data.userIdx}`);
 
     if (getPerson === undefined) return null;
