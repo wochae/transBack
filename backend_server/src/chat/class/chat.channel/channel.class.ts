@@ -118,7 +118,11 @@ export class Channel {
     this.admin?.splice(this.admin.indexOf(admin), 1);
   }
   removeMember(member: UserObject) {
-    this.member?.splice(this.member.indexOf(member), 1);
+    const userIdx = this.member.findIndex((user) => {
+      return member.userIdx === user.userIdx;
+    });
+    if (userIdx === -1) return;
+    this.member?.splice(userIdx, 1);
   }
   removeOwner() {
     this.owner = null;

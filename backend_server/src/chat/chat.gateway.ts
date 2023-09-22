@@ -913,7 +913,8 @@ export class ChatGateway
     const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
       return admin.userIdx === target.userIdx;
     });
-    if (targetIsAdmin) {
+    const userIsOwner: boolean = channel.getOwner.userIdx === user.userIdx;
+    if (targetIsAdmin && !userIsOwner) {
       return this.messanger.logWithMessage(
         'chat_mute',
         'target',
@@ -992,7 +993,8 @@ export class ChatGateway
     const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
       return admin.userIdx === target.userIdx;
     });
-    if (targetIsAdmin) {
+    const userIsOwner: boolean = channel.getOwner.userIdx === user.userIdx;
+    if (targetIsAdmin && !userIsOwner) {
       return this.messanger.logWithMessage(
         'chat_kick',
         'target',
@@ -1064,7 +1066,8 @@ export class ChatGateway
     const targetIsAdmin: boolean = channel.getAdmin.some((admin) => {
       return admin.userIdx === target.userIdx;
     });
-    if (targetIsAdmin) {
+    const userIsOwner: boolean = channel.getOwner.userIdx === user.userIdx;
+    if (targetIsAdmin && !userIsOwner) {
       return this.messanger.logWithMessage(
         'chat_ban',
         'target',
