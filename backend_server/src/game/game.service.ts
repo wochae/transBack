@@ -588,8 +588,8 @@ export class GameService {
     }
     // TODO: Lateyncy cnt to change
     console.log(`target ${latencyIdx} : ${targetRoom.latencyCnt[latencyIdx]}`);
-    if (targetRoom.latencyCnt[latencyIdx] === 30) {
-      if (targetRoom.latencyCnt[0] >= 30 && targetRoom.latencyCnt[1] >= 30) {
+    if (targetRoom.latencyCnt[latencyIdx] === 10) {
+      if (targetRoom.latencyCnt[0] >= 10 && targetRoom.latencyCnt[1] >= 10) {
         targetRoom.stopInterval();
         targetRoom.users[0].playerStatus = PlayerPhase.PING_DONE;
         targetRoom.users[1].playerStatus = PlayerPhase.PING_DONE;
@@ -759,8 +759,8 @@ export class GameService {
           winner = user1.userIdx;
           if (room.gameObj.gameType === GameType.RANK) {
             console.log('winner A 들어감!');
-            if (user1.rankpoint === 0) user1.rankpoint = 3000;
-            if (user2.rankpoint === 0) user2.rankpoint = 3000;
+            // if (user1.rankpoint === 0) user1.rankpoint = 3000;
+            // if (user2.rankpoint === 0) user2.rankpoint = 3000;
             if (user1.rankpoint === user2.rankpoint) {
               user1.rankpoint += 100;
               user2.rankpoint -= 100;
@@ -776,8 +776,8 @@ export class GameService {
           user2.win += 1;
           user1.lose += 1;
           if (room.gameObj.gameType === GameType.RANK) {
-            if (user1.rankpoint === 0) user1.rankpoint = 3000;
-            if (user2.rankpoint === 0) user2.rankpoint = 3000;
+            // if (user1.rankpoint === 0) user1.rankpoint = 3000;
+            // if (user2.rankpoint === 0) user2.rankpoint = 3000;
             if (user1.rankpoint === user2.rankpoint) {
               user1.rankpoint -= 100;
               user2.rankpoint += 100;
@@ -1151,9 +1151,9 @@ export class GameService {
     const record1 = room.history[0];
     const record2 = room.history[1];
     const channel = room.channel;
-    if (channel !== undefined) this.gameChannelRepository.remove(channel);
-    if (record1 !== undefined) this.gameRecordRepository.remove(record1);
-    if (record2 !== undefined) this.gameRecordRepository.remove(record2);
+    if (channel !== undefined) this.gameChannelRepository.save(channel);
+    if (record1 !== undefined) this.gameRecordRepository.save(record1);
+    if (record2 !== undefined) this.gameRecordRepository.save(record2);
     server.to(room.roomId).emit('game_force_quit');
     this.deleteplayRoomByRoomId(room.roomId);
 
@@ -1185,9 +1185,9 @@ export class GameService {
     const record1 = room.history[0];
     const record2 = room.history[1];
     const channel = room.channel;
-    if (channel !== undefined) this.gameChannelRepository.remove(channel);
-    if (record1 !== undefined) this.gameRecordRepository.remove(record1);
-    if (record2 !== undefined) this.gameRecordRepository.remove(record2);
+    if (channel !== undefined) this.gameChannelRepository.save(channel);
+    if (record1 !== undefined) this.gameRecordRepository.save(record1);
+    if (record2 !== undefined) this.gameRecordRepository.save(record2);
     server.to(room.roomId).emit('game_force_quit');
     this.deleteplayRoomByRoomId(room.roomId);
   }
@@ -1209,9 +1209,9 @@ export class GameService {
     const record1 = room.history[0];
     const record2 = room.history[1];
     const channel = room.channel;
-    if (record1 !== undefined) this.gameRecordRepository.remove(record1);
-    if (record2 !== undefined) this.gameRecordRepository.remove(record2);
-    if (channel !== undefined) this.gameChannelRepository.remove(channel);
+    if (record1 !== undefined) this.gameRecordRepository.save(record1);
+    if (record2 !== undefined) this.gameRecordRepository.save(record2);
+    if (channel !== undefined) this.gameChannelRepository.save(channel);
     server.to(room.roomId).emit('game_force_quit');
     this.deleteplayRoomByRoomId(room.roomId);
   }
@@ -1266,8 +1266,8 @@ export class GameService {
       p2Object.getUserObject().win++;
       winner = p2Object.getUserObject().userIdx;
       if (room.channel.type === RecordType.RANK) {
-        if (user1.rankpoint === 0) user1.rankpoint = 3000;
-        if (user2.rankpoint === 0) user2.rankpoint = 3000;
+        // if (user1.rankpoint === 0) user1.rankpoint = 3000;
+        // if (user2.rankpoint === 0) user2.rankpoint = 3000;
         if (user1.rankpoint === user2.rankpoint) {
           user1.rankpoint -= 100;
           user2.rankpoint += 100;
