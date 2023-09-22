@@ -48,9 +48,9 @@ export class GameGateway
     if (Number.isNaN(userIdx)) return;
     // console.log(`userIdx(disconnection) : ${userIdx}`);
     this.gameService.handleDisconnectUsers(userIdx, this.server);
-    if (this.gameService.getOnlineList().length === 0) {
-      this.gameService.stopIntervalId();
-    }
+    // if (this.gameService.getOnlineList().length === 0) {
+    //   this.gameService.stopIntervalId();
+    // }
     return;
   }
 

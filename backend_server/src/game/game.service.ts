@@ -244,6 +244,7 @@ export class GameService {
           return undefined;
         }
         // console.log(list);
+        this.stopIntervalId();
         return this.makePlayerRoom(list, server);
       }
     }
@@ -265,7 +266,10 @@ export class GameService {
       }
       list[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
       list[1].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+      this.stopIntervalId();
       return this.makePlayerRoom(list, server);
+    } else {
+      return undefined;
     }
 
     if (this.rankQueue.getLength() >= 2) {
@@ -283,6 +287,7 @@ export class GameService {
       }
       list[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
       list[1].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+      this.stopIntervalId();
       return this.makePlayerRoom(list, server);
     } else return undefined;
   }
@@ -341,38 +346,16 @@ export class GameService {
   async makePlayerRoom(players: GamePlayer[], server: Server) {
     const roomName = this.makeRoomName();
     this.messanger.logWithMessage('makePlayerRoom', '', '', `${roomName}`);
-
     const option = this.setOptions(players);
-    // this.messanger.logWithMessage(
-    //   'makePlayerRoom',
-    //   '',
-    //   '',
-    //   `${option.userIdx}`,
-    // );
-
     const channel = this.makeGameChannel(players);
-    // this.messanger.logWithMessage(
-    //   'makePlayerRoom',
-    //   '',
-    //   '',
-    //   `${players.length}`,
-    // );
-
     const newChannel = await this.gameChannelRepository.save(channel);
-    // this.messanger.logWithMessage(
-    //   'makePlayerRoom',
-    //   '',
-    //   '',
-    //   `${channel.userIdx1} ${channel.userIdx2} / ${channel.matchDate}`,
-    // );
-
     const gameRecord = this.makeGameHistory(players, newChannel);
     // TODO: FIX here
     const record0 = await this.gameRecordRepository.save(gameRecord[0]);
     const record1 = await this.gameRecordRepository.save(gameRecord[1]);
-    (await gameRecord).splice(0, 2);
-    (await gameRecord).push(record0);
-    (await gameRecord).push(record1);
+    gameRecord.splice(0, 2);
+    gameRecord.push(record0);
+    gameRecord.push(record1);
     const room = new GameRoom(
       roomName,
       players,
@@ -396,7 +379,6 @@ export class GameService {
       room.gameObj.gameSpeed,
       room.gameObj.gameMapNumber,
     );
-    // // console.log('here you Are1!');
     setTimeout(() => {
       server.to(room.roomId).emit('game_queue_success', data);
     }, 400);
@@ -529,9 +511,6 @@ export class GameService {
 
   // Room 의 이름으로 룸을 가
   public findGameRoomByRoomId(roomId: string): GameRoom {
-    // const target = this.playRoom.find(
-    //   (room) => room.roomId.valueOf() === roomId.valueOf(),
-    // );
     let target;
     for (let i = 0; i < this.playRoom.length; i++) {
       if (this.playRoom[i].roomId.valueOf() === roomId.valueOf()) {
@@ -587,12 +566,7 @@ export class GameService {
       targetRoom.latency[latencyIdx] = Math.round(
         targetRoom.latency[latencyIdx] / 2,
       );
-      // console.log(`data latency : ${latency}`);
-      //   // console.log(`data clientTime : ${data.clientTime}`);
-      // console.log(`Player ${latencyIdx} : ${targetRoom.latency[latencyIdx]}`);
     }
-    // TODO: Lateyncy cnt to change
-    // console.log(`target ${latencyIdx} : ${targetRoom.latencyCnt[latencyIdx]}`);
     if (targetRoom.latencyCnt[latencyIdx] === 10) {
       if (targetRoom.latencyCnt[0] >= 10 && targetRoom.latencyCnt[1] >= 10) {
         targetRoom.stopInterval();
