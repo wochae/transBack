@@ -80,10 +80,7 @@ export class GameGateway
 
     this.gameService.changeStatusForPlayer(userIdx);
 
-    if (
-      this.gameService.getIntervalId() === null &&
-      this.gameService.getOnlineList().length >= 2
-    ) {
+    if (this.gameService.getOnlineList().length >= 2) {
       const intervalId = setInterval(() => {
         this.gameService.checkQueue(this.server);
       }, 1000);

@@ -95,6 +95,7 @@ export class GameService {
 
   public stopIntervalId() {
     clearInterval(this.intervalId);
+    this.intervalId = null;
   }
 
   public getOnlineList(): [GamePlayer, GameType][] {
@@ -144,7 +145,8 @@ export class GameService {
     const player = new GamePlayer(getPerson);
     player.setOptions(data);
     getPerson.isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
-    const target = await this.inMemoryUsers.saveUserByUserIdFromIM(
+    await this.inMemoryUsers.setUserByIdFromIM(getPerson);
+    const target = await this.inMemoryUsers.getUserByIdFromIM(
       getPerson.userIdx,
     );
     // console.log(`userIdx: ${data.userIdx}`);
@@ -271,25 +273,6 @@ export class GameService {
     } else {
       return undefined;
     }
-
-    if (this.rankQueue.getLength() >= 2) {
-      targetQueue = this.rankQueue;
-      const target = targetQueue.playerList[0];
-      //   // console.log(`큐의 길이는 : `, targetQueue.getLength());
-      const list = targetQueue.popPlayer(target.getUserObject().userIdx);
-      const cond = this.checkListSamePeron(list);
-      if (cond === null) {
-        return undefined;
-      } else if (cond === true) {
-        const picked = this.pickOnePersonFromList(list);
-        this.putInQueue(picked, null);
-        return undefined;
-      }
-      list[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
-      list[1].playerStatus = PlayerPhase.QUEUE_SUCCESS;
-      this.stopIntervalId();
-      return this.makePlayerRoom(list, server);
-    } else return undefined;
   }
 
   private checkListSamePeron(playerList: GamePlayer[]): boolean | null {
@@ -337,9 +320,9 @@ export class GameService {
     }
     if (target === undefined) return;
     target[0].getUserObject().isOnline = OnlineStatus.ONGAME;
-    target[0].setUserObject(
-      await this.inMemoryUsers.saveUserByUserIdFromIM(userIdx),
-    );
+    this.inMemoryUsers.setUserByIdFromIM(target[0].getUserObject());
+    const player = await this.inMemoryUsers.getUserByIdFromIM(userIdx);
+    target[0].setUserObject(player);
   }
 
   // play room 을 구성한다.
