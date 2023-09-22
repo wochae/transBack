@@ -287,17 +287,21 @@ export class UsersService {
     const target = await this.userObjectRepository.findOneBy({
       userIdx: insertFriendDto.targetIdx,
     });
-    const list = await this.friendListRepository.insertFriend(
-      insertFriendDto,
-      user,
-      this.userObjectRepository,
-    );
-    const updatedList: FriendListResDto = list.map((res) => ({
-      friendNickname: res.friendNickname,
-      friendIdx: res.friendIdx,
-      isOnline: target.isOnline, // 여기서 user.isOnline 값을 추가
-    }));
-    return updatedList;
+    try {
+      const list = await this.friendListRepository.insertFriend(
+        insertFriendDto,
+        user,
+        this.userObjectRepository,
+      );
+      const updatedList: FriendListResDto = list.map((res) => ({
+        friendNickname: res.friendNickname,
+        friendIdx: res.friendIdx,
+        isOnline: target.isOnline, // 여기서 user.isOnline 값을 추가
+      }));
+      return updatedList;
+    } catch(error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   async deleteFriend(
