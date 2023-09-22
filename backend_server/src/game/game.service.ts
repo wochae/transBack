@@ -146,6 +146,7 @@ export class GameService {
     player.setOptions(data);
     getPerson.isOnline = OnlineStatus.ONGAME; //TODO: chat과 연계 버그 확인 필요
     await this.inMemoryUsers.setUserByIdFromIM(getPerson);
+    await this.inMemoryUsers.saveUserByUserIdFromIM(getPerson.userIdx);
     const target = await this.inMemoryUsers.getUserByIdFromIM(
       getPerson.userIdx,
     );
@@ -339,6 +340,9 @@ export class GameService {
     if (target === undefined) return;
     target[0].getUserObject().isOnline = OnlineStatus.ONGAME;
     this.inMemoryUsers.setUserByIdFromIM(target[0].getUserObject());
+    this.inMemoryUsers.saveUserByUserIdFromIM(
+      target[0].getUserObject().userIdx,
+    );
     const player = await this.inMemoryUsers.getUserByIdFromIM(userIdx);
     target[0].setUserObject(player);
   }
@@ -775,7 +779,10 @@ export class GameService {
         room.users[0].setUserObject(user1);
         room.users[1].setUserObject(user2);
         this.inMemoryUsers.setUserByIdFromIM(user1);
+        this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
         this.inMemoryUsers.setUserByIdFromIM(user2);
+        this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
+
         user1.rankpoint = parseInt(user1.rankpoint.toString());
         user2.rankpoint = parseInt(user2.rankpoint.toString());
         this.processedUserIdxList.push(
@@ -1280,7 +1287,10 @@ export class GameService {
     this.gameRecordRepository.save(room.getHistories()[0]);
     this.gameRecordRepository.save(room.getHistories()[1]);
     this.inMemoryUsers.setUserByIdFromIM(user1);
+    this.inMemoryUsers.saveUserByUserIdFromIM(user1.userIdx);
     this.inMemoryUsers.setUserByIdFromIM(user2);
+    this.inMemoryUsers.saveUserByUserIdFromIM(user2.userIdx);
+
     server
       .to(room.roomId)
       .emit(
