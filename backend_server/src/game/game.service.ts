@@ -65,6 +65,26 @@ export class GameService {
     this.intervalId = null;
   }
 
+  public printAllQueueData() {
+    const rooms = this.playRoom;
+    const queue1 = this.normalQueue.playerList;
+    const queue2 = this.rankQueue.playerList;
+    const queue3 = this.friendQueue;
+
+    let i = 1;
+    for (const room of rooms) {
+      console.log(
+        `room ${i++}(${room.roomId}) : [ ${room.users[0]}, ${room.users[1]} ]`,
+      );
+    }
+
+    for (const room of rooms) {
+      console.log(
+        `room ${i++}(${room.roomId}) : [ ${room.users[0]}, ${room.users[1]} ]`,
+      );
+    }
+  }
+
   public getIntervalId(): any | null {
     return this.intervalId;
   }
@@ -173,17 +193,16 @@ export class GameService {
   }
 
   // 큐 내부를 파악하고, 게임 상대가 준비되었는지 확인한다.
-  async checkQueue(userIdx: number, server: Server): Promise<void> {
+  async checkQueue(server: Server): Promise<void> {
     if (this.friendQueue.length >= 2) {
       const target = this.friendQueue[0];
-      // console.log(`friend Queue : ${this.friendQueue}`);
+      console.log(`friend Queue length : ${this.friendQueue.length}`);
       const friendQue = this.friendQueue;
       const player1 = friendQue.find(
         (player) =>
           player[0].getUserObject().userIdx ===
           target[0].getUserObject().userIdx,
       );
-      console.log(`TargetQueue : ${friendQue.length}`);
       const player2 = friendQue.find(
         (player) => player[0].getUserObject().userIdx === player1[1].targetIdx,
       );
@@ -242,7 +261,9 @@ export class GameService {
       list[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
       list[1].playerStatus = PlayerPhase.QUEUE_SUCCESS;
       return this.makePlayerRoom(list, server);
-    } else if (this.rankQueue.getLength() >= 2) {
+    }
+
+    if (this.rankQueue.getLength() >= 2) {
       targetQueue = this.rankQueue;
       const target = targetQueue.playerList[0];
       //   console.log(`큐의 길이는 : `, targetQueue.getLength());

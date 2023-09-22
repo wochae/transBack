@@ -85,10 +85,7 @@ export class GameGateway
       this.gameService.getOnlineList().length >= 2
     ) {
       const intervalId = setInterval(() => {
-        this.gameService.checkQueue(
-          this.gameService.getOnlineList()[0][0].getOption().userIdx,
-          this.server,
-        );
+        this.gameService.checkQueue(this.server);
       }, 1000);
       this.gameService.setIntervalId(intervalId);
     }
