@@ -29,7 +29,7 @@ export class GameController {
     @Query('userIdx') userIdx: number,
     @Query('page') page: number,
   ) {
-    // console.log('getRecord', userIdx, page);
+    // // console.log('getRecord', userIdx, page);
     const user = await this.usersService.findOneUser(userIdx);
     const records = await this.gameService.getGameRecordsByInfinity(
       userIdx,
@@ -43,13 +43,13 @@ export class GameController {
       },
       gameRecord: records,
     };
-    // console.log('getRecord', userProfileGameRecordDto);
+    // // console.log('getRecord', userProfileGameRecordDto);
     return userProfileGameRecordDto;
   }
 
   @Post('normal-match')
   async postGameOptions(@Req() req, @Res() res, @Body() option: GameOptionDto) {
-    console.log('나 켜짐!! : 일반 게임');
+    // console.log('나 켜짐!! : 일반 게임');
     const message = '플레이어가 큐에 등록 되었습니다.';
     const errorMessage = '플레이어가 큐에 등록되지 못하였습니다.';
     let status: boolean;
@@ -60,7 +60,7 @@ export class GameController {
       this.gameService.putInQueue(target, null);
       status = true;
     }
-    console.log(`option 찾자!!!!!`, option);
+    // console.log(`option 찾자!!!!!`, option);
     if (status === false)
       return res.status(HttpStatus.SERVICE_UNAVAILABLE).json(errorMessage);
     return res.status(HttpStatus.OK).json(message);
@@ -72,7 +72,7 @@ export class GameController {
     @Res() res,
     @Body() option: GameInviteOptionDto,
   ) {
-    console.log('나 켜짐!! : 친선 게임');
+    // console.log('나 켜짐!! : 친선 게임');
     const message = '친선전이 준비 되었습니다.';
     const errorMessage = '친선전이 실패하였습니다.';
     let status: boolean;
@@ -84,12 +84,12 @@ export class GameController {
     );
     const target = await this.gameService.makePlayer(basicOption);
     target.playerStatus = PlayerPhase.SET_OPTION;
-    // console.log(`target check?! : ${target}`);
+    // // console.log(`target check?! : ${target}`);
     if (target === null) status = false;
     else {
-      console.log(
-        `Friend Queue inserting! : ${target.getUserObject().nickname}`,
-      );
+      // console.log(
+      //     `Friend Queue inserting! : ${target.getUserObject().nickname}`,
+      //   );
       this.gameService.putInQueue(target, option);
       status = true;
     }
@@ -113,7 +113,7 @@ export class GameResultController {
 
   @Get()
   async getHistory(@Req() req, @Res() res, @Query('gameKey') gameKey: string) {
-    console.log(`game Key = ${gameKey}`);
+    // console.log(`game Key = ${gameKey}`);
     if (gameKey === undefined) return res.status(HttpStatus.BAD_REQUEST).json();
     const gIdx = parseInt(gameKey);
     const ret = await this.gameService.getHistoryByGameId(gIdx);

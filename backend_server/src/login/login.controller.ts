@@ -29,7 +29,7 @@ export class LoginController {
   constructor(
     private readonly loginService: LoginService,
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
 
   private logger: Logger = new Logger('LoginController');
   private messanger: LoggerWithRes = new LoggerWithRes('LoginController');
@@ -41,58 +41,62 @@ export class LoginController {
     @Res() res: Response,
     @Body() query: any,
   ) {
-    this.logger.log(`codeCallback code : ${query.code}`);
-    console.log('authHeader', authHeader);
-    if (!authHeader) {
-      authHeader = req.headers.token;
-    } else {
-      authHeader = authHeader.startsWith('Bearer')
-        ? authHeader.split(' ')[1]
-        : req.headers.token;
-      console.log('codeCallback token : ', authHeader);
-    }
-    let intraInfo: IntraInfoDto;
-    let intraSimpleInfoDto: IntraSimpleInfoDto;
-    intraInfo = await this.loginService.getIntraInfo(query.code);
-    const user = await this.usersService.findOneUser(intraInfo.userIdx);
-    
-    console.log('codeCallback user : ', user);
-    if (!user) {
-      console.log('codeCallback user not exist : ', user);
-      intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
-      this.loginService.downloadProfileImg(intraInfo);
-    } else {
-      user.imgUri = `${backenduri}/img/${user.userIdx}.png`
-      this.usersService.setUserImg(user.userIdx, user.imgUri);
-      
-      console.log('codeCallback user exist : ', user);
-      intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth, user.available);
-    }
-    const anyImg = await this.usersService.checkFileExists(`public/img/${intraSimpleInfoDto.userIdx}.png`);
-    if (!anyImg && !intraSimpleInfoDto.imgUri)
-    {
-      intraSimpleInfoDto.imgUri = `${backenduri}/img/0.png`;
-      await this.usersService.setUserImg(intraSimpleInfoDto.userIdx, intraSimpleInfoDto.imgUri);
-    }
-    const payload = { id: intraInfo.userIdx, email: intraInfo.email };
-    const jwt = await this.loginService.issueToken(payload);
-    intraInfo.token = (jwt).toString();
-    intraInfo.check2Auth = intraSimpleInfoDto.check2Auth;
-    intraInfo.imgUri = intraSimpleInfoDto.imgUri;
-    intraInfo.nickname = intraSimpleInfoDto.nickname;
-    intraInfo.available = intraSimpleInfoDto.available;
-    const userOnline = await this.usersService.findOneUser(intraInfo.userIdx)
-    this.usersService.setIsOnline(userOnline, OnlineStatus.ONLINE);
+    try {
+      this.logger.log(`codeCallback code : ${query.code}`);
+      // console.log('authHeader', authHeader);
+      if (!authHeader) {
+        authHeader = req.headers.token;
+      } else {
+        authHeader = authHeader.startsWith('Bearer')
+          ? authHeader.split(' ')[1]
+          : req.headers.token;
+        // console.log('codeCallback token : ', authHeader);
+      }
+      let intraInfo: IntraInfoDto;
+      let intraSimpleInfoDto: IntraSimpleInfoDto;
+      intraInfo = await this.loginService.getIntraInfo(query.code);
+      const user = await this.usersService.findOneUser(intraInfo.userIdx);
 
-    res.cookie('authorization', intraInfo.token, { httpOnly: true, path: '*' });
-    res.header('Cache-Control', 'no-store');
-    // res.setHeader('Authorization', `Bearer ${intraInfo.token}`);
-    console.log(`codeCallback intraInfo : `, intraInfo);
+      // console.log('codeCallback user : ', user);
+      if (!user) {
+        // console.log('codeCallback user not exist : ', user);
+        intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
+        this.loginService.downloadProfileImg(intraInfo);
+      } else {
+        user.imgUri = `${backenduri}/img/${user.userIdx}.png`
+        this.usersService.setUserImg(user.userIdx, user.imgUri);
 
-    console.log("success");
+        // console.log('codeCallback user exist : ', user);
+        intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth, user.available);
+      }
+      const anyImg = await this.usersService.checkFileExists(`public/img/${intraSimpleInfoDto.userIdx}.png`);
+      if (!anyImg && !intraSimpleInfoDto.imgUri) {
+        intraSimpleInfoDto.imgUri = `${backenduri}/img/0.png`;
+        await this.usersService.setUserImg(intraSimpleInfoDto.userIdx, intraSimpleInfoDto.imgUri);
+      }
+      const payload = { id: intraInfo.userIdx, email: intraInfo.email };
+      const jwt = await this.loginService.issueToken(payload);
+      intraInfo.token = (jwt).toString();
+      intraInfo.check2Auth = intraSimpleInfoDto.check2Auth;
+      intraInfo.imgUri = intraSimpleInfoDto.imgUri;
+      intraInfo.nickname = intraSimpleInfoDto.nickname;
+      intraInfo.available = intraSimpleInfoDto.available;
+      const userOnline = await this.usersService.findOneUser(intraInfo.userIdx)
+      this.usersService.setIsOnline(userOnline, OnlineStatus.ONLINE);
 
-    return res.status(200).json(intraInfo);
+      res.cookie('authorization', intraInfo.token, { httpOnly: true, path: '*' });
+      res.header('Cache-Control', 'no-store');
+      // res.setHeader('Authorization', `Bearer ${intraInfo.token}`);
+      // console.log(`codeCallback intraInfo : `, intraInfo);
+
+      // console.log("success");
+      return res.status(200).json(intraInfo);
+    } catch (err) {
+      this.logger.error(err);
+      return res.status(400).json({ message: "다시 시도해주세요." });
+    }
   }
+
 
   @Get('logout')
   async logout(@Res() res: Response): Promise<void> {

@@ -77,6 +77,7 @@ export class ProfileResDto {
   lose: number;
   rankpoint: number;
   email: string;
+  check2Auth: boolean;
 }
 export class GameRecordDto {
   matchUserNickname: string;

@@ -28,13 +28,13 @@ export class Animations {
 
   // 기존 데이터를 기반으로 다음 프레임 연산을 진행한다.
   public makeFrame(room: GameRoom, key: KeyPress[]): GameData {
-    console.log(`각도가 ?! : ${room.gameObj.linearEquation[0]}`);
+    // console.log(`각도가 ?! : ${room.gameObj.linearEquation[0]}`);
     const radianAngle = Math.atan(room.gameObj.linearEquation[0]);
-    console.log(`radianAngle : ${radianAngle}`);
+    // console.log(`radianAngle : ${radianAngle}`);
     const cosAngle = Math.cos(radianAngle);
-    console.log(`cosAngle : ${cosAngle}`);
+    // console.log(`cosAngle : ${cosAngle}`);
     const sinAngle = Math.sin(radianAngle);
-    console.log(`sinAngle : ${sinAngle}`);
+    // console.log(`sinAngle : ${sinAngle}`);
 
     let newX: number;
     let newY: number;

@@ -12,7 +12,7 @@ export class ChatController {
     @Query('channelIdx') channelIdx: number,
     @Query('page') page: string,
   ) {
-    console.log('프론트에서받은 마지막 메세지데이트', page);
+    // console.log('프론트에서받은 마지막 메세지데이트', page);
     return this.chatService.getChatMessagesByInfinity(channelIdx, page);
   }
 }

@@ -31,7 +31,7 @@ export class Physics {
       engine.checkHitThePaddle(gameData.currentPos, gameData.vector, engine)
     ) {
       if (engine.needToCorrection(gameData)) {
-        // console.log('페들 입력시 여기로 들어갈까?!');
+        // // console.log('페들 입력시 여기로 들어갈까?!');
         gameData.gamePhase = GamePhase.HIT_THE_PADDLE;
         gameData = engine.correctLinearEquation(gameData, engine, room);
       }

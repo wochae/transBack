@@ -19,7 +19,7 @@ export class AuthService {
         JwtPayloadDto;
       return payload;
     } catch (error) {
-      console.log(`auth.service: extractPayload: ${error}`);
+      // console.log(`auth.service: extractPayload: ${error}`);
       // 토큰이 유효하지 않은 경우 등 에러 처리
       return null;
     }
@@ -28,21 +28,21 @@ export class AuthService {
   validateRequest(request: Request): boolean | JwtPayloadDto {
     const token = request.headers.authorization;
     if (token === undefined || token === null) {
-      console.log(`auth.guard: invalid user`);
+      // console.log(`auth.guard: invalid user`);
       return false;
     }
     const jwtString = token.split('Bearer ')[1];
     const payload = this.verify(jwtString);
     (request as any).jwtPayload = payload;
-    console.log("auth.service: validateRequest: true");
-    console.log("auth.service: validateRequest: payload", payload);
+    // console.log("auth.service: validateRequest: true");
+    // console.log("auth.service: validateRequest: payload", payload);
     return payload;
   }
 
   validateSocket(client: Socket): boolean | JwtPayloadDto {
     const token = this.getToken(client);
     if (token === undefined || token === null) {
-      console.log(`auth.guard: invalid user`);
+      // console.log(`auth.guard: invalid user`);
       return false;
     }
     this.verify(token as string);

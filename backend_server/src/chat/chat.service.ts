@@ -57,7 +57,7 @@ export class ChatService {
   //   // Set 사용
   //   // const channel = this.findChannelByRoomId(clientData.roomId);
   //   // const membersSet = new Set(channel.getMember.flat());
-  //   // console.log(membersSet);
+  //   // // console.log(membersSet);
   //   // return membersSet.has(clientData.nickname);
   // }
 
@@ -307,7 +307,7 @@ export class ChatService {
         hasedPassword: hashedPassword,
       });
       this.hashedChannelRepository.save(hashed);
-      console.log('hashed', hashed);
+      // console.log('hashed', hashed);
     }
     channel.setPassword = password;
     this.chat.setProtectedChannels = channel;
@@ -338,7 +338,7 @@ export class ChatService {
     if (channel) {
       channel.setMessage = msgInfo;
     } else {
-      console.log('Channel not found.');
+      // console.log('Channel not found.');
       return;
     }
     const sender = await this.inMemoryUsers.getUserByIdFromIM(senderIdx);
@@ -368,7 +368,7 @@ export class ChatService {
         user,
         channelIdx,
       );
-      console.log(dm);
+      // console.log(dm);
       await queryRunner.manager.save(dm);
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -429,7 +429,7 @@ export class ChatService {
     }
     const channelInfo = {
       member: channel.getMember?.map((member) => {
-        console.log(member);
+        // console.log(member);
         return {
           userIdx: member.userIdx,
           nickname: member.nickname,
@@ -517,7 +517,7 @@ export class ChatService {
         'Already Banned',
       );
     }
-    console.log('ban', channel.getBan);
+    // console.log('ban', channel.getBan);
     const banInfo = {
       targetNickname: user.nickname,
       targetIdx: user.userIdx,
@@ -560,7 +560,7 @@ export class ChatService {
   }
 
   changePassword(channel: Channel, password: string) {
-    console.log('pw: ', password);
+    // console.log('pw: ', password);
     channel.setPassword = password;
     if (password === '' || !password) {
       channel.setMode = Mode.PUBLIC;
@@ -574,7 +574,7 @@ export class ChatService {
   /******************* Functions about Exit Room *******************/
 
   goToLobby(client: Socket, channel: Channel, user: UserObject) {
-    console.log('chat Service : goToLobby');
+    // console.log('chat Service : goToLobby');
     const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
     const isAdmin: boolean = channel.getAdmin.some(
       (member) => member.userIdx === user.userIdx,
@@ -676,18 +676,18 @@ export class ChatService {
       }),
     );
     const totalMsgCount = dmMessageList.length;
-    console.log('dmMessageList: ', dmMessageList);
+    // console.log('dmMessageList: ', dmMessageList);
     // // 전체 개수를 5로 나눈다. 나눈 값이 10이라고 하면  7 + i, 8 + i, 9 + i, 10 + i 인텍스의 메시지를 더한다. (i는 0부터 5까지)
     const dmMessageListWhenEnterRoom = [];
     let totalPage = Math.floor(totalMsgCount / 5);
     if (totalMsgCount % 5 != 0) {
       totalPage += 1;
     }
-    console.log('totalPage: ', totalPage);
+    // console.log('totalPage: ', totalPage);
     let pageForStart = totalPage - 4;
-    console.log('pageForStart: ', pageForStart);
+    // console.log('pageForStart: ', pageForStart);
     for (let j = 0; j < 4; j++) {
-      console.log(pageForStart);
+      // console.log(pageForStart);
       for (let i = 0; i < 5; i++) {
         let num = i + pageForStart * 5;
         if (dmMessageList[num]) {
@@ -697,7 +697,7 @@ export class ChatService {
       pageForStart += 1;
     }
     dmMessageListWhenEnterRoom.reverse();
-    console.log('의심되는 부분입니다: ', dmMessageListWhenEnterRoom);
+    // console.log('의심되는 부분입니다: ', dmMessageListWhenEnterRoom);
     const targetUser = await this.inMemoryUsers.getUserByIdFromIM(
       channel.userIdx2,
     );
@@ -719,7 +719,7 @@ export class ChatService {
     const messages = await this.directMessagesRepository.find({
       where: [{ channelIdx: channelIdx }],
     });
-    console.log('page : ', page);
+    // console.log('page : ', page);
     const messageList = [];
     for (let i = 0; i < 5; i++) {
       const num = i + (Number(page) - 1) * 5;

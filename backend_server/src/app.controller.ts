@@ -14,8 +14,8 @@ export class AppController {
       await fs.access(imagePath);
       res.sendFile(imagePath);
     } catch (error) {
-      console.log(error);
-      const imagePath = path.join(__dirname, '..', 'public', 'img', "0.png");
+      // console.log(error);
+      const imagePath = path.join(__dirname, '..', 'public', 'img', '0.png');
       res.status(201).sendFile(imagePath);
     }
   }
