@@ -93,10 +93,14 @@ export class GameGateway
     // console.log(`connection2 : ${userIdx}`);
 
     if (this.gameService.getOnlineList().length >= 2) {
-      const intervalId = setInterval(() => {
-        this.gameService.checkQueue(this.server);
-      }, 1000);
-      this.gameService.setIntervalId(intervalId);
+      if (this.gameService.getIntervalId() !== null) {
+        return;
+      } else {
+        const intervalId = setInterval(() => {
+          this.gameService.checkQueue(this.server);
+        }, 1000);
+        this.gameService.setIntervalId(intervalId);
+      }
     }
 
     return this.messanger.setResponseMsg(200, 'room is setted');
