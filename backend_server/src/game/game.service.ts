@@ -128,11 +128,13 @@ export class GameService {
   }
 
   public getOnlinePlayer(userIdx: number): GamePlayer {
-    const ret = this.onLinePlayer.find(
+    if (this.onLinePlayer.length === 0) {
+      return undefined;
+    }
+    const ret = this.onLinePlayer?.find(
       (user) => user[0].getUserObject().userIdx === userIdx,
     );
     if (ret === undefined) return undefined;
-    return ret[0];
   }
 
   // player 만들기
@@ -1029,6 +1031,9 @@ export class GameService {
     return;
   }
   private deleteOnLinePlayerList(target: GamePlayer): boolean {
+    if (this.onLinePlayer.length === 0) {
+      return undefined;
+    }
     const onIndex = this.onLinePlayer.findIndex(
       (player) =>
         player[0].getUserObject().userIdx === target.getUserObject().userIdx,
@@ -1043,7 +1048,8 @@ export class GameService {
     // put in Queue
     // TODO: find queue -> delete
     let targetQueue: GameQueue;
-    this.deleteOnLinePlayerList(target);
+    const ret = this.deleteOnLinePlayerList(target);
+    if (ret === undefined) return;
     switch (target.getOption().gameType) {
       case GameType.FRIEND:
         //TODO:
@@ -1096,7 +1102,8 @@ export class GameService {
     // Friend
     // Rank
     // Normal
-    this.deleteOnLinePlayerList(target);
+    const ret = this.deleteOnLinePlayerList(target);
+    if (ret === undefined) return;
     let targetQueue: GameQueue;
     switch (target.getOption().gameType) {
       case GameType.FRIEND:
@@ -1151,7 +1158,8 @@ export class GameService {
     //TODO: make delete Target
     // make playRoom
     // set room
-    this.deleteOnLinePlayerList(target);
+    const ret = this.deleteOnLinePlayerList(target);
+    if (ret === undefined) return;
     const room = this.findGameRoomById(target.getUserObject().userIdx);
     if (room === null) {
       //TODO: what should I do
