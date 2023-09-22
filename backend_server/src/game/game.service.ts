@@ -55,35 +55,35 @@ export class GameService {
     this.onLinePlayer = [];
     this.processedUserIdxList = [];
     this.nameCnt = 0;
-    const currentDate = new Date();
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth() + 1;
-    const day = currentDate.getDate();
-    const formattedDate = `${year}-${month}-${day}`;
-    this.today = formattedDate;
+    // const currentDate = new Date();
+    // const year = currentDate.getFullYear();
+    // const month = currentDate.getMonth() + 1;
+    // const day = currentDate.getDate();
+    // const formattedDate = `${year}-${month}-${day}`;
+    // this.today = formattedDate;
     this.frameData = new GameFrameDataDto(null, null);
     this.intervalId = null;
   }
 
-  public printAllQueueData() {
-    const rooms = this.playRoom;
-    const queue1 = this.normalQueue.playerList;
-    const queue2 = this.rankQueue.playerList;
-    const queue3 = this.friendQueue;
+  //   public printAllQueueData() {
+  //     const rooms = this.playRoom;
+  //     const queue1 = this.normalQueue.playerList;
+  //     const queue2 = this.rankQueue.playerList;
+  //     const queue3 = this.friendQueue;
 
-    let i = 1;
-    for (const room of rooms) {
-      console.log(
-        `room ${i++}(${room.roomId}) : [ ${room.users[0]}, ${room.users[1]} ]`,
-      );
-    }
-    i = 0;
-    for (const room of rooms) {
-      console.log(
-        `room ${i++}(${room.roomId}) : [ ${room.users[0]}, ${room.users[1]} ]`,
-      );
-    }
-  }
+  //     let i = 1;
+  //     for (const room of rooms) {
+  //       console.log(
+  //         `room ${i++}(${room.roomId}) : [ ${room.users[0]}, ${room.users[1]} ]`,
+  //       );
+  //     }
+  //     i = 0;
+  //     for (const room of rooms) {
+  //       console.log(
+  //         `room ${i++}(${room.roomId}) : [ ${room.users[0]}, ${room.users[1]} ]`,
+  //       );
+  //     }
+  //   }
 
   public getIntervalId(): any | null {
     return this.intervalId;
@@ -202,7 +202,7 @@ export class GameService {
   async checkQueue(server: Server): Promise<void> {
     if (this.friendQueue.length >= 2) {
       const target = this.friendQueue[0];
-      // // console.log(`friend Queue : ${this.friendQueue}`);
+
       const friendQue = this.friendQueue;
       const player1 = friendQue.find(
         (player) =>
@@ -270,9 +270,27 @@ export class GameService {
       list[1].playerStatus = PlayerPhase.QUEUE_SUCCESS;
       this.stopIntervalId();
       return this.makePlayerRoom(list, server);
-    } else {
-      return undefined;
     }
+
+    if (this.rankQueue.getLength() >= 2) {
+      targetQueue = this.rankQueue;
+      const target = targetQueue.playerList[0];
+      //   // console.log(`큐의 길이는 : `, targetQueue.getLength());
+      const list = targetQueue.popPlayer(target.getUserObject().userIdx);
+      const cond = this.checkListSamePeron(list);
+      if (cond === null) {
+        return undefined;
+      } else if (cond === true) {
+        const picked = this.pickOnePersonFromList(list);
+        this.putInQueue(picked, null);
+        return undefined;
+      }
+      list[0].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+      list[1].playerStatus = PlayerPhase.QUEUE_SUCCESS;
+      this.stopIntervalId();
+      return this.makePlayerRoom(list, server);
+    }
+    return undefined;
   }
 
   private checkListSamePeron(playerList: GamePlayer[]): boolean | null {
@@ -287,8 +305,8 @@ export class GameService {
         else {
           const msg = 'connection error happened. plz, try to reconnection';
           p1.getSocket().emit('game_queue_quit', msg);
-          p1.getSocket().disconnect(true);
-          p2.getSocket().disconnect(true);
+          //   p1.getSocket().disconnect(true);
+          //   p2.getSocket().disconnect(true);
           return null;
         }
       }
@@ -369,7 +387,8 @@ export class GameService {
 
   // play room 의 이름을 설정한다.
   private makeRoomName(): string {
-    const ret = `room_${this.today}_${this.nameCnt++}`;
+    const ret = `room_${this.today}_${this.nameCnt}`;
+    this.nameCnt += 1;
     return ret;
   }
 
@@ -608,8 +627,11 @@ export class GameService {
     const gap = Math.abs(targetRoom.latency[0] - targetRoom.latency[1]);
     if (gap >= 100) {
       targetRoom.stopInterval();
-      targetRoom.deleteRoom();
-      //TODO: add ForceQuit
+      const id = targetRoom.deleteRoom();
+      const index = this.playRoom.findIndex(
+        (room) => room.roomId.valueOf() === id.valueOf(),
+      );
+      if (index != -1) this.playRoom.splice(index, 1);
       return -1;
     }
     // targetRoom.intervalPeriod
@@ -827,9 +849,12 @@ export class GameService {
       (target) =>
         target[0].getUserObject().userIdx === target2.getUserObject().userIdx,
     );
+    if (target2Index != -1) this.onLinePlayer.splice(target2Index, 1);
+
     target1Index = undefined;
     target2Index = undefined;
     room = undefined;
+
     this.processedUserIdxList.push(target1.getUserObject().userIdx.valueOf());
     this.processedUserIdxList.push(target2.getUserObject().userIdx.valueOf());
     target1.setUserObject(undefined);
@@ -838,7 +863,7 @@ export class GameService {
     target2 = undefined;
     if (target2Index != -1) this.onLinePlayer.splice(target2Index, 1);
     const index = this.playRoom.findIndex((room) => room.roomId === roomId);
-    this.playRoom.splice(index, 1);
+    if (index != -1) this.playRoom.splice(index, 1);
     roomId = undefined;
   }
 

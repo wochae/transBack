@@ -393,7 +393,6 @@ export class GameRoom {
   }
 
   public deleteRoom(): string {
-    this.roomId;
     this.intervalId = undefined;
     this.intervalPeriod = undefined; // 서버 -(좌표)-> 클라이언트 -(키 입력)-> 서버  -(좌표, 키 입력)-> 클라이언트
     this.users[0].getSocket().disconnect(true);
