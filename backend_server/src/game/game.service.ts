@@ -146,6 +146,7 @@ export class GameService {
     });
     this.inMemoryUsers.setUserByIdFromIM(getPerson);
     this.inMemoryUsers.saveUserByUserIdFromIM(getPerson.userIdx);
+    console.log('getPerson', getPerson.userIdx);
     // console.log(`userIdx: ${data.userIdx}`);
 
     if (getPerson === undefined) return null;
