@@ -575,8 +575,8 @@ export class ChatService {
 
   goToLobby(client: Socket, channel: Channel, user: UserObject) {
     // console.log('chat Service : goToLobby');
-    const isOwner: boolean = channel.getOwner.userIdx === user.userIdx;
-    const isAdmin: boolean = channel.getAdmin.some(
+    const isOwner: boolean = channel.getOwner?.userIdx === user.userIdx;
+    const isAdmin: boolean = channel.getAdmin?.some(
       (member) => member.userIdx === user.userIdx,
     );
 
