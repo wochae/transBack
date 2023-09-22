@@ -45,6 +45,7 @@ export class GameGateway
 
   handleDisconnect(client: Socket) {
     const userIdx: number = parseInt(client.handshake.query.userId as string);
+    if (userIdx === undefined) return;
     if (Number.isNaN(userIdx)) return;
     // console.log(`userIdx(disconnection) : ${userIdx}`);
     this.gameService.handleDisconnectUsers(userIdx, this.server);
@@ -60,6 +61,10 @@ export class GameGateway
       client.handshake.query.userId as string,
       10,
     );
+    if (userIdx === undefined) {
+      client.disconnect(true);
+      return;
+    }
     if (Number.isNaN(userIdx)) return;
     const target = this.gameService.getOnlinePlayer(userIdx);
     // console.log(`target ${target}`);
