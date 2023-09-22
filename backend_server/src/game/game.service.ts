@@ -93,6 +93,10 @@ export class GameService {
     this.intervalId = id;
   }
 
+  public stopIntervalId() {
+    clearInterval(this.intervalId);
+  }
+
   public getOnlineList(): [GamePlayer, GameType][] {
     return this.onLinePlayer;
   }
@@ -196,21 +200,14 @@ export class GameService {
   async checkQueue(server: Server): Promise<void> {
     if (this.friendQueue.length >= 2) {
       const target = this.friendQueue[0];
-<<<<<<< HEAD
-      console.log(`friend Queue length : ${this.friendQueue.length}`);
-=======
       // // console.log(`friend Queue : ${this.friendQueue}`);
->>>>>>> dev
       const friendQue = this.friendQueue;
       const player1 = friendQue.find(
         (player) =>
           player[0].getUserObject().userIdx ===
           target[0].getUserObject().userIdx,
       );
-<<<<<<< HEAD
-=======
       // console.log(`TargetQueue : ${friendQue.length}`);
->>>>>>> dev
       const player2 = friendQue.find(
         (player) => player[0].getUserObject().userIdx === player1[1].targetIdx,
       );
@@ -595,15 +592,9 @@ export class GameService {
       // console.log(`Player ${latencyIdx} : ${targetRoom.latency[latencyIdx]}`);
     }
     // TODO: Lateyncy cnt to change
-<<<<<<< HEAD
-    console.log(`target ${latencyIdx} : ${targetRoom.latencyCnt[latencyIdx]}`);
+    // console.log(`target ${latencyIdx} : ${targetRoom.latencyCnt[latencyIdx]}`);
     if (targetRoom.latencyCnt[latencyIdx] === 10) {
       if (targetRoom.latencyCnt[0] >= 10 && targetRoom.latencyCnt[1] >= 10) {
-=======
-    // console.log(`target ${latencyIdx} : ${targetRoom.latencyCnt[latencyIdx]}`);
-    if (targetRoom.latencyCnt[latencyIdx] === 30) {
-      if (targetRoom.latencyCnt[0] >= 30 && targetRoom.latencyCnt[1] >= 30) {
->>>>>>> dev
         targetRoom.stopInterval();
         targetRoom.users[0].playerStatus = PlayerPhase.PING_DONE;
         targetRoom.users[1].playerStatus = PlayerPhase.PING_DONE;
@@ -772,15 +763,9 @@ export class GameService {
           user2.lose += 1;
           winner = user1.userIdx;
           if (room.gameObj.gameType === GameType.RANK) {
-<<<<<<< HEAD
             console.log('winner A 들어감!');
             // if (user1.rankpoint === 0) user1.rankpoint = 3000;
             // if (user2.rankpoint === 0) user2.rankpoint = 3000;
-=======
-            // console.log('winner A 들어감!');
-            if (user1.rankpoint === 0) user1.rankpoint = 3000;
-            if (user2.rankpoint === 0) user2.rankpoint = 3000;
->>>>>>> dev
             if (user1.rankpoint === user2.rankpoint) {
               user1.rankpoint += 100;
               user2.rankpoint -= 100;

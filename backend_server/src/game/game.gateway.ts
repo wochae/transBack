@@ -49,7 +49,7 @@ export class GameGateway
     // console.log(`userIdx(disconnection) : ${userIdx}`);
     this.gameService.handleDisconnectUsers(userIdx, this.server);
     if (this.gameService.getOnlineList().length === 0) {
-      clearInterval(this.gameService.getIntervalId());
+      this.gameService.stopIntervalId();
     }
     return;
   }
