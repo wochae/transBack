@@ -43,30 +43,24 @@ export class LoginController {
   ) {
     try {
       this.logger.log(`codeCallback code : ${query.code}`);
-      // console.log('authHeader', authHeader);
       if (!authHeader) {
         authHeader = req.headers.token;
       } else {
         authHeader = authHeader.startsWith('Bearer')
           ? authHeader.split(' ')[1]
           : req.headers.token;
-        // console.log('codeCallback token : ', authHeader);
       }
       let intraInfo: IntraInfoDto;
       let intraSimpleInfoDto: IntraSimpleInfoDto;
       intraInfo = await this.loginService.getIntraInfo(query.code);
       const user = await this.usersService.findOneUser(intraInfo.userIdx);
 
-      // console.log('codeCallback user : ', user);
       if (!user) {
-        // console.log('codeCallback user not exist : ', user);
         intraSimpleInfoDto = await this.usersService.validateUser(intraInfo);
         this.loginService.downloadProfileImg(intraInfo);
       } else {
         user.imgUri = `${backenduri}/img/${user.userIdx}.png`
         this.usersService.setUserImg(user.userIdx, user.imgUri);
-
-        // console.log('codeCallback user exist : ', user);
         intraSimpleInfoDto = new IntraSimpleInfoDto(user.userIdx, user.nickname, user.imgUri, user.check2Auth, user.available);
       }
       const anyImg = await this.usersService.checkFileExists(`public/img/${intraSimpleInfoDto.userIdx}.png`);
@@ -86,10 +80,6 @@ export class LoginController {
 
       res.cookie('authorization', intraInfo.token, { httpOnly: true, path: '*' });
       res.header('Cache-Control', 'no-store');
-      // res.setHeader('Authorization', `Bearer ${intraInfo.token}`);
-      // console.log(`codeCallback intraInfo : `, intraInfo);
-
-      // console.log("success");
       return res.status(200).json(intraInfo);
     } catch (err) {
       this.logger.error(err);

@@ -18,7 +18,6 @@ export class LoginService {
   private logger: Logger = new Logger('LoginService');
 
   async getAccessToken(code: string): Promise<any> {
-    // console.log('checking', checking);
     this.logger.log(`getAccessToken : code= ${code}`);
     const body = {
       grant_type: 'authorization_code',
@@ -27,24 +26,20 @@ export class LoginService {
       code: code,
       redirect_uri: frontcallback,
     };
-    // console.log('body', body);
     try {
-      // console.log('hi');
       const response = await axios.post(intraApiTokenUri, body);
       this.logger.log(
         `getAccessToken: response.data.access_token : ${response.data.access_token}`,
       );
       return response.data.access_token;
     } catch (error) {
-      // Handle error
-      // console.error('Error making POST request:', error.message);
       throw error;
     }
   }
 
   async getIntraInfo(code: string): Promise<IntraInfoDto> {
-    const token = await this.getAccessToken(code);
     try {
+      const token = await this.getAccessToken(code);
       const response = await axios.get(intraApiMyInfoUri, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -64,8 +59,7 @@ export class LoginService {
         available: false,
       };
     } catch (error) {
-      // 에러 핸들링
-      // console.error('Error making GET request:', error);
+      throw error;
     }
   }
 
