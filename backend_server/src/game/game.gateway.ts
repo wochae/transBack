@@ -96,10 +96,7 @@ export class GameGateway
       if (this.gameService.getIntervalId() !== null) {
         return;
       } else {
-        const intervalId = setInterval(() => {
-          this.gameService.checkQueue(this.server);
-        }, 1000);
-        this.gameService.setIntervalId(intervalId);
+        this.gameService.setIntervalQueue(this.server);
       }
     }
 
@@ -221,11 +218,6 @@ export class GameGateway
   @SubscribeMessage('game_force_quit')
   getQuitSignal(@MessageBody() data: GameBasicAnswerDto) {
     this.gameService.forceQuitMatch(data.userIdx, this.server);
-  }
-
-  @SubscribeMessage('game_over_quit')
-  getQuitProperly(@MessageBody() data: GameBasicAnswerDto) {
-    //TODO: 만들기
   }
 
   @SubscribeMessage('game_queue_quit')
