@@ -83,10 +83,10 @@ export class GameController {
       option.mapNumber,
     );
     const target = await this.gameService.makePlayer(basicOption);
-    target.playerStatus = PlayerPhase.SET_OPTION;
     // console.log(`target check?! : ${target}`);
     if (target === null) status = false;
     else {
+      target.playerStatus = PlayerPhase.SET_OPTION;
       //   console.log(
       //     `Friend Queue inserting! : ${target.getUserObject().nickname}`,
       //   );

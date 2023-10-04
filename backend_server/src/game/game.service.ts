@@ -28,6 +28,7 @@ import { GameResultDto } from './dto/game.result.dto';
 import { GameInviteOptionDto } from './dto/game.invite.option.dto';
 import { UserProfileGameDto } from './dto/game.record.dto';
 import { UserObjectRepository } from 'src/users/users.repository';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class GameService {
@@ -127,10 +128,13 @@ export class GameService {
     return records;
   }
 
+  public setIntervalQueue(server: Server) {
+    console.log('get in here?!');
+    const intervalId = setInterval(this.checkQueue.bind(this, server), 1000);
+    this.setIntervalId(intervalId);
+  }
+
   public getOnlinePlayer(userIdx: number): GamePlayer {
-    // if (this.onLinePlayer.length === 0) {
-    //   return undefined;
-    // }
     const ret = this.onLinePlayer.find(
       (user) => user[0].getUserObject().userIdx === userIdx,
     );
@@ -140,6 +144,8 @@ export class GameService {
 
   // player 만들기
   async makePlayer(data: GameOptionDto): Promise<GamePlayer | null> {
+    // eslint-disable-next-line prettier/prettier
+	// console.log("inmemory", this.inMemoryUsers)
     // console.log(`userIdx: ${data.userIdx}`);
     // const getPerson = await this.inMemoryUsers.getUserByIdFromIM(data.userIdx);
     const getPerson = await this.userObjectRepository.findOne({
@@ -147,7 +153,7 @@ export class GameService {
     });
     this.inMemoryUsers.setUserByIdFromIM(getPerson);
     this.inMemoryUsers.saveUserByUserIdFromIM(getPerson.userIdx);
-    console.log('getPerson', getPerson.userIdx);
+    console.log('1getPerson', getPerson.userIdx);
     // console.log(`userIdx: ${data.userIdx}`);
 
     if (getPerson === undefined) return null;
@@ -211,8 +217,9 @@ export class GameService {
   }
 
   // 큐 내부를 파악하고, 게임 상대가 준비되었는지 확인한다.
-  async checkQueue(server: Server): Promise<void> {
+  async checkQueue(server: Server): Promise<Observable<void>> {
     if (this.friendQueue.length >= 2) {
+      console.log('get in here?!2');
       const target = this.friendQueue[0];
 
       const friendQue = this.friendQueue;
@@ -226,9 +233,10 @@ export class GameService {
         (player) => player[0].getUserObject().userIdx === player1[1].targetIdx,
       );
       // console.log(`player 2: ${player2}`);
-
+      console.log('get in here?!3');
       if (player2 === undefined) return undefined;
       else {
+        console.log('get in here?!4');
         const player1Index = friendQue.findIndex(
           (player) =>
             player[0].getUserObject().userIdx ===
@@ -247,8 +255,11 @@ export class GameService {
         list.push(player2[0]);
         const cond = this.checkListSamePeron(list);
         if (cond === null) {
+          console.log('get in here?!NULL');
           return undefined;
         } else if (cond === true) {
+          console.log('get in here?!PROBLEM');
+
           const picked = this.pickOnePersonFromList(list);
           const options =
             picked.getUserObject().userIdx === p1[0][0].getUserObject().userIdx
@@ -257,6 +268,7 @@ export class GameService {
           this.putInQueue(picked, options);
           return undefined;
         }
+        console.log('get in here?!6');
         // console.log(list);
         this.stopIntervalId();
         return this.makePlayerRoom(list, server);
@@ -359,7 +371,10 @@ export class GameService {
   }
 
   // play room 을 구성한다.
-  async makePlayerRoom(players: GamePlayer[], server: Server) {
+  async makePlayerRoom(
+    players: GamePlayer[],
+    server: Server,
+  ): Promise<Observable<void>> {
     const roomName = this.makeRoomName();
     this.messanger.logWithMessage('makePlayerRoom', '', '', `${roomName}`);
     const option = this.setOptions(players);
@@ -401,6 +416,7 @@ export class GameService {
     setTimeout(() => {
       server.to(room.roomId).emit('game_queue_success', data);
     }, 400);
+    return;
   }
 
   // play room 의 이름을 설정한다.
@@ -559,9 +575,10 @@ export class GameService {
     target.intervalId = null;
     target.users[0].playerStatus = PlayerPhase.PING_CHECK;
     target.users[1].playerStatus = PlayerPhase.PING_CHECK;
-    target.intervalId = setInterval(() => {
-      this.sendPingToRoom(target, server);
-    }, 15);
+    target.intervalId = setInterval(
+      this.sendPingToRoom.bind(this, target, server),
+      15,
+    );
   }
 
   // 실제 초반 레이턴시 확정을 위한 핑 보내는 메서드
@@ -682,9 +699,10 @@ export class GameService {
     targetRoom.setGamePhase(GamePhase.ON_PLAYING);
     // console.log(`target Interval Ms : ${targetRoom.getIntervalMs()}`);
     targetRoom.setIntervalId(
-      setInterval(() => {
-        gameService.startRendering(targetRoom, server, gameService);
-      }, targetRoom.getIntervalMs()),
+      setInterval(
+        gameService.startRendering.bind(this, targetRoom, server, gameService),
+        targetRoom.getIntervalMs(),
+      ),
     );
   }
 
